@@ -1,0 +1,9 @@
+'use client';
+import {useEffect,useState} from 'react';
+import {api} from '../_lib/auth-client';
+type Row={id:number;title:string;zone:string;mobility:string;repair:string};
+export default function DamagePanel({vehicleId,inspectionId,departure=false}:{vehicleId:number;inspectionId?:number;departure?:boolean}){
+ const [rows,setRows]=useState<Row[]>([]),[error,setError]=useState(''),[loading,setLoading]=useState(true);
+ useEffect(()=>{const abort=new AbortController();fetch(api+'/api/v1/damages?vehicle_id='+vehicleId+'&open=1',{credentials:'include',headers:{Accept:'application/json'},signal:abort.signal}).then(async r=>{if(!r.ok)throw Error('Suivi des dommages indisponible.');const b=await r.json();setRows(b.data);setError('');}).catch(e=>{if(!abort.signal.aborted)setError(e.message);}).finally(()=>{if(!abort.signal.aborted)setLoading(false);});return()=>abort.abort();},[vehicleId]);
+ return <section className="rq-panel" aria-label="Dommages connus"><h4>Dommages connus de cette voiture</h4>{error?<p role="alert">{error}</p>:loading?<p>Chargement des dommages…</p>:rows.length?<ul>{rows.map(row=><li key={row.id}><a href={'/incidents?ticket='+row.id+(inspectionId?'&inspection='+inspectionId:'')}>DOM-{row.id} · {row.zone} · {row.title}</a> — {row.mobility==='usable'?'Utilisation validée':row.mobility==='blocked'?'Sortie bloquée':'Disponibilité à examiner'}{row.repair==='deferred'?' · Réparation reportée':''}</li>)}</ul>:<p>Aucun dossier de dommage ouvert enregistré.</p>}{departure&&rows.length>0&&<p>Comparez ces dommages aux photos et mentionnez les marques encore présentes dans le contrôle de départ. Ne les attribuez pas au nouveau client.</p>}<a className="secondary" href={'/incidents?vehicle='+vehicleId+(inspectionId?'&inspection='+inspectionId:'')}>{inspectionId?'Signaler un dommage ou relier un dommage connu':'Ouvrir le suivi des dommages'}</a></section>;
+}

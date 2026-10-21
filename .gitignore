@@ -1,0 +1,16 @@
+/sites/
+/tmp/
+/.local/
+/output/
+**/node_modules/
+**/.next/
+**/.turbo/
+**/vendor/
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.testing.example
+**/*.log
+**/*.tsbuildinfo
+.DS_Store
+Thumbs.db

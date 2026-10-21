@@ -1,0 +1,55 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const {expect}=require((process.env.PLAYWRIGHT_MODULE||'playwright')+'/test');
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const local=path.resolve(__dirname,'../.local');
+const credentials=JSON.parse(fs.readFileSync(path.join(local,'demo-account.json'),'utf8'));
+(async()=>{
+ const browser=await chromium.launch({channel:'chrome',headless:true});
+ try{
+ const context=await browser.newContext({viewport:{width:1440,height:1000}});
+ const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://localhost:3000/login');
+ await page.getByLabel('Adresse e-mail',{exact:true}).fill(credentials.email);
+ await page.getByLabel('Mot de passe',{exact:true}).fill(credentials.password);
+ await page.getByRole('button',{name:'Se connecter',exact:true}).click();
+ await expect(page).toHaveURL('http://localhost:3000/');
+ await page.getByRole('link',{name:'Véhicules',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Ajouter un véhicule',exact:true})).toBeVisible();
+
+
+
+ const plate='TEST-GARAGE-'+Date.now().toString().slice(-7);
+ await page.getByRole('button',{name:'Ajouter un véhicule',exact:true}).click();await page.locator('input[name=plate]').fill(plate);await page.locator('select[name=make_choice]').selectOption('Dacia');await page.locator('select[name=model_choice]').selectOption('Logan');await page.getByRole('button',{name:'Créer le fichier',exact:true}).click();
+ const panel=page.locator('.v-maintenance');await panel.getByRole('button',{name:'Enregistrer une intervention'}).click();const form=page.locator('.gf-dialog');
+ await form.getByRole('button',{name:/La voiture entre au garage/}).click();
+ await form.getByLabel('Compteur lors de cette visite (km)',{exact:true}).fill('45000');
+ await form.getByRole('button',{name:'Aide : Compteur lors de cette visite (km)',exact:true}).click();await expect(page.locator('.field-help-popover:popover-open')).toContainText('العداد');await expect(form).toBeVisible();await page.getByRole('button',{name:'Fermer l’aide',exact:true}).click();await expect(form.getByLabel('Compteur lors de cette visite (km)',{exact:true})).toHaveValue('45000');
+ const cards=form.locator('.gf-work-card');await cards.nth(0).getByLabel('Montant (DH)',{exact:true}).fill('650');await form.getByRole('button',{name:'Ajouter un travail',exact:false}).click();
+ await cards.nth(1).getByLabel('Type de travail',{exact:true}).selectOption('body');await cards.nth(1).getByLabel('Travaux à effectuer / effectués',{exact:true}).fill('Peinture pare-chocs');await form.getByLabel('Déjà payé / avance (DH)',{exact:true}).fill('200');
+ await page.screenshot({path:path.join(local,'garage-create.png')});
+ await form.getByRole('button',{name:'Créer le dossier',exact:true}).click();await expect(form.locator('.gf-table tbody tr')).toHaveCount(2);await expect(form.getByText('Coût à confirmer',{exact:true})).toBeVisible();await expect(form.locator('.m-detail-total')).toContainText('450,00');
+ const today=await page.evaluate(()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Casablanca',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()));
+ await form.getByRole('button',{name:'Modifier Vidange',exact:true}).click();let op=form.locator('.gf-operation');await op.getByLabel('État du travail',{exact:true}).selectOption('done');await op.getByLabel('Date de réalisation',{exact:true}).fill(today);await op.getByLabel('Compteur lors de la réalisation (km)',{exact:true}).fill('45000');await op.locator('.gf-next summary').click();await op.getByLabel('Prochain compteur (km)',{exact:true}).fill('55000');await op.getByLabel('Motif de la mise à jour',{exact:true}).fill('Vidange réalisée et contrôlée');await op.getByRole('button',{name:'Enregistrer',exact:true}).click();await expect(op).toHaveCount(0);
+ await form.getByRole('button',{name:'Enregistrer le retour',exact:true}).click();op=form.locator('.gf-operation');await op.getByLabel('Contrôle et observations',{exact:true}).fill('Contrôle du véhicule');await op.getByRole('checkbox').check();await op.getByRole('button',{name:'Enregistrer',exact:true}).click();await expect(form.getByRole('alert')).toContainText('Terminez les travaux');
+ page.once('dialog',d=>d.accept());await op.getByRole('button',{name:'Annuler',exact:true}).click();await form.getByRole('button',{name:'Modifier Peinture pare-chocs',exact:true}).click();op=form.locator('.gf-operation');await op.getByLabel('Prix',{exact:true}).selectOption('confirmed');await op.getByLabel('Montant (DH)',{exact:true}).fill('1200');await op.getByLabel('État du travail',{exact:true}).selectOption('deferred');await op.getByLabel('Motif du report',{exact:true}).fill('Travail cosmétique reporté, sécurité contrôlée');await op.getByRole('button',{name:'Enregistrer',exact:true}).click();await expect(op).toHaveCount(0);
+ await expect(form.locator('.m-detail-total')).toContainText('1.850,00');await form.getByRole('button',{name:'Enregistrer un paiement',exact:false}).click();op=form.locator('.gf-operation');await op.getByLabel('Montant réellement payé (DH)',{exact:true}).fill('600');await op.getByRole('button',{name:'Enregistrer',exact:true}).click();await expect(op).toHaveCount(0);await expect(form.locator('.m-detail-total')).toContainText('1.050,00');await expect(form.locator('.gf-payment')).toHaveCount(2);
+ await form.getByRole('button',{name:'Joindre une facture',exact:false}).click();op=form.locator('.gf-operation');const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=400;c.height=200;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,400,200);x.fillStyle='black';x.fillText('FACTURE FICTIVE',20,40);return c.toDataURL('image/png').split(',')[1]});await op.getByLabel('Facture du dossier',{exact:true}).setInputFiles({name:'test.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});await op.getByRole('button',{name:'Enregistrer',exact:true}).click();await expect(op).toHaveCount(0);await expect(form.locator('.m-detail-total')).toContainText('1.850,00');const download=page.waitForEvent('download');await form.getByRole('button',{name:/Télécharger la facture #/}).click();assert.equal(await (await download).failure(),null);
+ await form.getByRole('button',{name:'Enregistrer le retour',exact:true}).click();op=form.locator('.gf-operation');await op.getByLabel('Contrôle et observations',{exact:true}).fill('Sécurité vérifiée, peinture cosmétique reportée');await op.getByRole('checkbox').check();await op.getByRole('button',{name:'Enregistrer',exact:true}).click();await expect(op).toHaveCount(0);await expect(form.getByText('Véhicule revenu / prestation terminée',{exact:true})).toBeVisible();await expect(form.getByText('Paiement incomplet',{exact:true})).toBeVisible();
+ await form.getByRole('button',{name:'Fermer',exact:true}).click();
+ const follow=panel.locator('.m-followups');await expect(follow).toContainText('Peinture pare-chocs');
+ await follow.getByRole('button',{name:'Suivre le travail',exact:true}).click();
+ op=page.locator('.gf-operation');await expect(op).toContainText('aucune dépense');
+ await op.getByLabel('Date de suivi prévue',{exact:true}).fill('2026-11-01');await op.getByLabel('Observation / motif',{exact:true}).fill('Pièce commandée, reprise prévue');await op.getByRole('button',{name:'Enregistrer',exact:true}).click();await expect(op).toHaveCount(0);
+ await form.getByRole('button',{name:'Fermer',exact:true}).click();await expect(follow).toContainText('nov.');
+ await follow.getByRole('button',{name:'Suivre le travail',exact:true}).click();op=page.locator('.gf-operation');await op.getByLabel('Que souhaitez-vous enregistrer ?', {exact:true}).selectOption('start');await op.getByLabel('Observation / motif',{exact:true}).fill('Reprise peinture');await op.getByRole('button',{name:'Enregistrer',exact:true}).click();await expect(op).toHaveCount(0);
+ await expect(form.locator('.m-detail-total')).toContainText('1.850,00');await expect(form.locator('.m-detail-total')).toContainText('1.050,00');
+ await form.getByRole('button',{name:'Suivre le travail',exact:true}).click();op=form.locator('.gf-operation');await op.getByLabel('Observation / motif',{exact:true}).fill('Peinture terminée');await op.getByRole('button',{name:'Enregistrer',exact:true}).click();await expect(op).toHaveCount(0);
+ await form.getByRole('button',{name:'Fermer',exact:true}).click();await expect(follow).toContainText('retour');
+ await follow.scrollIntoViewIfNeeded();await page.screenshot({path:path.join(local,'maintenance-followups-desktop.png')});await page.setViewportSize({width:390,height:844});await follow.scrollIntoViewIfNeeded();await page.screenshot({path:path.join(local,'maintenance-followups-mobile.png')});assert(await page.locator('.vehicle-dialog').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
+ await follow.getByRole('button',{name:'Suivre le travail',exact:true}).click();op=form.locator('.gf-operation');await expect(op.getByLabel('Que souhaitez-vous enregistrer ?', {exact:true})).toHaveValue('return');await op.getByLabel('Observation / motif',{exact:true}).fill('Véhicule revenu et contrôlé');await op.getByRole('checkbox').check();await op.getByRole('button',{name:'Enregistrer',exact:true}).click();await expect(op).toHaveCount(0);
+ await expect(form.locator('.m-detail-total')).toContainText('1.850,00');await expect(form.locator('.m-detail-total')).toContainText('1.050,00');await expect(form.locator('.gf-payment')).toHaveCount(2);
+ await form.getByText('Historique des reprises et suivis',{exact:true}).click();await expect(form).toContainText('Peinture terminée');await expect(form).toContainText('Véhicule revenu et contrôlé');
+ await form.getByRole('button',{name:'Fermer',exact:true}).click();await expect(follow.getByRole('button',{name:'Suivre le travail'})).toHaveCount(0);
+ assert.equal(errors.length,0,errors.join(' | '));console.log('PASS '+plate+': deferred work visible, planned followup, garage reprise, complete then separate return, original totals/payments unchanged, history, mobile.');
+ }finally{await browser.close();}
+})().catch(e=>{console.error(String(e).replaceAll(credentials.email,'[email]').replaceAll(credentials.password,'[password]'));process.exit(1)});

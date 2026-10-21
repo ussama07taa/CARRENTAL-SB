@@ -1,0 +1,21 @@
+{
+  "name": "bensebih-car-rental",
+  "private": true,
+  "packageManager": "pnpm@10.34.0",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=10 <11"
+  },
+  "scripts": {
+    "dev": "turbo run dev --ui=stream",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test:api": "pnpm --filter @bensebih/api test"
+  },
+  "devDependencies": {
+    "turbo": "2.11.9"
+  },
+  "dependencies": {
+    "puppeteer": "25.14.0"
+  }
+}

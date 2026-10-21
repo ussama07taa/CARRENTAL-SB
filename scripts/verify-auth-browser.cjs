@@ -1,0 +1,56 @@
+// Run against the isolated demo with PLAYWRIGHT_MODULE set to an installed Playwright.
+const { chromium, request } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { expect } = require((process.env.PLAYWRIGHT_MODULE || 'playwright') + '/test');
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const local = path.resolve(__dirname, '../.local');
+const credentials = JSON.parse(fs.readFileSync(path.join(local, 'demo-account.json'), 'utf8'));
+(async () => {
+ const browser = await chromium.launch({channel:'chrome',headless:true});
+ try {
+  const context = await browser.newContext({viewport:{width:1365,height:900}});
+  const page = await context.newPage();
+  const errors=[]; page.on('pageerror', e=>errors.push(e.message));
+  await page.goto('http://localhost:3000/');
+  await expect(page).toHaveURL('http://localhost:3000/login');
+  await page.screenshot({path:path.join(local,'login-desktop.png'),fullPage:true});
+  await page.getByLabel('Adresse e-mail',{exact:true}).fill(credentials.email);
+  await page.getByLabel('Mot de passe',{exact:true}).fill('incorrect-password');
+  await page.getByRole('button',{name:'Se connecter',exact:true}).click();
+  await expect(page.locator('#login-error')).toContainText('Adresse e-mail ou mot de passe incorrect.');
+  await page.getByLabel('Mot de passe',{exact:true}).fill(credentials.password);
+  await page.getByRole('button',{name:'Se connecter',exact:true}).click();
+  await expect(page).toHaveURL('http://localhost:3000/');
+  await expect(page.getByText('BENSEBIHI · AGENCE DÉMO',{exact:true})).toBeVisible();
+  await expect(page.locator('.identity-grid').getByText('Responsable Démo',{exact:true})).toBeVisible();
+  await expect(page.getByText('MODE DÉMONSTRATION',{exact:false})).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('BENSEBIHI · AGENCE DÉMO',{exact:true})).toBeVisible();
+  await page.goto('http://localhost:3000/login');
+  await expect(page).toHaveURL('http://localhost:3000/');
+  const cookies=await context.cookies('http://localhost:8000');
+  assert(cookies.find(c=>c.name==='bensebih_demo_session')?.httpOnly);
+  const oldCookie=cookies.map(c=>`${c.name}=${c.value}`).join('; ');
+  const noCsrf=await page.evaluate(async()=> (await fetch('http://localhost:8000/api/v1/auth/logout',{method:'POST',credentials:'include',headers:{Accept:'application/json'}})).status);
+  assert.equal(noCsrf,419);
+  await page.screenshot({path:path.join(local,'private-desktop.png'),fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.screenshot({path:path.join(local,'private-mobile.png'),fullPage:true});
+  await page.getByRole('button',{name:'Se déconnecter',exact:true}).click();
+  await expect(page).toHaveURL('http://localhost:3000/login');
+  await page.goto('http://localhost:3000/');
+  await expect(page).toHaveURL('http://localhost:3000/login');
+  const stale=await request.newContext({extraHTTPHeaders:{Cookie:oldCookie,Accept:'application/json'}});
+  assert.equal((await stale.get('http://localhost:8000/api/v1/auth/me')).status(),401);
+  await stale.dispose();
+  await page.goBack();
+  await expect(page.getByText('BENSEBIHI · AGENCE DÉMO',{exact:true})).toHaveCount(0);
+  await page.goto('http://localhost:3000/login');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.screenshot({path:path.join(local,'login-mobile.png'),fullPage:true});
+  assert.deepEqual(errors,[]);
+  console.log('PASS: guest redirect, invalid password, login, identity, demo isolation, refresh, authenticated redirect, CSRF, httpOnly cookie, logout, old-cookie invalidation, back navigation, mobile layout, no JS errors.');
+ } finally {await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

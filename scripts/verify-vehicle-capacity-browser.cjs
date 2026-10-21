@@ -1,0 +1,70 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const {expect}=require((process.env.PLAYWRIGHT_MODULE||'playwright')+'/test');
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const local=path.resolve(__dirname,'../.local');
+const credentials=JSON.parse(fs.readFileSync(path.join(local,'demo-account.json'),'utf8'));
+(async()=>{
+ const browser=await chromium.launch({channel:'chrome',headless:true});
+ try{
+ const context=await browser.newContext({viewport:{width:1440,height:1000}});
+ const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&m.text().includes('same key'))errors.push(m.text());});
+ await page.goto('http://localhost:3000/login');
+ await page.getByLabel('Adresse e-mail',{exact:true}).fill(credentials.email);
+ await page.getByLabel('Mot de passe',{exact:true}).fill(credentials.password);
+ await page.getByRole('button',{name:'Se connecter',exact:true}).click();
+ await expect(page).toHaveURL('http://localhost:3000/');
+ await page.getByRole('link',{name:'Véhicules',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Ouvrir DEMO-1',exact:true})).toBeVisible();
+ await page.screenshot({path:path.join(local,'vehicles-desktop.png'),fullPage:true});
+ await page.getByLabel('Rechercher un véhicule', {exact:true}).fill('TEST-VAN-01');
+ const open=page.getByRole('button',{name:'Ouvrir TEST-VAN-01',exact:true});
+ await expect(open.or(page.getByRole('heading',{name:'Aucun véhicule trouvé.'}))).toBeVisible();
+ if(await open.isVisible()){
+ await open.click();await page.getByRole('button',{name:/Modifier le fichier/}).click();
+ }else{
+ await page.getByRole('button',{name:'Ajouter un véhicule',exact:true}).click();
+ await page.locator('input[name=plate]').fill('TEST-VAN-01');
+ await page.locator('select[name=make_choice]').selectOption('Renault');
+ await page.locator('select[name=model_choice]').selectOption('Trafic');
+ }
+ const seats=page.getByLabel('Nombre de places',{exact:true});
+ const type=page.getByLabel('Type de véhicule',{exact:true});
+ await type.selectOption('van');await seats.selectOption('other');
+ await expect(page.getByText('Chauffeur inclus dans le nombre total.',{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:/^(Créer le fichier|Enregistrer les modifications)$/}).click();
+ await expect(page.getByLabel('Nombre total de places *',{exact:true})).toBeFocused();
+ await page.getByLabel('Nombre total de places *',{exact:true}).fill('12');
+ await page.getByRole('button',{name:/^(Créer le fichier|Enregistrer les modifications)$/}).click();
+ await expect(page.locator('.vehicle-dialog')).not.toBeVisible();
+ await open.click();
+ const specs=page.locator('.v-summary-specs');
+ const capacity=specs.locator('div').filter({has:page.locator('dt',{hasText:'Places (chauffeur inclus)'})}).locator('dd');
+ const category=specs.locator('div').filter({has:page.locator('dt',{hasText:/^Type$/})}).locator('dd');
+ await expect(capacity).toHaveText('12');await expect(category).toHaveText('Van');
+ await page.getByRole('button',{name:/Modifier le fichier/}).click();
+ await expect(seats).toHaveValue('other');
+ await expect(page.getByLabel('Nombre total de places *',{exact:true})).toHaveValue('12');
+ await type.selectOption('minibus');
+ await page.getByLabel('Nombre total de places *',{exact:true}).fill('17');
+ await page.getByRole('button',{name:'Enregistrer les modifications',exact:true}).click();
+ await expect(page.locator('.vehicle-dialog')).not.toBeVisible();
+ await open.click();await expect(capacity).toHaveText('17');await expect(category).toHaveText('Minibus');
+ await page.screenshot({path:path.join(local,'vehicle-minibus-summary.png')});
+ await page.getByRole('button',{name:/Modifier le fichier/}).click();
+ await seats.selectOption('5');
+ await expect(page.locator('input[name=seats]')).toHaveCount(0);
+ await page.getByRole('button',{name:'Enregistrer les modifications',exact:true}).click();
+ await expect(page.locator('.vehicle-dialog')).not.toBeVisible();
+ await open.click();await expect(capacity).toHaveText('5');
+ await page.getByRole('button',{name:/Modifier le fichier/}).click();
+ await seats.selectOption('other');await page.locator('input[name=seats]').fill('17');
+ await page.setViewportSize({width:390,height:844});
+ await page.locator('input[name=seats]').scrollIntoViewIfNeeded();
+ await page.screenshot({path:path.join(local,'vehicle-minibus-mobile.png')});
+ assert(await page.locator('.vehicle-dialog').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
+ await page.getByRole('button',{name:'Enregistrer les modifications',exact:true}).click();
+ await expect(page.locator('.vehicle-dialog')).not.toBeVisible();
+ assert.equal(errors.length,0,errors.join('\n'));
+ console.log('PASS: Van/Minibus types, 12 and 17 seats save/reopen, driver-inclusive labels, required custom count, standard count switch and mobile.');
+ }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exit(1)});

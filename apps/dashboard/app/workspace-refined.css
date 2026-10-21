@@ -1,0 +1,78 @@
+/* Bensebihi agency workspace: forest navigation, restrained paper surfaces. */
+.workspace.app-shell{--app-sidebar:240px;--cp-ink:#183d30;--cp-line:#e0e6e2;background:#f5f7f6}
+.app-shell>.workspace-header{padding:18px 30px;min-height:84px;background:#fff}
+.app-shell .brand-mark{border-radius:12px;background:#193d30}
+.app-shell .brand strong{letter-spacing:1.5px;font-size:14px}
+.app-shell .brand-caption{letter-spacing:2px}
+.app-shell .app-header-profile strong{font-size:13px}.app-shell .app-header-profile small{font-size:11px}
+.app-sidebar{width:216px;margin:20px 12px 20px 20px;padding:24px 14px 16px;border-radius:18px;background:#193b2e;color:#e9f1ec;top:20px;height:calc(100dvh - 128px);min-height:490px;align-items:stretch;box-shadow:0 10px 25px #16372b0a}
+.app-sidebar .app-nav-label{display:block;font-size:10px;font-weight:600;letter-spacing:1.6px;color:#a8c2b3;margin:2px 12px 22px}
+.app-sidebar .app-nav{display:flex;flex-direction:column;gap:6px;margin:0 0 24px;overflow:visible;flex-shrink:0}
+.app-sidebar .app-nav a{width:100%;height:auto;min-height:46px;border-radius:9px;padding:12px;gap:12px;justify-content:flex-start;color:#c2d3c8}
+.app-sidebar .app-nav a>span{position:static;left:auto;width:auto;max-width:none;padding:0;background:transparent;color:inherit;font-size:13px;line-height:1.5;box-shadow:none;opacity:1;pointer-events:auto;white-space:normal}
+.app-sidebar .app-nav a[aria-current=page]{background:#e6f0e8;color:#193d30;font-weight:650;box-shadow:inset 3px 0 #a5cbb3}
+.app-sidebar .app-nav a:not([aria-current]):hover{background:#ffffff0d;color:#fff}
+.app-sidebar .app-nav a:nth-child(5){margin-top:18px}
+.app-sidebar .app-nav .app-nav-chevron{display:none}
+.app-sidebar .app-nav-logout{width:100%;margin-top:auto;min-height:46px;justify-content:flex-start;padding:12px;gap:12px;background:#ffffff05;color:#ffbbb0;border:1px solid #e8a19533;border-radius:9px}
+.app-sidebar .app-nav-logout>span{display:block;position:static;left:auto;background:transparent;color:inherit;padding:0;font-size:13px;white-space:normal}
+.app-sidebar .app-nav-logout:hover{background:#6f332e;color:#fff}
+.app-content{padding:36px 32px;min-width:0}
+.app-shell>footer{background:transparent;border:0;color:#77857c;font-size:11px;padding:16px 30px}
+.app-shell .cockpit .cp-heading{margin-bottom:32px;align-items:center;flex-direction:row}
+.app-shell .cockpit .cp-heading h1{font-size:30px;letter-spacing:-.8px;font-weight:600;margin:10px 0}
+.app-shell .cockpit .cp-heading .cp-kicker{font-size:12px;color:#677b6f;letter-spacing:.3px}
+.app-shell .cockpit .cp-heading p{font-size:14px}
+.app-shell .cockpit .cp-simple-actions .cp-primary{border-radius:9px;background:#214d39;padding:13px 18px;box-shadow:0 3px 7px #193d3012}
+.app-shell .cockpit .cp-rentals{padding:0;background:transparent;border:0;margin-bottom:26px}
+.app-shell .cockpit .cp-rentals>header{margin-bottom:20px}
+.app-shell .cockpit .cp-rentals h2{font-size:18px;letter-spacing:-.2px;margin-bottom:6px}
+.app-shell .cockpit .cp-rentals>header p{font-size:13px}
+.app-shell .cockpit .cp-rental-tabs{gap:16px;margin:0 0 26px}
+.app-shell .cockpit .cp-rental-tabs button{position:relative;display:grid;grid-template-columns:1fr auto;gap:10px;padding:22px;border:1px solid #dce5df;border-radius:13px;background:#fff;color:#244536;box-shadow:0 3px 8px #193d3003}
+.app-shell .cockpit .cp-rental-tabs .cp-day-icon{grid-column:2;grid-row:1/3;align-self:start;display:grid;place-items:center;width:38px;height:38px;background:#f0f5f1;border-radius:10px}
+.app-shell .cockpit .cp-rental-tabs .cp-day-label{font-size:14px;grid-column:1;grid-row:1;line-height:1.5}
+.app-shell .cockpit .cp-rental-tabs strong{grid-column:1;grid-row:2;font-size:36px;line-height:1.1;font-weight:600;letter-spacing:-1px}
+.app-shell .cockpit .cp-rental-tabs small{grid-column:1/-1;font-size:12px;color:#63766a;line-height:1.5;margin-top:3px}
+.app-shell .cockpit .cp-rental-tabs button[aria-pressed=true]{background:#214d39;color:#fff;border-color:#214d39;box-shadow:0 8px 16px #193d3010}
+.app-shell .cockpit .cp-rental-tabs button[aria-pressed=true] small{color:#d0e0d5}
+.app-shell .cockpit .cp-rental-tabs button[aria-pressed=true] .cp-day-icon{background:#ffffff14}
+.app-shell .cockpit .cp-rental-tabs button.is-late:not([aria-pressed=true]){color:#a34b3d}
+.app-shell .cockpit .cp-rental-tabs button.is-late[aria-pressed=true]{background:#713d34;border-color:#713d34}
+.app-shell .cockpit .cp-day-list{background:#fff;border:1px solid #e0e7e2;border-radius:13px;overflow:hidden}
+.app-shell .cockpit .cp-day-list-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid #edf0ed}
+.app-shell .cockpit .cp-day-list-heading h3{font-size:16px;font-weight:600;margin:0}
+.app-shell .cockpit .cp-day-list-heading>span{font-size:12px;color:#627468;background:#f2f5f2;border-radius:6px;padding:5px 9px;white-space:nowrap}
+.app-shell .cockpit .cp-rental-empty{text-align:center;padding:38px 20px 32px}
+.app-shell .cockpit .cp-empty-check{display:grid;place-items:center;width:54px;height:54px;border:1px solid #deeadf;border-radius:50%;color:#537e62;background:#f2f7f1;margin:0 auto 16px}
+.app-shell .cockpit .cp-rental-empty h4{font-size:17px;margin:0 0 8px;font-weight:600;color:#2b4b39}
+.app-shell .cockpit .cp-rental-empty p{font-size:13px;margin:0 auto 14px;max-width:420px}
+.app-shell .cockpit .cp-rental-empty a{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:#315c44;text-underline-offset:4px}
+.app-shell .cockpit .cp-rentals li{padding:20px 24px;gap:20px;border-color:#edf0ed}
+.app-shell .cockpit .cp-rental-time{padding:8px 10px;background:#f4f7f4;border-radius:7px;min-width:86px}
+.app-shell .cockpit .cp-other-followup{border:1px solid #e0e7e2;border-radius:12px;background:#fff}
+.app-shell .cockpit .cp-other-followup>summary{padding:20px 24px;font-size:14px}
+.app-shell .cockpit .cp-other-followup[open]{padding:0 20px 20px}
+.app-shell .cockpit .cp-other-followup[open]>summary{padding-left:4px}
+.app-shell .cockpit .cp-day-list>[role]{padding:22px}
+@media(max-width:1100px) and (min-width:901px){.workspace.app-shell{--app-sidebar:214px}.app-sidebar{width:190px;margin-left:14px;padding:20px 10px 14px}.app-sidebar .app-nav a{gap:9px;padding:10px}.app-sidebar .app-nav a>span{font-size:12px}.app-content{padding:28px 22px}.app-shell .cockpit .cp-heading{flex-direction:column;align-items:flex-start}.app-shell .cockpit .cp-rental-tabs button{padding:16px}}
+@media(max-height:700px) and (min-width:901px){.app-sidebar{position:sticky;top:10px;height:auto;min-height:0;padding-top:16px}.app-sidebar .app-nav{gap:2px;margin-bottom:18px}.app-sidebar .app-nav-label{margin-bottom:10px}.app-sidebar .app-nav a{min-height:42px;padding-top:9px;padding-bottom:9px}.app-sidebar .app-nav a:nth-child(5){margin-top:8px}}
+@media(max-width:900px){.app-sidebar{position:static;width:auto;height:auto;min-height:0;margin:12px 20px;padding:20px;border-radius:14px;box-shadow:none}.app-sidebar .app-nav{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:18px}.app-sidebar .app-nav-label{margin-bottom:14px}.app-sidebar .app-nav a:nth-child(5){margin-top:0}.app-sidebar .app-nav-logout{margin:0}.app-content{padding:28px 22px}.app-shell .cockpit .cp-heading{flex-direction:column;align-items:flex-start;gap:18px}.app-shell .cockpit .cp-simple-actions{width:auto}}
+@media(max-width:600px){.app-shell>.workspace-header{min-height:72px;padding:14px 16px}.app-content{padding:24px 16px}.app-sidebar{margin:10px 16px;padding:16px}.app-sidebar .app-nav{grid-template-columns:1fr}.app-sidebar .app-nav a{min-height:44px}.app-shell .cockpit .cp-heading h1{font-size:24px;line-height:1.3}.app-shell .cockpit .cp-simple-actions{width:100%}.app-shell .cockpit .cp-rental-tabs{grid-template-columns:1fr;gap:10px;margin-bottom:20px}.app-shell .cockpit .cp-rental-tabs button{padding:16px;grid-template-columns:36px minmax(0,1fr) auto;gap:4px 12px}.app-shell .cockpit .cp-rental-tabs .cp-day-icon{grid-column:1;grid-row:1/3;width:36px;height:36px;align-self:center}.app-shell .cockpit .cp-rental-tabs .cp-day-label{grid-column:2;grid-row:1;font-size:14px}.app-shell .cockpit .cp-rental-tabs strong{grid-column:3;grid-row:1/3;align-self:center;font-size:28px}.app-shell .cockpit .cp-rental-tabs small{grid-column:2;grid-row:2;margin:0;font-size:12px}.app-shell .cockpit .cp-day-list-heading{padding:18px 16px}.app-shell .cockpit .cp-rental-empty{padding:28px 16px}.app-shell .cockpit .cp-rental-empty h4{font-size:16px;line-height:1.5}.app-shell .cockpit .cp-rentals li{padding:18px 16px;gap:12px}.app-shell .cockpit .cp-rental-time{justify-self:start}.app-shell .cockpit .cp-rentals li>a{width:100%}.app-shell .cockpit .cp-other-followup>summary{padding:18px;font-size:13px}}
+.app-sidebar .app-nav-size{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;margin:0 0 16px;padding:10px 12px;border:1px solid #ffffff24;border-radius:9px;background:transparent;color:#c2d3c8;cursor:pointer}
+.app-sidebar .app-nav-size>span{flex:1;text-align:left;font-size:12px}
+.app-sidebar .app-nav-size>svg:last-child{transform:rotate(180deg)}
+.app-sidebar .app-nav-size:hover{background:#ffffff0d;color:#fff}
+.app-sidebar .app-nav-size:focus-visible{outline:2px solid #d4edab;outline-offset:3px}
+@media(min-width:901px){
+.workspace.app-shell.app-nav-compact{--app-sidebar:104px}
+.app-nav-compact .app-sidebar{width:72px;margin:20px 16px;padding:16px 12px;border-radius:24px;align-items:center}
+.app-nav-compact .app-nav-label{display:none}
+.app-nav-compact .app-nav{width:48px;gap:8px;overflow:visible}
+.app-nav-compact .app-nav a{width:48px;height:46px;padding:0;justify-content:center;border-radius:12px;gap:0}
+.app-nav-compact .app-nav a>span,.app-nav-compact .app-nav-logout>span{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%);white-space:nowrap!important}
+.app-nav-compact .app-nav-size{width:48px;padding:0;justify-content:center;flex-shrink:0}
+.app-nav-compact .app-nav-size>span,.app-nav-compact .app-nav-size>svg:last-child{display:none}
+.app-nav-compact .app-nav-logout{width:48px;justify-content:center;padding:0;gap:0}
+}
+@media(max-width:900px){.app-sidebar .app-nav-size{display:none}}

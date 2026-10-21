@@ -1,0 +1,111 @@
+.df-page{width:100%;max-width:1200px;margin:0 auto;color:#213e33;min-width:0;padding-bottom:32px}
+.df-page *{box-sizing:border-box}.df-page button,.df-page input,.df-page select{min-height:44px}.df-page button{white-space:normal}.df-page :is(input,select,textarea){max-width:100%;min-width:0}.df-page button:focus-visible,.df-page a:focus-visible{outline:3px solid #799e88;outline-offset:3px}
+.df-header{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:8px 0 22px}.df-back{display:inline-flex;align-items:center;gap:8px;border:0;background:transparent;color:#52675b;padding:0;font:inherit;font-size:13px;cursor:pointer}.df-title{display:flex;flex-wrap:wrap;align-items:center;gap:16px}.df-title h1{font-size:28px;margin:4px 0;letter-spacing:-.7px}.df-title .rh-state>small,.df-title .rh-state>p{display:none}.df-modify{position:relative}.df-modify>.secondary{display:flex;align-items:center;justify-content:center;gap:12px}.df-action-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:30;width:290px;max-width:calc(100vw - 40px);padding:8px;background:#fff;border:1px solid #d4dfd6;border-radius:12px;box-shadow:0 12px 35px #18382b22}.df-action-menu p{font-size:12px;color:#697b70;padding:6px 10px;margin:0}.df-action-menu button{display:block;width:100%;border:0;background:transparent;padding:12px;text-align:left;border-radius:7px;font:inherit;font-size:14px;color:#264537;cursor:pointer}.df-action-menu button:hover{background:#edf3ec}
+.df-context{display:grid;grid-template-columns:1.15fr 1fr 1.35fr 1fr;gap:20px;padding:22px;background:#fff;border:1px solid #d7e2d8;border-radius:12px}.df-context>div{min-width:0;display:flex;flex-direction:column;gap:7px}.df-context span,.df-context small{font-size:12px;color:#607468;line-height:1.5}.df-context strong{font-size:15px;line-height:1.5;overflow-wrap:anywhere}.df-context a{display:flex;align-items:center;gap:6px;font-size:12px;color:#3f6550}
+.df-tabs{position:sticky;top:0;z-index:10;background:#f5f7f2;display:flex;border-bottom:1px solid #ccd9ce;gap:12px;margin:20px 0 0;overflow-x:auto;scrollbar-width:thin}.df-tabs button{flex:1 0 auto;min-height:52px;background:transparent;color:#5b6e61;border:0;border-bottom:3px solid transparent;padding:12px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}.df-tabs button[aria-selected=true]{color:#214d38;border-bottom-color:#214d38;background:#edf3ec}.df-content{padding-top:24px;min-width:0;min-height:340px}.df-content :is(h3,h4,h5,fieldset){scroll-margin-top:125px}.df-content>h2:not(.sr-only){margin:0 0 16px;font-size:24px}.df-content>.rq-panel{margin-top:0}.df-content .rq-panel{min-width:0}.df-action-back{display:flex;gap:8px;align-items:center;margin-bottom:18px}
+.df-next{background:#eef4e9;border:1px solid #cddcc9;border-left:4px solid #315c43;border-radius:12px;padding:26px;margin-bottom:26px}.df-next h2{font-size:24px;line-height:1.35;letter-spacing:-.4px;margin:10px 0}.df-next p{max-width:720px;color:#536a58;line-height:1.7;font-size:14px;margin:0 0 20px}.df-next .primary{display:inline-flex;align-items:center;justify-content:center;gap:20px}
+.df-progress{background:white;border:1px solid #d7e2d8;border-radius:12px;padding:8px 22px 4px}.df-progress h3{font-size:16px;margin:16px 0}.df-progress>button{display:flex;align-items:center;gap:15px;width:100%;padding:17px 0;text-align:left;border:0;border-top:1px solid #e4eae3;background:transparent;color:#284a39;cursor:pointer}.df-progress>button:hover{background:#f7faf5}.df-progress>button>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:6px}.df-progress strong{font-size:14px}.df-progress small{font-size:12px;color:#607363;line-height:1.5}.df-progress>button>svg{flex-shrink:0}.df-done,.df-todo{display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;border-radius:50%;background:#e8f0e5;color:#315c43}.df-todo{background:#f3f3ed;color:#817754}
+.df-quick{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}.df-quick button{display:flex;align-items:center;gap:10px}.df-subnav{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px}.df-subnav button[aria-pressed=true]{background:#eaf2e6;border-color:#527c5c;color:#254b35}.df-help{font-size:14px;line-height:1.7;color:#536c59}.df-history{max-width:850px}.df-history>h3{font-size:21px}.df-history>p{font-size:13px;color:#69796d}.df-past-departure{margin:20px 0;border:1px solid #d7e2d8;border-radius:10px;background:#fff;padding:18px}.df-past-departure summary{cursor:pointer;font-weight:600;font-size:14px}.df-document-task{background:#eef4e9;padding:20px;border-radius:10px;margin-bottom:18px}.df-document-task h3{margin:0 0 8px;font-size:17px}.df-document-task p{color:#536c59;font-size:14px;line-height:1.6}.df-footer{font-size:12px;color:#748074;padding:28px 0 0}.df-page .dp-steps{overflow-x:auto}.df-page .dp-context{display:none}.df-page .rr-actions{flex-wrap:wrap}.df-page .dc-steps{flex-wrap:wrap}.df-page h2:focus{outline:none}
+@media(max-width:900px){.df-context{grid-template-columns:1fr 1fr}.df-header{align-items:start}.df-tabs{gap:0}.df-tabs button{font-size:13px;padding:10px}.df-next h2{font-size:22px}}
+@media(max-width:540px){.df-header{flex-direction:column;gap:14px;padding-bottom:16px}.df-title h1{font-size:24px}.df-modify{width:100%}.df-modify>.secondary{width:100%;justify-content:space-between}.df-action-menu{width:100%;max-width:none}.df-context{gap:16px;padding:16px}.df-context strong{font-size:13px}.df-context span,.df-context small,.df-context a{font-size:11px}.df-tabs{margin-top:14px;gap:2px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));overflow:visible}.df-tabs button{grid-column:span 2;padding:10px 4px;font-size:12px;line-height:1.4;min-height:48px}.df-tabs button:nth-child(n+4){grid-column:span 3}.df-content{padding-top:18px}.df-next{padding:20px 16px;margin-bottom:18px}.df-next h2{font-size:20px}.df-next .primary{width:100%;gap:12px}.df-progress{padding:4px 14px}.df-progress>button{gap:10px}.df-quick{display:grid}.df-subnav{gap:6px}.df-subnav button{flex:1;font-size:12px;padding:10px}.df-page .rq-panel{padding:16px}.df-page .dc-review dl{grid-template-columns:1fr}.df-page .dp-steps{display:flex;gap:6px;padding-bottom:8px}.df-page .dp-steps button{flex:0 0 118px}.df-page .dp-stage-actions{flex-wrap:wrap}.df-page .dp-stage-actions button{flex:1;min-width:120px}.df-page .rr-summary{grid-template-columns:1fr}.df-page .dc-steps{gap:12px}.df-page .dc-steps li{min-width:100px}.df-page .dp-form-grid{grid-template-columns:1fr}.df-page .dp-actions{flex-wrap:wrap}.df-page .dp-actions>button{max-width:100%}.df-footer{line-height:1.6}}
+.df-overview{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+.df-overview .df-next{margin:0;background:#fff;border:1px solid #d7e2d8;border-top:4px solid #254e3c;border-radius:14px;padding:28px}
+.df-overview .df-next .rq-eyebrow{font-size:12px;letter-spacing:1px;color:#426c56;font-weight:700}
+.df-overview .df-next h2{font-size:26px;line-height:1.3;margin:18px 0 12px}
+.df-overview .df-next p{font-size:16px;line-height:1.65;color:#526359}
+.df-overview .df-next .primary{min-height:48px;font-size:15px;margin-top:8px}
+.df-overview .df-progress{border:0;background:transparent;padding:0 4px}
+.df-overview .df-progress h3{font-size:18px;margin:4px 0 16px}
+.df-overview .df-progress strong{font-size:15px}
+.df-overview .df-progress small{font-size:14px;color:#526359}
+.df-overview .df-quick{grid-column:1/-1;margin:0;padding-top:20px;border-top:1px solid #dce4de}
+.df-overview>.dp-warning{grid-column:1/-1}
+.df-context strong{font-size:16px}.df-context span,.df-context small,.df-context a{font-size:13px}
+.df-page .da.rq-panel{margin:0;padding:0;border:0;background:transparent}
+.df-page .da-heading{display:flex;align-items:start;justify-content:space-between;gap:20px;margin-bottom:24px}
+.df-page .da-heading h4{font-size:24px;margin:0 0 8px;letter-spacing:-.4px}
+.df-page .da-heading p{margin:0}
+.df-page .da-heading button{display:flex;align-items:center;justify-content:center;gap:8px;flex-shrink:0}
+.df-page .da p{font-size:15px;color:#526359;line-height:1.65}
+.df-page .da h5{font-size:18px;display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.df-page .da>section{padding:26px 0}
+.df-page .da>section.da-current{padding:26px;background:#fff;border:1px solid #d7e2d8;border-radius:14px}
+.df-page .da-reference{display:block;font-size:24px;letter-spacing:-.4px;margin:12px 0 18px}
+.df-page .da .da-status{display:inline-block;font-size:13px;padding:5px 10px;border-radius:6px;background:#fff3df;color:#79551c;margin:0 0 12px}
+.df-page .da .da-status.is-verified{background:#eaf3ec;color:#28543b}
+.df-page .da summary{min-height:48px;font-size:14px;line-height:1.5}
+.df-page .da-current details{border-top:1px solid #e4eae5;margin-top:10px}
+.df-page .da-file-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+.df-page .da-file{display:flex;align-items:center;gap:14px;padding:18px;text-align:left;background:#fff;border-color:#d7e2d8;min-width:0}
+.df-page .da-file>svg{flex-shrink:0;color:#47725a}.df-page .da-file>span{flex:1;min-width:0}
+.df-page .da-file strong,.df-page .da-file small{display:block;overflow-wrap:anywhere}
+.df-page .da-file strong{font-size:15px;font-weight:600}.df-page .da-file small{font-size:13px;color:#607268;margin-top:6px}
+.df-page .da-media-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.df-page .da-media{padding:0;background:white;color:#294c39;text-align:left;border:1px solid #d7e2d8;border-radius:10px;overflow:hidden;cursor:pointer;min-width:0}
+.df-page .da-preview{display:flex;align-items:center;justify-content:center;aspect-ratio:4/3;background:#edf2ee;color:#5c7b66;overflow:hidden}
+.df-page .da-preview img{width:100%;height:100%;object-fit:cover}
+.df-page .da-media>span:last-child{display:block;padding:12px;font-size:14px;overflow-wrap:anywhere}
+@media(max-width:900px){.df-overview{grid-template-columns:1fr;gap:22px}.df-page .da-media-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:540px){.df-context strong{font-size:15px}.df-context span,.df-context small,.df-context a{font-size:13px}.df-overview .df-next{padding:22px 18px}.df-overview .df-next h2{font-size:23px}.df-overview .df-progress{padding:0}.df-page .da-heading{flex-direction:column;gap:14px}.df-page .da-heading h4{font-size:22px}.df-page .da>section.da-current{padding:20px 16px}.df-page .da-file-grid{grid-template-columns:1fr}.df-page .da-media-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.df-page .da-file{padding:16px}.df-overview .df-quick button{justify-content:flex-start;text-align:left}}
+/* Shared dossier surfaces. Business forms and their validation remain unchanged. */
+.df-page :is(.df-tab-payments,.df-tab-operations) .rq-panel{background:#fff;border:1px solid #d7e2d8;border-radius:14px;padding:26px;box-shadow:none}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-heading h3,.dp-heading h3,.rr>h4){font-size:24px;line-height:1.35;letter-spacing:-.4px}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(h4,h5){line-height:1.5}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp h4,.dp-title h4,.rr h5){font-size:18px}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp p,.dp p,.rr p){font-size:15px;line-height:1.7;color:#526359}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.primary,.secondary){font-size:14px;min-height:46px;line-height:1.5}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-form,.dp-form,.rr-form){background:#f8faf8;border:1px solid #d7e2d8;border-radius:12px;padding:22px;box-shadow:none}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-form label,.dp-form label,.rr-form label){font-size:15px;text-align:left}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(input:not([type=checkbox]):not([type=radio]),textarea,select){font-size:16px}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-totals,.rr-summary,.dp-money){gap:0;border:1px solid #dce4de;border-radius:12px;overflow:hidden;background:#fff}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-totals>div,.rr-summary>div,.dp-money>div){border:0;border-right:1px solid #dce4de;border-radius:0;padding:20px;background:#fff;min-width:0}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-totals>div,.rr-summary>div,.dp-money>div):last-child{border-right:0}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-totals span,.rr-summary span,.dp-money span){font-size:13px;color:#526359;line-height:1.5}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-totals strong,.rr-summary strong,.dp-money strong){font-size:23px;line-height:1.4;letter-spacing:-.3px}
+.df-page .df-tab-payments .rp-totals .settled{background:#edf5ee}
+.df-page .df-tab-payments .rp-totals .remaining{background:#fff7e9}
+.df-page .df-tab-payments .df-subnav{padding:6px;background:#eaf0eb;border-radius:12px;gap:6px}
+.df-page .df-tab-payments .df-subnav button{flex:1;border:1px solid transparent;background:transparent;color:#50665a;font-size:14px;padding:12px}
+.df-page .df-tab-payments .df-subnav button[aria-pressed=true]{background:#fff;border-color:#d2dfd5;color:#214d38;box-shadow:0 1px 3px #18382b0a}
+.df-page .df-tab-payments .rp-payment{padding:22px 0}
+.df-page .df-tab-payments .rp-payment :is(span,small){font-size:14px;line-height:1.6}
+.df-page .df-tab-payments .rp-totals small{font-size:13px}
+.df-page :is(.df-tab-payments,.df-tab-operations) summary{min-height:44px;padding:12px 0;font-size:14px;line-height:1.6;cursor:pointer}
+.df-page .df-tab-operations .dp-heading{padding:0 0 18px}
+.df-page .df-tab-operations .dp-steps button{box-shadow:none;border-color:#d7e2d8;min-height:82px}
+.df-page .df-tab-operations .dp-steps button[aria-current=step]{background:#edf5ee;border-color:#47725a}
+.df-page .df-tab-operations .dp-steps small{font-size:12px;color:#526359}
+.df-page .df-tab-operations .rr-control{padding-top:26px;margin-top:26px;border-color:#dce4de}
+.df-page .df-tab-operations .df-past-departure{background:transparent;border:0;border-top:1px solid #dce4de;border-radius:0;padding:16px 0}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.dp-notice,.dp-warning,.dp-error){font-size:14px!important;line-height:1.65}
+.df-page .df-history{max-width:900px}
+.df-page .df-history>h3{font-size:24px;letter-spacing:-.4px;margin:0 0 8px}
+.df-page .df-history>p{font-size:14px;line-height:1.7;color:#526359;margin-bottom:26px}
+.df-page .df-history .rq-history{padding-left:6px}
+.df-page .df-history .rq-history li{position:relative;padding:0 0 26px;gap:22px}
+.df-page .df-history .rq-history li:not(:last-child)::before{content:"";position:absolute;left:4px;top:15px;bottom:0;width:1px;background:#ccdacf}
+.df-page .df-history .rq-history-dot{position:relative;margin-top:7px;background:#47725a;box-shadow:0 0 0 5px #edf2ee}
+.df-page .df-history .rq-history li>div{flex:1;min-width:0;background:#fff;border:1px solid #dce4de;border-radius:10px;padding:18px 20px}
+.df-page .df-history .rq-history strong{font-size:15px;line-height:1.5}
+.df-page .df-history .rq-history p{font-size:14px;color:#526359;line-height:1.65;margin:8px 0;overflow-wrap:anywhere;white-space:pre-wrap}
+.df-page .df-history .rq-history time{display:block;font-size:13px;color:#607268;margin-top:12px}
+@media(max-width:800px){
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-totals,.rr-summary,.dp-money){grid-template-columns:1fr}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-totals>div,.rr-summary>div,.dp-money>div){border-right:0;border-bottom:1px solid #dce4de;padding:16px 18px}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-totals>div,.rr-summary>div,.dp-money>div):last-child{border-bottom:0}
+}
+@media(max-width:540px){
+.df-page :is(.df-tab-payments,.df-tab-operations) .rq-panel{padding:18px!important}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-heading h3,.dp-heading h3,.rr>h4){font-size:22px}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-form,.dp-form,.rr-form){padding:16px;margin-left:0;margin-right:0}
+.df-page .df-tab-payments .df-subnav{display:grid;grid-template-columns:1fr}
+.df-page .df-tab-payments .df-subnav button{text-align:left;justify-content:flex-start;padding:10px 14px}
+.df-page .df-tab-operations .dp-steps button{flex-basis:150px}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-buttons,.rr-actions,.dp-actions){display:flex;flex-direction:column;align-items:stretch}
+.df-page :is(.df-tab-payments,.df-tab-operations) :is(.rp-buttons,.rr-actions,.dp-actions)>button{width:100%}
+.df-page .df-history .rq-history li{gap:16px;padding-bottom:20px}
+.df-page .df-history .rq-history li>div{padding:16px}
+}
+.df-page input.sr-only{position:absolute!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+
+.df-completed{grid-column:1/-1;border:1px solid var(--line,#d6e1d7);border-radius:14px;padding:24px;background:#fff}.df-completed h3{margin:0 0 20px}.df-completed dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin:0}.df-completed dt,.df-completed small{font-size:13px;color:#60756b}.df-completed dd{margin:8px 0;font-weight:650}.df-completed small{display:block}@media(max-width:600px){.df-completed dl{grid-template-columns:1fr}.df-completed{padding:20px}}

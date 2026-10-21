@@ -1,0 +1,149 @@
+/* Agency cockpit: quiet surfaces, visible actions, readable operational data. */
+.cockpit{max-width:1500px;margin:0 auto;padding:28px 20px;color:#213e33;--cp-line:#dce5df}
+.cockpit :is(button,a,input,select):focus-visible{outline:3px solid #6c967c;outline-offset:3px}
+.cockpit :is(button,a,select){min-height:44px}
+.cockpit button:disabled{opacity:.55}
+.cockpit .cp-heading{gap:22px;margin-bottom:28px;align-items:flex-start}
+.cockpit .cp-heading h1{font-size:32px;letter-spacing:-.8px;line-height:1.2;margin:12px 0}
+.cockpit .cp-heading p{font-size:15px;color:#52675b}
+.cockpit .cp-kicker{font-size:11px;letter-spacing:1px;line-height:1.6}
+.cockpit .cp-heading-actions{gap:12px}
+.cockpit .cp-start-links{display:flex;flex-wrap:wrap;gap:8px;max-width:500px;justify-content:flex-end}
+.cockpit :is(.cp-primary,.cp-secondary){font-size:14px;line-height:1.5;border-radius:8px;padding:11px 15px;white-space:normal;text-align:center;justify-content:center}
+.cockpit .cp-primary{background:#254e3c;color:#fff;border:1px solid #254e3c;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.cockpit .cp-secondary{background:#fff;border:1px solid #d6e1d9;color:#315441}
+.cockpit .cp-overview-top{grid-template-columns:minmax(0,1.8fr) minmax(280px,1fr);gap:24px}
+.cockpit .cp-overview-left{gap:20px}
+.cockpit .cp-priority{background:#254e3c;border-radius:14px;padding:24px;display:grid;grid-template-columns:64px minmax(0,1fr);gap:18px}
+.cockpit .cp-priority h2{font-size:23px}
+.cockpit .cp-priority p{font-size:14px;line-height:1.65;color:#e0eae2}
+.cockpit .cp-priority-action{grid-column:1/-1;justify-self:start;background:#fff;color:#254e3c;width:auto;font-size:14px}
+.cockpit .cp-document-overview{padding:22px;border-radius:14px}
+.cockpit .cp-document-overview h2{font-size:20px;margin:4px 0}
+.cockpit .cp-document-overview>p{font-size:13px;margin-top:12px}
+.cockpit .cp-document-counts{gap:10px;margin-top:18px}
+.cockpit .cp-document-count{padding:14px 12px;background:#fff}
+.cockpit .cp-document-count>span{font-size:13px}
+.cockpit .cp-document-count strong{font-size:30px;margin:10px 0}
+.cockpit .cp-document-count small{font-size:12px}
+.cockpit .cp-rental-hub{background:#fff;border:1px solid #dce5df;border-radius:14px;padding:26px;min-width:0}
+.cockpit .cp-rental-hub h2{font-size:24px;letter-spacing:-.4px;margin:8px 0 12px}
+.cockpit .cp-rental-hub p{font-size:15px;color:#52675b;line-height:1.7;margin-bottom:24px}
+.cockpit .cp-rental-hub a{display:flex;align-items:center;gap:12px;text-decoration:none;color:#254e3c;padding:18px 0;border-bottom:1px solid #e4ebe6;font-size:15px}
+.cockpit .cp-rental-hub a>span{flex:1;min-width:0}
+.cockpit .cp-rental-hub a>svg{flex-shrink:0}
+.cockpit .cp-rental-hub small{display:block;font-size:13px;color:#536c5e;margin-top:6px;line-height:1.5}
+.cockpit .cp-rental-hub .cp-hub-main{background:#edf4ee;border:1px solid #d5e3d8;border-radius:10px;padding:18px 14px;margin-bottom:10px}
+.cockpit .cp-rental-hub a:hover{color:#123e29;background:#f3f7f3}
+.cockpit .cp-metrics{gap:16px;margin:24px 0}
+.cockpit .cp-metric{border-radius:12px;background:#fff;padding:22px;box-shadow:none}
+.cockpit .cp-metric-title{font-size:14px;color:#52675b}
+.cockpit .cp-metric strong{font-size:32px}
+.cockpit .cp-metric small{font-size:13px;line-height:1.6;color:#52675b}
+.cockpit .cp-body{grid-template-columns:minmax(0,1fr) 300px;gap:24px}
+.cockpit .cp-board{border-radius:14px;overflow:hidden}
+.cockpit .cp-board-heading{padding:24px;gap:16px}
+.cockpit .cp-board-heading h2{font-size:22px}
+.cockpit .cp-period :is(label,select){font-size:13px}
+.cockpit .cp-tabs{padding:0 18px 16px;gap:6px;flex-wrap:wrap}
+.cockpit .cp-tabs>button{font-size:14px;min-height:44px;padding:10px 12px}
+.cockpit .cp-search{padding:10px 22px}
+.cockpit .cp-search input{font-size:16px;flex:1;width:100%}
+.cockpit .cp-task strong{font-size:16px}
+.cockpit .cp-task :is(p,small),.cockpit .cp-plate{font-size:14px;line-height:1.6}
+.cockpit :is(.cp-badge,.cp-due,.cp-cost-note,.cp-row-action,.cp-table-note,.cp-pagination){font-size:13px}
+.cockpit .cp-table th{font-size:13px;background:#f5f8f5}
+.cockpit .cp-table td{padding:22px 18px}
+.cockpit .cp-task-icon{display:none}
+.cockpit .cp-finance{padding:24px;border-radius:14px}
+.cockpit .cp-finance h2{font-size:22px;line-height:1.3}
+.cockpit .cp-finance-title .cp-kicker{font-size:11px}
+.cockpit .cp-finance-number>span{font-size:14px;line-height:1.6}
+.cockpit .cp-finance-number>strong{font-size:27px;margin:12px 0}
+.cockpit .cp-finance-number>small,.cockpit .cp-finance-foot{font-size:13px}
+.cockpit .cp-shortcuts{background:#fff;border-color:#dce5df;border-radius:14px}
+.cockpit .cp-shortcuts>a{font-size:15px}
+.cockpit .cp-shortcuts small,.cockpit .cp-scope small,.cockpit .cp-update{font-size:12px;color:#607268}
+.cockpit .cp-scope p{font-size:14px}
+.cockpit .cp-fleet-details{background:#fff;border:1px solid #dce5df;border-radius:12px}
+.cockpit .cp-fleet-details summary{padding:18px;cursor:pointer;font-size:15px;font-weight:600;min-height:48px}
+.cockpit .cp-fleet-details .fleet-spotlight{border:0;border-top:1px solid #dce5df;border-radius:0;background:transparent}
+.cockpit .cp-fleet-details .fleet-spotlight-car{grid-template-columns:1fr}
+@media(max-width:1100px){
+.cockpit .cp-heading{flex-direction:column}
+.cockpit .cp-start-links{justify-content:flex-start;max-width:none}
+.cockpit .cp-body{grid-template-columns:1fr}
+.cockpit .cp-aside{display:grid;grid-template-columns:1fr 1fr;align-items:start}
+.cockpit .cp-fleet-details{grid-column:1/-1;order:3}
+.cockpit .cp-scope{grid-column:1/-1;order:4}
+}
+@media(max-width:760px){
+.cockpit{padding:20px 0}
+.cockpit .cp-heading h1{font-size:27px}
+.cockpit .cp-overview-top{grid-template-columns:1fr;gap:18px}
+.cockpit .cp-priority{padding:22px 18px}
+.cockpit .cp-priority h2{font-size:21px}
+.cockpit .cp-priority-action{width:100%;justify-self:stretch}
+.cockpit .cp-rental-hub{padding:22px}
+.cockpit .cp-metrics{grid-template-columns:1fr 1fr;gap:12px}
+.cockpit .cp-metric{padding:18px 14px}
+.cockpit .cp-metric-title{font-size:13px}
+.cockpit .cp-metric small{font-size:12px}
+.cockpit .cp-board-heading{padding:20px 16px;flex-wrap:wrap}
+.cockpit .cp-board-heading h2{font-size:21px}
+.cockpit .cp-search{padding:10px 16px}
+.cockpit .cp-start-links{display:grid;grid-template-columns:1fr 1fr;width:100%}
+.cockpit .cp-start-links .cp-primary{grid-column:1/-1;margin:0;font-size:14px}
+.cockpit .cp-start-links>button{grid-column:1/-1}
+.cockpit .cp-start-links .cp-secondary{font-size:13px}
+.cockpit .cp-document-overview{padding:20px 16px}
+.cockpit .cp-document-counts{grid-template-columns:1fr}
+.cockpit .cp-document-count{display:grid;grid-template-columns:1fr auto;gap:4px 12px}
+.cockpit .cp-document-count>span{grid-column:1;grid-row:1}
+.cockpit .cp-document-count>span svg{display:none}
+.cockpit .cp-document-count strong{grid-column:2;grid-row:1/3;margin:0;align-self:center}
+.cockpit .cp-document-count small{grid-column:1;grid-row:2}
+.cockpit .cp-aside{grid-template-columns:1fr}
+.cockpit .cp-pagination{flex-wrap:wrap}
+.cockpit .cp-tabs{padding:0 12px 14px;gap:4px}
+.cockpit .cp-tabs>button{font-size:13px}
+}
+.cockpit .cp-more-rows{padding:18px 22px;border-top:1px solid #e4ebe6}
+.cockpit .cp-more-rows button{width:100%}
+.cockpit .cp-simple-actions{display:flex;gap:10px;align-items:center}
+.cockpit .cp-overview-top{display:block;margin-bottom:24px}
+.cockpit .cp-overview-left{display:block}
+.cockpit .cp-priority{background:#fff;color:#254e3c;border:1px solid #dce5df;grid-template-columns:54px minmax(0,1fr) auto;padding:20px 24px}
+.cockpit .cp-priority p{color:#52675b}
+.cockpit .cp-priority button.cp-priority-number{width:54px;min-width:54px;height:54px;min-height:54px;background:#edf4ee;color:#254e3c;border:0;font-size:27px}
+.cockpit .cp-priority-action{grid-column:auto;border:1px solid #d5e1d8;background:#edf4ee;justify-self:end;width:auto}
+.cockpit .cp-body{display:block}
+.cockpit .cp-filter-details{border-top:1px solid #e4ebe6;border-bottom:1px solid #e4ebe6}
+.cockpit .cp-filter-details>summary,.cockpit .cp-extra>summary{cursor:pointer;font-size:15px;font-weight:600;padding:18px 24px;min-height:48px;color:#315441}
+.cockpit .cp-extra{margin-top:22px;border:1px solid #dce5df;border-radius:12px;background:#fff}
+.cockpit .cp-extra[open]{padding:0 20px 20px}
+.cockpit .cp-extra[open]>summary{padding-left:4px}
+.cockpit .cp-extra .cp-aside{display:grid;grid-template-columns:1fr 1fr;margin-top:20px}
+.cockpit .cp-extra .cp-fleet-details,.cockpit .cp-extra .cp-scope{grid-column:1/-1}
+@media(max-width:760px){.cockpit .cp-priority{grid-template-columns:48px minmax(0,1fr);padding:18px;gap:14px}.cockpit .cp-priority-action{grid-column:1/-1;width:100%}.cockpit .cp-simple-actions{width:100%}.cockpit .cp-simple-actions>a{flex:1}.cockpit .cp-extra .cp-aside{grid-template-columns:1fr}.cockpit .cp-extra[open]{padding:0 12px 12px}.cockpit .cp-filter-details>summary,.cockpit .cp-extra>summary{padding:16px}.cockpit .cp-heading h1{font-size:25px}}
+.cockpit .cp-rentals{background:#fff;border:1px solid #dce5df;border-radius:14px;padding:24px;margin-bottom:24px}
+.cockpit .cp-rentals>header{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.cockpit .cp-rentals h2{font-size:23px;margin:0 0 8px}
+.cockpit .cp-rentals p{font-size:14px;line-height:1.65;color:#52675b}
+.cockpit .cp-rental-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:24px 0}
+.cockpit .cp-rental-tabs button{display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;padding:16px;background:#f8faf8;border:1px solid #dce5df;border-radius:10px;color:#315441;font-size:15px}
+.cockpit .cp-rental-tabs strong{font-size:25px}
+.cockpit .cp-rental-tabs button[aria-pressed=true]{background:#edf4ee;border-color:#47725a}
+.cockpit .cp-rental-tabs .is-late{color:#9a382e}
+.cockpit .cp-rental-tabs .is-late[aria-pressed=true]{background:#fff1ed;border-color:#bd6b5e}
+.cockpit .cp-rentals ul{list-style:none;padding:0;margin:0}
+.cockpit .cp-rentals li{display:flex;align-items:center;gap:22px;padding:20px 0;border-top:1px solid #e4ebe6}
+.cockpit .cp-rental-time{display:flex;align-items:center;gap:8px;font-size:14px;min-width:85px}
+.cockpit .cp-rental-person{flex:1;min-width:0;display:grid;gap:6px;overflow-wrap:anywhere}
+.cockpit .cp-rental-person strong{font-size:16px}.cockpit .cp-rental-person span{font-size:14px;color:#52675b}.cockpit .cp-rental-person small{font-size:13px;color:#607268}
+.cockpit .cp-rentals li>a{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;background:#edf4ee;color:#254e3c;border-radius:8px;text-decoration:none;font-size:14px}
+.cockpit .cp-rentals>footer{display:flex;justify-content:flex-end;align-items:center;gap:12px;padding:16px 0 0;font-size:13px}
+.cockpit .cp-rentals>footer button{display:grid;place-items:center;width:44px;border:1px solid #dce5df;background:white;border-radius:8px}
+.cockpit .cp-rental-empty{padding:18px 0}
+.cockpit .cp-other-followup>summary{padding:18px 0;font-size:15px;cursor:pointer;color:#315441}
+@media(max-width:600px){.cockpit .cp-rentals{padding:18px}.cockpit .cp-rental-tabs{grid-template-columns:1fr;gap:8px;margin:18px 0}.cockpit .cp-rental-tabs button{padding:12px 14px}.cockpit .cp-rentals li{display:grid;grid-template-columns:1fr;gap:12px}.cockpit .cp-rentals li>a{justify-self:start}.cockpit .cp-rentals h2{font-size:21px}}

@@ -1,0 +1,9 @@
+{
+  "name": "@bensebih/api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "bash ../../scripts/api-dev.sh",
+    "test": "php artisan test"
+  }
+}

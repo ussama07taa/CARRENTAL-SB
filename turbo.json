@@ -1,0 +1,8 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "dev": {"cache": false, "persistent": true, "env": ["BENSEBIH_DEMO", "API_INTERNAL_URL", "NEXT_PUBLIC_API_URL"]},
+    "build": {"dependsOn": ["^build"], "outputs": [".next/**", "!.next/cache/**"], "env": ["API_INTERNAL_URL", "NEXT_PUBLIC_API_URL"]},
+    "typecheck": {"dependsOn": ["^typecheck"], "outputs": []}
+  }
+}

@@ -1,0 +1,28 @@
+/* Shared visual foundation, including forms rendered in the top layer. */
+:root {
+  --brand-forest: #244c3b;
+  --brand-lime: #d4edab;
+  --brand-surface: #f5f6f2;
+  --brand-line: #dde5dc;
+  --brand-text: #233a2d;
+  --brand-muted: #607366;
+  --accent: var(--brand-forest);
+  --ink: var(--brand-text);
+  --muted: var(--brand-muted);
+  --line: var(--brand-line);
+}
+body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif; }
+button, input, select, textarea { font-family: inherit; }
+.primary { background: var(--brand-forest); border-color: var(--brand-forest); min-height: 44px; font-size: 13px; font-weight: 600; box-shadow: none; }
+.primary:hover { background: #1b3c2d; }
+.secondary { min-height: 40px; border-color: #d5e0d6; color: #365541; font-weight: 500; }
+.app-content :is(.clients-heading,.mo-heading,.lc-page-head) h1 { font-weight: 650; letter-spacing: -1px; }
+.app-content :is(.clients-heading,.mo-heading,.lc-page-head) p { color: var(--brand-muted); }
+.app-content :is(.client-directory,.lc-list-section,.mo-board,.fleet-table-wrap) { border-color: var(--brand-line); border-radius: 14px; }
+.app-content :is(.client-table,.fleet-table,.lc-table,.mo-table) tbody tr:hover { background: #f7faf3; }
+.app-content :is(.client-table,.fleet-table,.lc-table,.mo-table) td { font-variant-numeric: tabular-nums; }
+.app-content :is(.client-table,.fleet-table,.lc-table,.mo-table) th { color: #64745c; }
+.app-content :is(.add-client,.mo-add) { background: var(--brand-forest); border-color: var(--brand-forest); box-shadow: none; }
+@media(prefers-reduced-motion:no-preference) {
+  .primary,.secondary,.cp-primary,.cp-secondary,.cp-row-action { transition: background-color .15s ease,border-color .15s ease,box-shadow .15s ease; }
+}

@@ -1,0 +1,33 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const {expect}=require((process.env.PLAYWRIGHT_MODULE||'playwright')+'/test');
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const local=path.resolve(__dirname,'../.local');
+const credentials=JSON.parse(fs.readFileSync(path.join(local,'demo-account.json'),'utf8'));
+(async()=>{
+ const browser=await chromium.launch({channel:'chrome',headless:true});
+ try{
+ const context=await browser.newContext({viewport:{width:1440,height:1000}});
+ const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://localhost:3000/login');
+ await page.getByLabel('Adresse e-mail',{exact:true}).fill(credentials.email);
+ await page.getByLabel('Mot de passe',{exact:true}).fill(credentials.password);
+ await page.getByRole('button',{name:'Se connecter',exact:true}).click();
+ await expect(page).toHaveURL('http://localhost:3000/');
+ await page.getByRole('link',{name:'Véhicules',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Ajouter un véhicule',exact:true})).toBeVisible();
+
+
+
+ const plate='TEST-ADD-MAINT-'+Date.now().toString().slice(-7);
+ await page.getByRole('button',{name:'Ajouter un véhicule',exact:true}).click();await page.locator('input[name=plate]').fill(plate);await page.locator('select[name=make_choice]').selectOption('Dacia');await page.locator('select[name=model_choice]').selectOption('Logan');await page.getByRole('button',{name:'Créer le fichier',exact:true}).click();
+ await page.getByRole('button',{name:'Fermer',exact:true}).click();await page.getByRole('link',{name:'Entretien & suivi',exact:true}).click();const add=page.getByRole('button',{name:'＋ Ajouter un entretien',exact:true});await expect(add).toBeEnabled();await add.click();const picker=page.locator('.mo-picker');await expect(picker).toBeVisible();await expect(picker.getByRole('button',{name:'Suivant',exact:true})).toBeEnabled();await picker.getByRole('button',{name:'Suivant',exact:true}).click();await expect(picker.locator('.mp-pages')).toContainText('Page 2');
+ await picker.getByLabel('Rechercher un véhicule',{exact:true}).fill('NO-CAR-FOUND');await expect(picker).toContainText('Aucune voiture trouvée');await picker.getByLabel('Rechercher un véhicule',{exact:true}).fill(plate);await picker.getByRole('button',{name:'Choisir '+plate,exact:true}).click();await expect(picker.locator('.mp-counter')).toContainText('Non renseigné');await expect(picker).toContainText('Aucune visite au garage ouverte');await picker.getByRole('button',{name:'Continuer avec cette voiture',exact:true}).click();await expect(picker).toHaveCount(0);
+ const form=page.locator('.gf-dialog');await expect(form.locator('.fleet-eyebrow')).toContainText(plate);await form.getByRole('button',{name:/La voiture entre au garage/}).click();await form.getByLabel('Compteur lors de cette visite (km)',{exact:true}).fill('45000');await form.getByLabel('Montant (DH)',{exact:true}).fill('650');await form.getByLabel('Déjà payé / avance (DH)',{exact:true}).fill('200');
+ let writes=0;page.on('request',req=>{if(req.method()==='POST'&&/maintenance\/files$/.test(req.url()))writes++});await form.getByRole('button',{name:'Créer le dossier',exact:true}).evaluate(button=>{button.click();button.click()});await expect(form.locator('.gf-table tbody tr')).toHaveCount(1);assert.equal(writes,1);await expect(form.locator('.m-detail-total')).toContainText('450,00');const heading=await form.locator('#gf-title').innerText();await form.getByRole('button',{name:'Fermer',exact:true}).click();
+ await add.click();await picker.getByLabel('Rechercher un véhicule',{exact:true}).fill(plate);await picker.getByRole('button',{name:'Choisir '+plate,exact:true}).click();await expect(picker.locator('.mp-counter')).toContainText('45.000 km');await expect(picker.locator('.mp-open')).toContainText('Une visite est déjà ouverte');await page.screenshot({path:path.join(local,'maintenance-picker-desktop.png')});await page.setViewportSize({width:390,height:844});await picker.locator('.mp-open').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(local,'maintenance-picker-mobile.png')});assert(await picker.evaluate(el=>el.scrollWidth<=el.clientWidth+1));
+ await picker.getByRole('button',{name:'Ouvrir ce dossier',exact:true}).click();await expect(form.locator('#gf-title')).toHaveText(heading);await expect(form.locator('.m-detail-total')).toContainText('450,00');assert.equal(writes,1);await form.getByRole('button',{name:'Fermer',exact:true}).click();
+ await add.click();await picker.getByLabel('Rechercher un véhicule',{exact:true}).fill(plate);await picker.getByRole('button',{name:'Choisir '+plate,exact:true}).click();await picker.getByRole('button',{name:'Créer une nouvelle visite',exact:true}).click();await expect(form.locator('#gf-title')).toHaveText('Ajouter une intervention');await expect(form).toContainText('45.000 km');await form.getByRole('button',{name:'Annuler',exact:true}).click();assert.equal(writes,1);
+ await page.route('**/api/v1/vehicles/*/maintenance',route=>route.fulfill({status:503,json:{message:'Test failure'}}));await add.click();await picker.getByLabel('Rechercher un véhicule',{exact:true}).fill(plate);await picker.getByRole('button',{name:'Choisir '+plate,exact:true}).click();await expect(picker.getByRole('alert')).toContainText('Impossible de vérifier');await expect(picker.getByRole('button',{name:'Continuer avec cette voiture',exact:true})).toBeDisabled();await expect(picker.locator('.mp-clear')).toHaveCount(0);await page.unroute('**/api/v1/vehicles/*/maintenance');await picker.getByRole('button',{name:'Réessayer',exact:true}).click();await expect(picker.locator('.mp-open')).toBeVisible();await picker.getByRole('button',{name:'Changer',exact:true}).click();await expect(picker.locator('.mp-open')).toHaveCount(0);await expect(picker.getByLabel('Rechercher un véhicule',{exact:true})).toBeFocused();await picker.getByRole('button',{name:'Fermer le choix du véhicule',exact:true}).focus();await page.keyboard.press('Escape');await expect(picker).toHaveCount(0);await expect(add).toBeFocused();
+ assert.equal(errors.length,0,errors.join(' | '));console.log('PASS '+plate+': paginated vehicle search, no matches, no odometer, create linked garage file and partial payment, double click single write, current odometer, existing file reuse, separate new visit cancel, failed verification blocked, retry, change vehicle, mobile and focus.');
+ }finally{await browser.close();}
+})().catch(e=>{console.error(String(e.stack||e).replaceAll(credentials.email,'[email]').replaceAll(credentials.password,'[password]'));process.exit(1)});

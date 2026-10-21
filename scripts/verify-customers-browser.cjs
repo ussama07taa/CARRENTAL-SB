@@ -1,0 +1,82 @@
+// Exercises the approved client workflow against the isolated local demo.
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { expect } = require((process.env.PLAYWRIGHT_MODULE || 'playwright') + '/test');
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const local = path.resolve(__dirname, '../.local');
+const credentials = JSON.parse(fs.readFileSync(path.join(local, 'demo-account.json'), 'utf8'));
+(async () => {
+ const browser = await chromium.launch({ channel: 'chrome', headless: true });
+ try {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const page = await context.newPage();
+  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  await page.goto('http://localhost:3000/clients');
+  await expect(page).toHaveURL('http://localhost:3000/login');
+  await page.getByLabel('Adresse e-mail', { exact: true }).fill(credentials.email);
+  await page.getByLabel('Mot de passe', { exact: true }).fill(credentials.password);
+  await page.getByRole('button', { name: 'Se connecter', exact: true }).click();
+  await expect(page).toHaveURL('http://localhost:3000/');
+  await page.getByRole('link', { name: 'Clients', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Ouvrir le fichier de Lina Berrada' })).toBeVisible();
+  await page.screenshot({ path: path.join(local, 'clients-desktop.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Nouveau client' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByLabel('E-mail', { exact: true })).not.toBeVisible();
+  await page.screenshot({ path: path.join(local, 'client-create-desktop.png'), fullPage: true });
+  // Stable record for repeatable QA, without deleting anything.
+  await page.getByLabel('Prénom', {exact:true}).fill('Client');
+  await page.locator('#client-last_name').fill('Test navigateur');
+  await page.getByLabel('Téléphone principal', {exact:true}).fill('0600000099');
+  await page.getByRole('button', { name: 'Créer le client', exact: true }).click();
+  const duplicate = page.getByRole('button', { name: 'C’est une autre personne : créer son fichier' });
+  await expect(page.locator('.save-notice').or(duplicate)).toBeVisible();
+  if (await duplicate.isVisible()) {
+    page.once('dialog', d => d.accept());
+    await page.getByRole('button', { name: /Client Test navigateur ·/ }).first().click();
+  }
+  await expect(page.getByRole('heading', { name: 'Client Test navigateur', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Modifier le fichier' }).click();
+  await page.getByLabel('Ville', { exact: true }).fill('Rabat');
+  await page.getByRole('button', { name: 'Enregistrer les modifications' }).click();
+  await expect(page.getByRole('dialog').getByText('Rabat', { exact: true })).toBeVisible();
+  await page.screenshot({ path: path.join(local, 'client-profile-desktop.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Modifier le fichier' }).click();
+  await page.getByLabel('Ville', { exact: true }).fill('Tanger');
+  page.once('dialog', d => d.dismiss());
+  await page.getByRole('button', { name: 'Annuler', exact: true }).click();
+  await expect(page.getByLabel('Ville', { exact: true })).toHaveValue('Tanger');
+  page.once('dialog', d => d.accept());
+  await page.getByRole('button', { name: 'Annuler', exact: true }).click();
+  await expect(page.getByRole('dialog').getByText('Rabat', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Fermer', exact: true }).click();
+  await page.getByLabel('Rechercher un client', {exact:true}).fill('0600000099');
+  await expect(page.locator('.client-table tbody tr')).toHaveCount(1);
+  await expect(page.locator('.client-table')).toContainText('Client Test navigateur');
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Vos clients, bien suivis.' })).toBeVisible();
+  await page.getByLabel('Rechercher un client', {exact:true}).fill('Aucun-client-xyz');
+  await expect(page.getByText('Aucun client ne correspond.')).toBeVisible();
+  await page.getByRole('button', { name: 'Effacer la recherche', exact: true }).last().click();
+  await expect(page.getByRole('button', { name: 'Ouvrir le fichier de Lina Berrada' })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  await page.screenshot({ path: path.join(local, 'clients-mobile.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Nouveau client' }).click();
+  await page.screenshot({ path: path.join(local, 'client-create-mobile.png'), fullPage: true });
+  assert.equal(await page.getByRole('dialog').evaluate(el => el.scrollWidth > el.clientWidth), false);
+  await page.getByRole('button', { name: 'Annuler', exact: true }).click();
+  await page.getByRole('button', { name: 'Ouvrir le fichier de Lina Berrada' }).click();
+  await expect(page.getByRole('heading', { name: 'Lina Berrada', exact: true })).toBeVisible();
+  await page.screenshot({ path: path.join(local, 'client-profile-mobile.png'), fullPage: true });
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await page.getByRole('button', { name: 'Se déconnecter', exact: true }).click();
+  await expect(page).toHaveURL('http://localhost:3000/login');
+  await page.goto('http://localhost:3000/clients');
+  await expect(page).toHaveURL('http://localhost:3000/login');
+  assert.deepEqual(errors, []);
+  console.log('PASS: protected directory, create, persistent edit, discard protection, phone search, empty search, responsive list/forms/profile, Escape, logout, no JS errors.');
+ } finally { await browser.close(); }
+})().catch(e => { console.error(e); process.exitCode = 1; });

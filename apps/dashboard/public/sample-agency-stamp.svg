@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="190" viewBox="0 0 420 190">
+  <g fill="none" stroke="#235a91" stroke-width="4">
+    <rect x="6" y="6" width="408" height="178" rx="12"/>
+    <rect x="15" y="15" width="390" height="160" rx="7" stroke-width="1.5"/>
+    <path d="M34 108h352" stroke-width="1.5"/>
+  </g>
+  <g fill="#235a91" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700">
+    <text x="210" y="53" font-size="28">bensbehicarrental</text>
+    <text x="210" y="86" font-size="23" letter-spacing="4">SARL · TANGER</text>
+    <text x="210" y="145" font-size="28" letter-spacing="3">EXEMPLE / TEST</text>
+    <text x="210" y="166" font-size="12" font-weight="400">CACHET PROVISOIRE · NON OFFICIEL</text>
+  </g>
+</svg>
