@@ -51,7 +51,8 @@ jobs:
           php artisan key:generate --env=testing
           PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -U "$DB_USERNAME" -d "$DB_DATABASE" -c 'CREATE EXTENSION IF NOT EXISTS btree_gist'
           php artisan migrate --env=testing --force
-      - run: composer validate --working-dir=apps/api --strict
+      # Browsershot is deliberately pinned; validate schema and lock consistency.
+      - run: composer validate --working-dir=apps/api --strict --no-check-all
       - run: php apps/api/artisan test
       - run: pnpm install --frozen-lockfile
       - run: pnpm build

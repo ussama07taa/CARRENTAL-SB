@@ -7,5 +7,6 @@ export TURBO_TELEMETRY_DISABLED=1
 pnpm build
 pnpm typecheck
 cd apps/api
-php /opt/bensebih-toolchain/composer.phar validate --strict
+# Browsershot is deliberately pinned; keep schema and lock validation strict.
+php /opt/bensebih-toolchain/composer.phar validate --strict --no-check-all
 php artisan test
