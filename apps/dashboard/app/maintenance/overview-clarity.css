@@ -42,3 +42,7 @@
 @media(min-width:701px){.mo-summary,.mf-file-status{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}}
 
 @media(max-width:700px){.maintenance-overview .mo-summary{grid-template-columns:1fr}.maintenance-overview .mo-summary>.mo-stat{grid-column:1/-1;width:100%;min-height:0}}
+
+/* Actions wrap within the available tablet width, including an expanded sidebar. */
+.mo-heading-actions{flex-wrap:wrap;min-width:0;max-width:100%}
+@media(max-width:1100px){.maintenance-overview .mo-heading{flex-wrap:wrap}.maintenance-overview .mo-heading-actions{width:100%}}
