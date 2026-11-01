@@ -53,7 +53,9 @@ jobs:
           php artisan migrate --env=testing --force
       # Browsershot is deliberately pinned; validate schema and lock consistency.
       - run: composer validate --working-dir=apps/api --strict --no-check-all
-      - run: php apps/api/artisan test
+      - name: Run API tests
+        working-directory: apps/api
+        run: php artisan test
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm typecheck
