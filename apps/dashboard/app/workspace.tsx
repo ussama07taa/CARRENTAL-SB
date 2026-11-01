@@ -1,8 +1,10 @@
 'use client';
+import { OverviewIcon, PeopleIcon, ReceiptIcon, ReportsIcon } from './_components/navigation-icons';
+import './navigation-icons.css';
 import AgencyBrand from './_components/agency-brand';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { Settings, Archive, CarFront, ChartNoAxesCombined, ChevronRight, ClipboardList, Landmark, LayoutDashboard, LogOut, Menu, ReceiptText, ShieldCheck, Tags, UsersRound, Wallet, Wrench, X } from 'lucide-react';
+import { Settings, Archive, CarFront, ChevronRight, ClipboardList, Landmark, LogOut, Menu, ShieldCheck, Tags, Wallet, Wrench, X } from 'lucide-react';
 import type { Session } from './_lib/session';
 import { api, authPost } from './_lib/auth-client';
 import NotificationCenter from './_components/notification-center';
@@ -20,17 +22,17 @@ export default function Workspace({ session, children }: { session: Session | nu
   const menuButton = useRef<HTMLButtonElement>(null);
   const root = useRef<HTMLDivElement>(null);
   const navigation = [
-    { href: '/', label: 'Accueil', icon: LayoutDashboard },
-    { href: '/clients', label: 'Clients', icon: UsersRound },
+    { href: '/', label: 'Accueil', icon: OverviewIcon },
+    { href: '/clients', label: 'Clients', icon: PeopleIcon },
     { href: '/vehicles', label: 'Véhicules', icon: CarFront },
     { href: '/reservations', label: 'Réservations', icon: ClipboardList },
     { href: '/pricing', label: session?.can_manage_expenses ? 'Tarifs et saisons' : 'Consulter les tarifs', icon: Tags },
     { href: '/maintenance', label: 'Entretien & suivi', icon: Wrench }, { href: '/fines', label: 'Infractions', icon: ShieldCheck },
-    ...(session?.can_manage_expenses ? [{ href: '/expenses', label: 'Dépenses', icon: ReceiptText }] : []),
+    ...(session?.can_manage_expenses ? [{ href: '/expenses', label: 'Dépenses', icon: ReceiptIcon }] : []),
     ...(session?.can_manage_expenses ? [{ href: '/cash', label: 'Caisse', icon: Wallet }] : []),
     ...(session?.can_manage_expenses ? [{ href: '/loans', label: 'Achats & crédits', icon: Landmark }] : []),
-    ...(session?.can_manage_expenses ? [{ href: '/reports', label: 'Rapports', icon: ChartNoAxesCombined }] : []),
-    ...(session?.can_manage_expenses ? [{ href: '/users', label: 'Utilisateurs', icon: UsersRound }] : []),
+    ...(session?.can_manage_expenses ? [{ href: '/reports', label: 'Rapports', icon: ReportsIcon }] : []),
+    ...(session?.can_manage_expenses ? [{ href: '/users', label: 'Utilisateurs', icon: PeopleIcon }] : []),
     ...(session?.can_manage_expenses ? [{ href: '/settings/agency', label: 'Paramètres', icon: Settings }, { href: '/settings/backups', label: 'Sauvegardes', icon: Archive }] : []),
   ];
   useEffect(() => { setMenuOpen(false); }, [pathname]);
@@ -73,7 +75,7 @@ export default function Workspace({ session, children }: { session: Session | nu
     {error && <p role="alert" className="notice error">{error}</p>}
     {session ? <>
       {session.demo && <p className="demo-banner">MODE DÉMONSTRATION <span>Données fictives · aucun compte réel</span></p>}
-      <aside id="app-navigation" className="app-sidebar" data-open={menuOpen}><button type="button" className="app-nav-size" onClick={toggleNav} aria-label={navCompact ? "Agrandir le menu" : "Réduire le menu"} aria-expanded={!navCompact} aria-controls="agency-nav" title={navCompact ? "Agrandir le menu" : "Réduire le menu"}><Menu size={19}/><span>Réduire le menu</span><ChevronRight size={16}/></button><div className="app-nav-label">VOTRE AGENCE</div><nav id="agency-nav" className="app-nav" aria-label="Navigation principale">{navigation.map(({href,label,icon:Icon}) => <a key={href} href={href==='/reservations'&&websiteCount?'/reservations?source=website&status=demande':href} title={href==='/reservations'&&websiteCount?`${label} · ${websiteCount} demandes du site à traiter`:label} aria-label={href==='/reservations'&&websiteCount?`${label} · ${websiteCount} demandes du site à traiter`:label} aria-current={pathname === href || (href !== '/' && pathname.startsWith(href + '/')) ? 'page' : undefined}><Icon size={19} strokeWidth={1.7} aria-hidden="true"/><span>{label}</span>{href==='/reservations'&&!!websiteCount&&<b className="app-request-badge" aria-hidden="true">{websiteCount>99?'99+':websiteCount}</b>}<ChevronRight className="app-nav-chevron" size={14} aria-hidden="true"/></a>)}</nav><button className="app-nav-logout" onClick={logout} disabled={busy} aria-label="Se déconnecter" title="Se déconnecter"><LogOut size={20} aria-hidden="true"/><span>{busy ? 'Déconnexion…' : 'Se déconnecter'}</span></button><div className="app-profile"><span className="app-profile-avatar" aria-hidden="true">{session.user.name.trim().slice(0,1).toUpperCase()}</span><div><strong>{session.user.name}</strong><span><ShieldCheck size={12} aria-hidden="true"/> {session.can_manage_expenses ? 'Responsable' : 'Employé'}</span></div></div></aside>
+      <aside id="app-navigation" className="app-sidebar" data-open={menuOpen}><button type="button" className="app-nav-size" onClick={toggleNav} aria-label={navCompact ? "Agrandir le menu" : "Réduire le menu"} aria-expanded={!navCompact} aria-controls="agency-nav" title={navCompact ? "Agrandir le menu" : "Réduire le menu"}><Menu size={19}/><span>Réduire le menu</span><ChevronRight size={16}/></button><div className="app-nav-label">VOTRE AGENCE</div><nav id="agency-nav" className="app-nav" aria-label="Navigation principale">{navigation.map(({href,label,icon:Icon}) => <a key={href} href={href==='/reservations'&&websiteCount?'/reservations?source=website&status=demande':href} title={href==='/reservations'&&websiteCount?`${label} · ${websiteCount} demandes du site à traiter`:label} aria-label={href==='/reservations'&&websiteCount?`${label} · ${websiteCount} demandes du site à traiter`:label} aria-current={pathname === href || (href !== '/' && pathname.startsWith(href + '/')) ? 'page' : undefined}><Icon size={22} strokeWidth={1.8} aria-hidden="true"/><span>{label}</span>{href==='/reservations'&&!!websiteCount&&<b className="app-request-badge" aria-hidden="true">{websiteCount>99?'99+':websiteCount}</b>}<ChevronRight className="app-nav-chevron" size={14} aria-hidden="true"/></a>)}</nav><button className="app-nav-logout" onClick={logout} disabled={busy} aria-label="Se déconnecter" title="Se déconnecter"><LogOut size={20} aria-hidden="true"/><span>{busy ? 'Déconnexion…' : 'Se déconnecter'}</span></button><div className="app-profile"><span className="app-profile-avatar" aria-hidden="true">{session.user.name.trim().slice(0,1).toUpperCase()}</span><div><strong>{session.user.name}</strong><span><ShieldCheck size={12} aria-hidden="true"/> {session.can_manage_expenses ? 'Responsable' : 'Employé'}</span></div></div></aside>
       <main id="app-content" className="app-content" tabIndex={-1}>{children ?? <section className="welcome"><span className="status"><span aria-hidden="true">●</span> Session ouverte</span><h1>Bonjour, {session.user.name}.</h1><p>Vous êtes connecté à votre espace agence.</p>
         <dl className="identity-grid"><div><dt>Votre agence</dt><dd>{session.company.name}</dd></div><div><dt>Responsable de l’agence</dt><dd>{session.responsible.name}</dd></div></dl>
         <a href="/clients" className="primary">Ouvrir les fichiers clients <span aria-hidden="true">↗</span></a>

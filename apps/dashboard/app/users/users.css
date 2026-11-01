@@ -5,3 +5,18 @@
 .team-dialog select{width:100%;min-height:46px;padding:10px 12px;border:1px solid #cfd5df;border-radius:8px;background:#fff;color:#182230;font:inherit}.team-dialog select:focus-visible{outline:3px solid #004fff33;border-color:#004fff}
 
 .team-row-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.team-row-actions .team-icon-action{width:42px;min-width:42px;height:44px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #e1e6ee;border-radius:8px;background:#fff;color:#344054}.team-row-actions .team-icon-action:hover{background:#edf3ff;color:#004fff;border-color:#b6ccff}.team-row-actions .team-protected{font-size:11px}.team-user-details{margin:0}.team-user-details>div{padding:14px 0;border-bottom:1px solid #e4e7ec}.team-user-details dt{font-size:12px;color:#475467}.team-user-details dd{margin:6px 0 0;font-size:14px;overflow-wrap:anywhere}
+
+/* Mobile user cards keep role, account status and actions visible together. */
+@media(max-width:600px){
+ .team-table,.team-table tbody{display:block;width:100%;white-space:normal}
+ .team-table thead{display:none}
+ .team-table tbody tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:18px 16px;border-bottom:1px solid #edf0f5}
+ .team-table td{display:block;padding:0;border:0;min-width:0}
+ .team-table td:first-child,.team-table td:last-child{grid-column:1/-1}
+ .team-person{align-items:flex-start}.team-person>div{min-width:0}
+ .team-person div>span{overflow-wrap:anywhere}.team-person strong{max-width:none}
+ .team-actions,.team-row-actions{text-align:left;justify-content:flex-start}
+ .team-table td.team-empty{grid-column:1/-1;padding:20px!important}
+ .team-panel-title>div{flex-wrap:wrap}.team-tabs{max-width:100%;flex-wrap:wrap}
+ .team-dialog input,.team-dialog textarea,.team-dialog select{font-size:16px}
+}
