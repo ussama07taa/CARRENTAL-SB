@@ -1,6 +1,6 @@
 // Agency-confirmed number, already displayed on the public site.
 // International digits only: country code 212 + local number without its initial zero.
-export const WHATSAPP_NUMBER = '212770098571';
+export const WHATSAPP_NUMBER = '212666333642';
 export type ContactLanguage = 'fr' | 'en' | 'es' | 'ar';
 const general = {
  fr: 'Bonjour Ben Sbih Rental Car, je souhaite réserver une voiture à Tanger.',

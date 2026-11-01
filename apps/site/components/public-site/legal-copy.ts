@@ -10,7 +10,7 @@ export const legalCopy = {
     "termsSections": [
       [
         "Agency & contact",
-        "BEN SBIH Rental Car operates in Tangier. Contact the agency on +212 770 098 571. The full legal name, registered address and business registration details remain to be completed. Branes is a location area, not a verified registered office."
+        "BEN SBIH Rental Car operates in Tangier. Contact the agency on +212 666 333 642 / +212 775 275 344. The full legal name, registered address and business registration details remain to be completed. Branes is a location area, not a verified registered office."
       ],
       [
         "Requests & confirmation",
@@ -36,7 +36,7 @@ export const legalCopy = {
     "privacySections": [
       [
         "Who to contact",
-        "For questions about your information, contact BEN SBIH Rental Car on +212 770 098 571 or through the contact page. The legal identity and full address of the data controller, and a dedicated privacy contact, remain to be completed. The example email on the contact page is not a working contact address."
+        "For questions about your information, contact BEN SBIH Rental Car on +212 666 333 642 / +212 775 275 344 or through the contact page. The legal identity and full address of the data controller, and a dedicated privacy contact, remain to be completed. Email: bensbih.carrental@gmail.com."
       ],
       [
         "Information & purposes",
@@ -71,7 +71,7 @@ export const legalCopy = {
     "termsSections": [
       [
         "Agence et contact",
-        "BEN SBIH Rental Car exerce à Tanger. Contactez l’agence au +212 770 098 571. La dénomination sociale complète, le siège et les références d’immatriculation restent à renseigner. Branes désigne un quartier, pas un siège social vérifié."
+        "BEN SBIH Rental Car exerce à Tanger. Contactez l’agence au +212 666 333 642 / +212 775 275 344. La dénomination sociale complète, le siège et les références d’immatriculation restent à renseigner. Branes désigne un quartier, pas un siège social vérifié."
       ],
       [
         "Demande et confirmation",
@@ -97,7 +97,7 @@ export const legalCopy = {
     "privacySections": [
       [
         "Votre interlocuteur",
-        "Pour toute question sur vos informations, contactez BEN SBIH Rental Car au +212 770 098 571 ou via la page contact. L’identité juridique, l’adresse complète du responsable du traitement et un contact dédié à la confidentialité restent à renseigner. L’e-mail d’exemple de la page contact n’est pas une adresse opérationnelle."
+        "Pour toute question sur vos informations, contactez BEN SBIH Rental Car au +212 666 333 642 / +212 775 275 344 ou via la page contact. L’identité juridique, l’adresse complète du responsable du traitement et un contact dédié à la confidentialité restent à renseigner. E-mail : bensbih.carrental@gmail.com."
       ],
       [
         "Informations et finalités",
@@ -132,7 +132,7 @@ export const legalCopy = {
     "termsSections": [
       [
         "Agencia y contacto",
-        "BEN SBIH Rental Car opera en Tánger. Contacta al +212 770 098 571. Quedan por completar la razón social, el domicilio y los datos de registro. Branes es una zona, no un domicilio social verificado."
+        "BEN SBIH Rental Car opera en Tánger. Contacta al +212 666 333 642 / +212 775 275 344. Quedan por completar la razón social, el domicilio y los datos de registro. Branes es una zona, no un domicilio social verificado."
       ],
       [
         "Solicitud y confirmación",
@@ -158,7 +158,7 @@ export const legalCopy = {
     "privacySections": [
       [
         "Contacto",
-        "Consulta a BEN SBIH Rental Car al +212 770 098 571 o mediante la página de contacto. Quedan por completar la identidad legal, dirección del responsable y contacto de privacidad. El correo de ejemplo no es una dirección operativa."
+        "Consulta a BEN SBIH Rental Car al +212 666 333 642 / +212 775 275 344 o mediante la página de contacto. Quedan por completar la identidad legal, dirección del responsable y contacto de privacidad. Correo electrónico: bensbih.carrental@gmail.com."
       ],
       [
         "Información y fines",
@@ -193,7 +193,7 @@ export const legalCopy = {
     "termsSections": [
       [
         "الوكالة والتواصل",
-        "BEN SBIH Rental Car كتخدم فطنجة. تواصل على +212 770 098 571. الاسم القانوني الكامل وعنوان المقر ومعلومات التسجيل التجاري باقي خاصها تكمل. برانص منطقة، وماشي عنوان مقر قانوني متحقق منه."
+        "BEN SBIH Rental Car كتخدم فطنجة. تواصل على +212 666 333 642 / +212 775 275 344. الاسم القانوني الكامل وعنوان المقر ومعلومات التسجيل التجاري باقي خاصها تكمل. برانص منطقة، وماشي عنوان مقر قانوني متحقق منه."
       ],
       [
         "الطلب والتأكيد",
@@ -219,7 +219,7 @@ export const legalCopy = {
     "privacySections": [
       [
         "جهة التواصل",
-        "لأي سؤال على معلوماتك، تواصل مع BEN SBIH Rental Car على +212 770 098 571 أو من صفحة التواصل. الهوية القانونية وعنوان المسؤول على المعالجة ووسيلة تواصل خاصة بالخصوصية باقي خاصها تكمل. الإيميل التجريبي ماشي عنوان خدام."
+        "لأي سؤال على معلوماتك، تواصل مع BEN SBIH Rental Car على +212 666 333 642 / +212 775 275 344 أو من صفحة التواصل. الهوية القانونية وعنوان المسؤول على المعالجة ووسيلة تواصل خاصة بالخصوصية باقي خاصها تكمل. البريد الإلكتروني: bensbih.carrental@gmail.com."
       ],
       [
         "المعلومات والاستعمال",

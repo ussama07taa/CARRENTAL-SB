@@ -1,3 +1,4 @@
+import { AGENCY_EMAIL, AGENCY_PHONES } from '../../lib/agency-contact';
 import {ArrowUpRight,ArrowRight,Phone,Mail,MapPin,Globe} from 'lucide-react';
 import {type ContactLanguage} from '../../lib/whatsapp';
 import ContactForm from './contact-form';
@@ -19,8 +20,8 @@ export default function ContactPage({language}:{language:ContactLanguage}){const
 <main id="contact-main">
 <section id="agency" className="cp-contact-grid" aria-label={t.contact}>
 <article><MapPin size={36} strokeWidth={1.35}/><h2>{d.location}</h2><p>{d.area}</p><a href="https://www.google.com/maps/search/?api=1&query=Branes+Tanger+Morocco" target="_blank" rel="noopener noreferrer">{d.map}<ArrowUpRight size={14}/></a></article>
-<article><Mail size={36} strokeWidth={1.35}/><h2>{d.email}</h2><p dir="ltr">contact@example.com</p><small>{d.example}</small></article>
-<article><Phone size={36} strokeWidth={1.35}/><h2>{d.phone}</h2><a className="cp-number" href="tel:+212770098571" dir="ltr">+212 770 098 571</a><small>{d.phoneNote}</small></article>
+<article><Mail size={36} strokeWidth={1.35}/><h2>{d.email}</h2><a href={`mailto:${AGENCY_EMAIL}`} dir="ltr">{AGENCY_EMAIL}</a></article>
+<article><Phone size={36} strokeWidth={1.35}/><h2>{d.phone}</h2><div>{AGENCY_PHONES.map(phone=><a key={phone.href} className="cp-number" href={phone.href} dir="ltr">{phone.label}</a>)}</div><small>{d.phoneNote}</small><small>{{fr:"7 jours sur 7",en:"7 days a week",es:"7 días a la semana",ar:"7 أيام فالأسبوع"}[language]}</small></article>
 </section>
 <section className="cp-contact-body"><div className="cp-map"><iframe title={d.location+' — Branes, Tanger'} src="https://maps.google.com/maps?q=Branes%2C%20Tanger%2C%20Morocco&z=14&output=embed" loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen/><p><MapPin size={15}/>{d.mapNote}</p></div>
 <div className="cp-form-panel"><span className="cp-eyebrow">{t.contact}</span><h1>{d.title}</h1><p>{d.intro}</p><ContactForm language={language}/></div></section>
