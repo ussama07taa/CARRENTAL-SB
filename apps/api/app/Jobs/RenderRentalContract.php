@@ -30,7 +30,9 @@ class RenderRentalContract implements ShouldQueue
                 return;
             }$path = $this->companyId.'/'.$v->reservation_id.'/'.Str::uuid().'.pdf';
             try {
-                $bytes = $pdf->render(json_decode($v->snapshot, true), 'CTR-'.str_pad((string) $v->reservation_id, 6, '0', STR_PAD_LEFT).'-V'.$v->version);
+                $snapshot = json_decode($v->snapshot, true);
+
+                $bytes = $pdf->render($snapshot, 'CTR-'.str_pad((string) $v->reservation_id, 6, '0', STR_PAD_LEFT).'-V'.$v->version);
                 if (! Storage::disk('rental_contracts')->put($path, $bytes)) {
                     throw new \RuntimeException('Contract storage failed.');
                 }

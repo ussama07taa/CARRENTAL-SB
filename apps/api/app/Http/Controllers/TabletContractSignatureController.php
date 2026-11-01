@@ -69,7 +69,7 @@ class TabletContractSignatureController extends Controller
         $lock = Cache::lock('tablet-contract-pdf-render', 90);
         abort_unless($lock->get(), 429, 'Une prévisualisation est en cours. Réessayez dans un instant.');
         try {
-            $pdf = $renderer->render(Storage::disk('rental_contracts')->get($original->path), [...$names, 'client' => $input['client_signature'], 'agency' => $input['agency_signature']], $reference, $original->sha256, $signedAt);
+            $pdf = $renderer->render(Storage::disk('rental_contracts')->get($original->path), [...$names, 'client' => $input['client_signature'], 'agency' => $input['agency_signature']], $reference, $original->sha256, $signedAt, isset($snapshot['presentation']['layout']) ? (int) $snapshot['presentation']['layout'] : null);
         } finally {
             $lock->release();
         }

@@ -46,9 +46,9 @@ class CustomerController extends Controller
     public function show(Request $request, int $customer): JsonResponse
     {
         $record = Customer::findOrFail($customer);
-        $activity = DB::table('customer_events as e')->join('company_memberships as m', function ($join): void {
+        $activity = DB::table('customer_events as e')->leftJoin('company_memberships as m', function ($join): void {
             $join->on('m.id', '=', 'e.actor_membership_id')->on('m.company_id', '=', 'e.company_id');
-        })->join('users as u', 'u.id', '=', 'm.user_id')
+        })->leftJoin('users as u', 'u.id', '=', 'm.user_id')
             ->where('e.company_id', Tenant::id())->where('e.customer_id', $record->id)->orderByDesc('e.id')->limit(10)
             ->get(['e.action', 'e.created_at', 'u.name as actor']);
 
@@ -56,6 +56,24 @@ class CustomerController extends Controller
         $documents = $canManageDocuments ? CustomerDocument::where('customer_id', $record->id)->orderByDesc('version')->get()->unique('slot')->values() : [];
 
         return response()->json(['data' => $record, 'activity' => $activity, 'documents' => $documents, 'can_manage_documents' => $canManageDocuments]);
+    }
+
+    public function reservations(Request $request, int $customer): JsonResponse
+    {
+        $request->validate(['page' => ['sometimes', 'integer', 'min:1']]);
+        $record = Customer::findOrFail($customer);
+        $rows = Reservation::where('customer_id', $record->id)
+            ->leftJoin('vehicles as v', fn ($join) => $join->on('v.id', '=', 'reservations.vehicle_id')->on('v.company_id', '=', 'reservations.company_id'))
+            ->orderByDesc('reservations.starts_at')->orderByDesc('reservations.id')
+            ->paginate(10, ['reservations.id', 'reservations.status', 'reservations.starts_at', 'reservations.ends_at', 'reservations.hold_expires_at', 'v.make', 'v.model', 'v.plate']);
+
+        return response()->json(['data' => $rows->getCollection()->map(fn ($row) => [
+            'id' => $row->id,
+            'reference' => 'DEM-'.str_pad((string) $row->id, 6, '0', STR_PAD_LEFT),
+            'status' => $row->status === 'temporaire' && $row->hold_expires_at?->isPast() ? 'demande' : $row->status,
+            'vehicle' => trim($row->make.' '.$row->model), 'plate' => $row->plate,
+            'starts_at' => $row->starts_at->toIso8601String(), 'ends_at' => $row->ends_at->toIso8601String(),
+        ]), 'total' => $rows->total(), 'page' => $rows->currentPage(), 'last_page' => $rows->lastPage()]);
     }
 
     public function store(SaveCustomerRequest $request, SaveCustomer $save): JsonResponse

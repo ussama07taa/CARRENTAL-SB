@@ -7,6 +7,7 @@ use App\Models\CompanyMembership;
 use App\Models\Reservation;
 use App\Models\Vehicle;
 use App\Support\Tenancy\Tenant;
+use App\Support\Vehicles\DamageTickets;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +36,7 @@ class RentalReturn
         $returns = $this->table('rental_returns')->whereIn('id', $this->table('rental_returns')->selectRaw('MAX(id)')->groupBy('vehicle_id'))->get();
         $inspections = $this->table('rental_return_inspections')->whereIn('return_id', $returns->pluck('id'))->orderByDesc('id')->get()->unique('return_id')->keyBy('return_id');
         $approvals = $this->table('rental_return_readiness')->whereIn('inspection_id', $inspections->pluck('id'))->pluck('inspection_id')->all();
-        $ids = app(\App\Support\Vehicles\DamageTickets::class)->blockers();
+        $ids = app(DamageTickets::class)->blockers();
         foreach ($returns as $return) {
             $inspection = $inspections->get($return->id);
             if (! $inspection || $inspection->condition === 'anomalie_bloquante' || ! in_array($inspection->id, $approvals, true)) {
@@ -68,8 +69,9 @@ class RentalReturn
         $approved = $inspection && $this->table('rental_return_readiness')->where('inspection_id', $inspection->id)->exists();
         $vehicle = Vehicle::findOrFail($return?->vehicle_id ?? $record->vehicle_id);
         $garage = in_array($vehicle->id, app(RequestAvailability::class)->garageVehicles(), true);
+        $maintenancePending = in_array($vehicle->id, app(RequestAvailability::class)->maintenanceUnreadyVehicles(), true);
 
-        return ['ready' => $ready, 'status' => $record->status, 'can_receive' => $ready && $pickup && ! $return && $record->status === 'en_location', 'simulation' => $this->simulation($snapshot ?? []), 'server_now_local' => now(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'vehicle' => $vehicle->only(['id', 'make', 'model', 'plate', 'version', 'current_odometer', 'current_odometer_date']), 'departure' => $pickup ? ['picked_up_local' => CarbonImmutable::parse($pickup->picked_up_at)->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'kilometers' => $snapshot['kilometers'], 'fuel_eighths' => $snapshot['fuel_eighths'], 'inspection_id' => $pickup->inspection_id] : null, 'return' => $return ? ['id' => $return->id, 'returned_local' => CarbonImmutable::parse($return->returned_at)->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'reason' => $return->reason, 'snapshot' => json_decode($return->snapshot, true)] : null, 'inspection' => $inspection ? [...collect($inspection)->only(['id', 'previous_id', 'kilometers', 'fuel_eighths', 'condition', 'notes', 'signature_state', 'signature_reason', 'reason'])->all(), 'snapshot' => json_decode($inspection->snapshot, true), 'files' => $files] : null, 'vehicle_ready' => (bool) $approved && ! $garage && ! in_array((int) $vehicle->id, app(\App\Support\Vehicles\DamageTickets::class)->blockers(), true), 'in_garage' => $garage, 'can_approve_readiness' => $this->canApprove($actor), 'readiness_policy_pending' => config('rental_returns.readiness_approvers', 'pending') === 'pending', 'caution' => app(DeparturePreparation::class)->summary($record, $actor, false)['caution'], 'financial' => app(RentalPayment::class)->summary($record)];
+        return ['ready' => $ready, 'status' => $record->status, 'can_receive' => $ready && $pickup && ! $return && $record->status === 'en_location', 'simulation' => $this->simulation($snapshot ?? []), 'server_now_local' => now(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'vehicle' => $vehicle->only(['id', 'make', 'model', 'plate', 'version', 'current_odometer', 'current_odometer_date']), 'departure' => $pickup ? ['picked_up_local' => CarbonImmutable::parse($pickup->picked_up_at)->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'kilometers' => $snapshot['kilometers'], 'fuel_eighths' => $snapshot['fuel_eighths'], 'inspection_id' => $pickup->inspection_id] : null, 'return' => $return ? ['id' => $return->id, 'returned_local' => CarbonImmutable::parse($return->returned_at)->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'reason' => $return->reason, 'snapshot' => json_decode($return->snapshot, true)] : null, 'inspection' => $inspection ? [...collect($inspection)->only(['id', 'previous_id', 'kilometers', 'fuel_eighths', 'condition', 'notes', 'signature_state', 'signature_reason', 'reason'])->all(), 'snapshot' => json_decode($inspection->snapshot, true), 'files' => $files] : null, 'vehicle_ready' => (bool) $approved && ! $garage && ! $maintenancePending && ! in_array((int) $vehicle->id, app(DamageTickets::class)->blockers(), true), 'in_garage' => $garage, 'maintenance_pending' => $maintenancePending, 'can_approve_readiness' => $this->canApprove($actor), 'readiness_policy_pending' => config('rental_returns.readiness_approvers', 'pending') === 'pending', 'caution' => app(DeparturePreparation::class)->summary($record, $actor, false)['caution'], 'financial' => app(RentalPayment::class)->summary($record)];
     }
 
     public function receive(int $id, CompanyMembership $actor, array $input): bool
@@ -183,8 +185,8 @@ class RentalReturn
             Vehicle::whereKey($return->vehicle_id)->lockForUpdate()->firstOrFail();
             $inspection = $this->table('rental_return_inspections')->where('return_id', $return->id)->latest('id')->first();
             abort_unless($inspection && $inspection->id === (int) $input['inspection_id'] && $inspection->condition !== 'anomalie_bloquante', 422, 'Contrôlez la voiture et résolvez les anomalies bloquantes.');
-            abort_if(in_array((int) $return->vehicle_id, app(\App\Support\Vehicles\DamageTickets::class)->blockers(), true), 409, 'Un dommage attend sa décision de disponibilité. Ouvrez le dossier de dommage.');
-            abort_unless($this->table('rental_returns')->where('vehicle_id', $return->vehicle_id)->max('id') === $return->id && ! Reservation::where('vehicle_id', $return->vehicle_id)->where('status', 'en_location')->exists() && ! in_array($return->vehicle_id, app(RequestAvailability::class)->garageVehicles(), true), 409, 'Une autre sortie ou un passage au garage empêche cette validation.');
+            abort_if(in_array((int) $return->vehicle_id, app(DamageTickets::class)->blockers(), true), 409, 'Un dommage attend sa décision de disponibilité. Ouvrez le dossier de dommage.');
+            abort_unless($this->table('rental_returns')->where('vehicle_id', $return->vehicle_id)->max('id') === $return->id && ! Reservation::where('vehicle_id', $return->vehicle_id)->where('status', 'en_location')->exists() && ! in_array($return->vehicle_id, [...app(RequestAvailability::class)->garageVehicles(), ...app(RequestAvailability::class)->maintenanceUnreadyVehicles()], true), 409, 'Une autre sortie, une visite au garage ou un contrôle de maintenance en attente empêche cette validation.');
             DB::table('rental_return_readiness')->insert(['company_id' => Tenant::id(), 'reservation_id' => $id, 'return_id' => $return->id, 'inspection_id' => $inspection->id, 'actor_membership_id' => $actor->id, 'reason' => $input['reason'], 'request_key' => $input['request_key'], 'request_hash' => $hash, 'created_at' => now()]);
             app(RentalContract::class)->event($id, $actor->id, 'return_readiness_approved', ['inspection_id' => $inspection->id, 'return_id' => $return->id, 'reason' => $input['reason']]);
 

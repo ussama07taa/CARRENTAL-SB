@@ -1,0 +1,22 @@
+'use client';
+import {useEffect,useRef,useState} from 'react';
+import {createPortal} from 'react-dom';
+import {ArrowDownLeft,ArrowUpRight,ChevronLeft,ChevronRight,ShieldCheck,X} from 'lucide-react';
+import {api} from '../_lib/auth-client';
+import {date,money,type Flow,type FlowQuery,type FlowResult} from './report-types';
+const channels:Record<string,string>={cash:'Espèces',bank:'Banque',card:'Carte',cheque:'Chèque',blocked:'Empreinte carte'};
+export default function ReportMovements({query,month,until,vehicleId,onClose,onOpen}:{query:FlowQuery;month:string;until:string;vehicleId:number|null;onClose:()=>void;onOpen:(flow:Flow)=>void}){
+ const allocation=query.group==='deposit_damage';
+ const dialog=useRef<HTMLDialogElement>(null);
+ const [page,setPage]=useState(1),[data,setData]=useState<FlowResult|null>(null),[error,setError]=useState(''),[retry,setRetry]=useState(0);
+ useEffect(()=>{const origin=document.activeElement as HTMLElement|null;dialog.current?.showModal();return()=>{origin?.focus();};},[]);
+ useEffect(()=>{const c=new AbortController();setData(null);setError('');const params=new URLSearchParams({month,page:String(page)});if(vehicleId)params.set('vehicle_id',String(vehicleId));for(const k of ['group','category','direction'] as const){if(query[k])params.set(k,query[k]!);}fetch(api+'/api/v1/reports/movements?'+params,{credentials:'include',cache:'no-store',headers:{Accept:'application/json'},signal:AbortSignal.any([c.signal,AbortSignal.timeout(30000)])}).then(async r=>{if(r.status===401){location.replace('/login');return;}if(!r.ok)throw Error(r.status===403?'Ce rapport est réservé au responsable.':'Les mouvements n’ont pas pu être chargés.');const body=await r.json();if(!c.signal.aborted)setData(body);}).catch(e=>{if(!c.signal.aborted)setError(e.message);});return()=>c.abort();},[query,month,vehicleId,page,retry]);
+ return createPortal(<dialog ref={dialog} className="rp-dialog" aria-labelledby="rp-movement-title" onCancel={e=>{e.preventDefault();onClose();}}><header><div><span className="rp-kicker">DÉTAIL DU RAPPORT</span><h2 id="rp-movement-title">{query.title}</h2><p>Du {date(month+'-01')} au {date(until)}</p></div><button className="rp-icon" aria-label="Fermer les mouvements" onClick={onClose}><X size={20}/></button></header>
+ <div className="rp-dialog-body">{error?<div role="alert" className="rp-error">{error}<button onClick={()=>setRetry(n=>n+1)}>Réessayer</button></div>:!data?<p role="status">Chargement des mouvements…</p>:<>
+ <div className="rp-flow-summary"><span>{data.total} mouvement{data.total!==1?'s':''}</span><>{allocation?<strong>{money(data.summary.allocated_centimes??0)} affectés · sans mouvement de caisse</strong>:<><strong className="rp-in">+ {money(data.summary.incoming_centimes)}</strong><strong className="rp-out">− {money(data.summary.outgoing_centimes)}</strong></>}</></div>
+ <div className="rp-flow-list">{data.data.map(row=><button key={row.key} onClick={()=>onOpen(row)} className="rp-flow"><span className={'rp-flow-icon '+(allocation?'':row.amount_centimes>0?'in':'out')}>{allocation?<ShieldCheck size={19}/>:row.amount_centimes>0?<ArrowDownLeft size={19}/>:<ArrowUpRight size={19}/>}</span><span className="rp-flow-copy"><strong>{row.label}</strong><span>{[row.party,row.vehicle!==row.party?row.vehicle:null].filter(Boolean).join(' · ')||'Agence'} · {date(row.occurred_on)}</span><small>{channels[row.channel]??row.channel}{row.attribution==='shared'?' · Facture partagée, montant entier':row.attribution==='swap'?' · Location avec changement de voiture':''}{row.reference?' · '+row.reference:''}</small></span><b className={allocation?'':row.amount_centimes>0?'rp-in':'rp-out'}>{allocation?'':row.amount_centimes>0?'+':'−'} {money(Math.abs(row.amount_centimes))}</b><ArrowUpRight size={16}/></button>)}</div>
+ {!data.total&&<p className="rp-empty">Aucun mouvement pour ce choix.</p>}
+ <div className="rp-pager"><button className="rp-icon" aria-label="Page précédente" disabled={data.page<=1} onClick={()=>setPage(p=>p-1)}><ChevronLeft size={18}/></button><span>{data.page} / {data.last_page}</span><button className="rp-icon" aria-label="Page suivante" disabled={data.page>=data.last_page} onClick={()=>setPage(p=>p+1)}><ChevronRight size={18}/></button></div>
+ <p className="rp-caption">Ouvrez une ligne pour retrouver son dossier d’origine. Les montants tiennent compte des corrections enregistrées.</p>
+ </>}</div></dialog>,document.body);
+}

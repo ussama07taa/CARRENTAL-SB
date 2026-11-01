@@ -17,6 +17,8 @@ class SaveVehicleRequest extends FormRequest
     {
         $data = [];
         foreach (VehicleFields::EDITABLE as $field) {
+            if (in_array($field, ['public_description', 'custom_equipment'], true) && ! $this->has($field)) continue;
+            if ($field === 'published' && ! $this->has($field)) continue;
             $v = $this->input($field);
             $data[$field] = is_string($v) ? (trim($v) === '' ? null : trim($v)) : $v;
         }
@@ -35,6 +37,15 @@ class SaveVehicleRequest extends FormRequest
         $initial = $this->isMethod('POST');
 
         return [
+            'published' => ['sometimes', 'boolean'],
+            'public_description' => ['sometimes', 'nullable', 'array:fr,ar,en,es'],
+            'public_description.*' => ['nullable', 'string', 'max:3000'],
+            'custom_equipment' => ['sometimes', 'nullable', 'array', 'max:30'],
+            'custom_equipment.*' => ['array:fr,ar,en,es'],
+            'custom_equipment.*.fr' => ['required', 'string', 'max:100'],
+            'custom_equipment.*.ar' => ['required', 'string', 'max:100'],
+            'custom_equipment.*.en' => ['required', 'string', 'max:100'],
+            'custom_equipment.*.es' => ['required', 'string', 'max:100'],
             'vehicle_type' => ['nullable', Rule::in(VehicleFields::TYPES)],
             'plate' => ['required', 'string', 'max:30', 'regex:/^[\pL\pN][\pL\pN\s\-]*$/u'],
             'make' => ['required', 'string', 'max:60'], 'model' => ['required', 'string', 'max:80'],

@@ -31,7 +31,26 @@ class ReservationPaymentController extends Controller
 
     public function quote(Request $request, int $reservation): JsonResponse
     {
-        return $this->save($request, $reservation, 'quote', ['total_centimes' => ['required', 'integer', 'min:1', 'max:99999999999'], 'reason' => ['required', 'string', 'min:3', 'max:1000'], 'expected_quote_id' => ['nullable', 'integer', 'min:1'], 'pricing_version_id' => ['nullable', 'required_if:use_calculated_price,true', 'integer', 'min:1'], 'use_calculated_price' => ['sometimes', 'boolean'], 'agreement_confirmed' => ['required', 'accepted']]);
+        return $this->save($request, $reservation, 'quote', ['vat_mode' => ['required_with:vat_rate', 'nullable', Rule::in(['included', 'added'])], 'vat_rate' => ['required_with:vat_mode', 'nullable', 'regex:/^\d{1,3}(\.\d{1,2})?$/', 'numeric', 'between:0,100'], 'total_centimes' => ['required', 'integer', 'min:1', 'max:99999999999'], 'reason' => ['required', 'string', 'min:3', 'max:1000'], 'expected_quote_id' => ['nullable', 'integer', 'min:1'], 'pricing_version_id' => ['nullable', 'required_if:use_calculated_price,true', 'integer', 'min:1'], 'use_calculated_price' => ['sometimes', 'boolean'], 'agreement_confirmed' => ['required', 'accepted']]);
+    }
+
+    public function invoiceRequest(Request $request, int $reservation): JsonResponse
+    {
+        $actor = CompanyMembership::where('user_id', $request->user()->id)->firstOrFail();
+        abort_unless($actor->is_primary_responsible, 403);
+        $input = $request->validate(['requested' => ['required', 'boolean'], 'expected_revision' => ['nullable', 'integer'], 'request_key' => ['required', 'uuid']]);
+        return DB::transaction(function () use ($reservation, $actor, $input) {
+            $r = Reservation::whereKey($reservation)->lockForUpdate()->firstOrFail();
+            $events = app(RentalPayment::class)->table('reservation_events')->where('reservation_id', $r->id)->where('action', 'invoice_request_updated');
+            $old = (clone $events)->where('data->request_key', $input['request_key'])->first();
+            if ($old) {
+                abort_unless((bool) json_decode($old->data, true)['requested'] === $input['requested'], 409, 'Cette opération a déjà été utilisée.');
+            } else {
+                abort_unless((int) (clone $events)->max('id') === (int) ($input['expected_revision'] ?? 0), 409, 'La demande de facture a changé. Actualisez le dossier.');
+                DB::table('reservation_events')->insert(['company_id' => $r->company_id, 'reservation_id' => $r->id, 'actor_membership_id' => $actor->id, 'action' => 'invoice_request_updated', 'data' => json_encode($input), 'created_at' => now()]);
+            }
+            return response()->json(['financial' => app(RentalPayment::class)->summary($r)]);
+        });
     }
 
     public function payment(Request $request, int $reservation): JsonResponse
@@ -66,6 +85,6 @@ class ReservationPaymentController extends Controller
             return response()->json(['code' => $result['error'], 'message' => $result['message'], ...($result['error'] === 'SIMILAR_PAYMENT' ? ['similar_payment_ids' => $result['similar_payment_ids'], 'financial' => $service->summary(Reservation::findOrFail($id))] : [])], $result['status']);
         }
 
-        return response()->json(['financial' => $service->summary(Reservation::findOrFail($id)), 'replayed' => $result['replayed']], $result['replayed'] ? 200 : 201);
+        return response()->json(['financial' => $service->summary(Reservation::findOrFail($id)), 'replayed' => $result['replayed'], 'payment_id' => $result['payment_id'] ?? null], $result['replayed'] ? 200 : 201);
     }
 }

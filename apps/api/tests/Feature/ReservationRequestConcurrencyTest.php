@@ -7,10 +7,10 @@ use App\Models\CompanyMembership;
 use App\Models\Customer;
 use App\Models\Vehicle;
 use App\Support\Tenancy\Tenant;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Tests\Support\IsolatedDatabaseMigrations as DatabaseMigrations;
 use Tests\TestCase;
 
 class ReservationRequestConcurrencyTest extends TestCase

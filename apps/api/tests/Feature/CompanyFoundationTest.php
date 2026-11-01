@@ -184,11 +184,11 @@ class CompanyFoundationTest extends TestCase
         Tenant::id();
     }
 
-    public function test_database_rejects_a_second_primary_responsible(): void
+    public function test_database_allows_multiple_agency_managers(): void
     {
         $company = $this->createCompany();
-        $this->expectException(QueryException::class);
         Tenant::run($company->id, fn () => CompanyMembership::factory()->responsible()->create());
+        $this->assertSame(2,Tenant::run($company->id,fn()=>CompanyMembership::where('is_primary_responsible',true)->count()));
     }
 
     public function test_audited_responsible_must_belong_to_the_same_agency(): void

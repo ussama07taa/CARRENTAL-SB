@@ -1,7 +1,8 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
 import {api,apiMutation} from '../_lib/auth-client';
-import DocumentViewer from '../vehicles/document-viewer';
+import ContractPdfPages from './contract-pdf-pages';
+import ContractPreview from './contract-preview';
 import './tablet-contract-signature.css';
 
 export function SignaturePad({label,disabled,onChange}:{label:string;disabled:boolean;onChange:(value:string)=>void}){
@@ -16,11 +17,13 @@ export function SignaturePad({label,disabled,onChange}:{label:string;disabled:bo
 }
 
 export default function TabletContractSignature({reservation,version,original,signedId,onDone,onCancel,onBusyChange}:{reservation:number;version:{id:number;version:number;reference:string;layout?:number|null};original:{id:number;sha256:string};signedId:number|null;onDone:()=>void;onCancel:()=>void;onBusyChange:(value:boolean)=>void}){
- const [client,setClient]=useState(''),[agency,setAgency]=useState(''),[read,setRead]=useState(false),[opened,setOpened]=useState(false),[showOriginal,setShowOriginal]=useState(false),[checked,setChecked]=useState(false),[consent,setConsent]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false),[uncertain,setUncertain]=useState(false),[preview,setPreview]=useState<{token:string;hash:string;url:string}|null>(null);
+ const [client,setClient]=useState(''),[agency,setAgency]=useState(''),[previewReady,setPreviewReady]=useState(false),[read,setRead]=useState(false),[opened,setOpened]=useState(false),[checked,setChecked]=useState(false),[consent,setConsent]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false),[uncertain,setUncertain]=useState(false),[preview,setPreview]=useState<{token:string;hash:string;url:string}|null>(null);
+ const previewHeading=useRef<HTMLHeadingElement>(null);
+ useEffect(()=>{if(preview){previewHeading.current?.focus({preventScroll:true});previewHeading.current?.scrollIntoView({block:'start'});}},[preview]);
  const lock=useRef(false),key=useRef(''),body=useRef<Record<string,unknown>|null>(null),url=useRef('');
  const base=`reservations/${reservation}/departure/contract/${version.id}/tablet`;
  useEffect(()=>()=>{if(url.current)URL.revokeObjectURL(url.current);},[]);
- function clearPreview(){if(url.current)URL.revokeObjectURL(url.current);url.current='';setPreview(null);setChecked(false);setConsent(false);key.current='';body.current=null;}
+ function clearPreview(){if(url.current)URL.revokeObjectURL(url.current);url.current='';setPreview(null);setPreviewReady(false);setChecked(false);setConsent(false);key.current='';body.current=null;}
  function updateClient(value:string){clearPreview();setClient(value);}function updateAgency(value:string){clearPreview();setAgency(value);}
  async function generate(){if(lock.current)return;lock.current=true;setBusy(true);onBusyChange(true);setError('');clearPreview();try{
   const form=new FormData();Object.entries({client_signature:client,agency_signature:agency,expected_signed_id:signedId??'',original_id:original.id,original_sha256:original.sha256,contract_read:'1'}).forEach(([k,v])=>form.append(k,String(v)));
@@ -35,17 +38,17 @@ export default function TabletContractSignature({reservation,version,original,si
  const blocked=busy||uncertain;
  return <section className="ts" aria-label="Signature tablette de test"><header><h4>Signer sur tablette · {version.reference}</h4><span>ESPACE TEST</span></header>
  <details className="ts-help"><summary>ⓘ Comprendre la signature tablette</summary><p lang="ar" dir="rtl">هاد التوقيع مرسوم بالصبع أو قلم الشاشة أو الماوس، غير للتجربة وماشي توقيع إلكتروني مصادق عليه. قراو العقد بجوج، وقّعو، وشوفو PDF قبل تأكيد الحفظ. الأصل كيبقى محفوظ، والتوقيع بوحدو ما كيسجلش خروج السيارة. الكاشي الحالي غير مثال باسم الوكالة ومكتوب عليه TEST، حتى نزيدو الصورة الحقيقية.</p></details>
- <p>Doigt, stylet ou souris. Le contrat papier reste possible. L’original est conservé ; {version.layout===4?'les signatures et le cachet sont placés dans leurs cadres, sur les deux pages.':'cette ancienne mise en page utilise une bande de signatures sous chaque page. Créez une nouvelle version pour signer dans les cadres.'} Cachet provisoire EXEMPLE / TEST au nom de bensbehicarrental SARL · Tanger.</p>
- <img className="ts-stamp" src="/sample-agency-stamp.svg" alt="Cachet provisoire EXEMPLE TEST bensbehicarrental SARL Tanger"/><ol className="ts-steps"><li>Lire le contrat</li><li>Dessiner les deux signatures</li><li>Revoir le PDF et confirmer</li></ol>
- <button type="button" className="secondary" disabled={blocked} onClick={()=>{setShowOriginal(true);setOpened(true);}}>Lire le PDF original avant de signer</button>
- <label className="dp-check"><input type="checkbox" disabled={blocked||!opened} checked={read} onChange={e=>{setRead(e.target.checked);clearPreview();}}/>Le client et l’agence ont lu cette version du contrat.</label>
+ <p>Relisez cette version, dessinez les deux signatures, puis contrôlez l’aperçu avant de l’enregistrer.</p>
+ <details className="dc-review" open={!read}><summary>1. Lire le contrat · {version.reference}</summary><ContractPreview reservation={reservation} fileId={original.id} title={'Contrat à lire · '+version.reference} onReady={ready=>{setOpened(ready);if(!ready)setRead(false);}}/></details>
+ <label className="dp-check"><input data-validation-field="read" type="checkbox" disabled={blocked||!opened} checked={read} onChange={e=>{setRead(e.target.checked);clearPreview();}}/>Le client et l’agence ont lu cette version du contrat.</label>
+ {!read&&<p className="dc-progress-note">Après lecture, cochez la confirmation ci-dessus pour activer les signatures.</p>}
  <div className="ts-pads"><SignaturePad label="Signature du client" disabled={blocked||!read} onChange={updateClient}/><SignaturePad label="Signature de l’agence" disabled={blocked||!read} onChange={updateAgency}/></div>
  <div className="dp-actions"><button type="button" className="primary" disabled={blocked||!read||!client||!agency} onClick={()=>void generate()}>{busy?'Préparation…':'Préparer l’aperçu PDF signé'}</button><button type="button" className="secondary" disabled={blocked} onClick={onCancel}>Annuler la signature tablette</button></div>
- {preview&&<div className="ts-preview"><h4>Aperçu avant confirmation · deux pages A4</h4><p>Vérifiez les deux pages, les signatures et la lisibilité. La copie n’est pas encore enregistrée.</p><iframe title="Aperçu PDF avec signatures de test" src={preview.url}/><a href={preview.url} target="_blank" rel="noreferrer">Ouvrir l’aperçu PDF dans un onglet</a>
- <label className="dp-check"><input type="checkbox" disabled={blocked} checked={checked} onChange={e=>setChecked(e.target.checked)}/>J’ai revu les deux pages et les deux signatures dans cet aperçu.</label>
- <label className="dp-check"><input type="checkbox" disabled={blocked} checked={consent} onChange={e=>setConsent(e.target.checked)}/>Le client et l’agence acceptent de conserver cette copie de test.</label>
- <button type="button" className="primary" disabled={blocked||!checked||!consent} onClick={()=>void confirm()}>Confirmer et conserver la copie de test</button></div>}
+ {preview&&<div className="ts-preview"><h4 ref={previewHeading} tabIndex={-1}>Aperçu avant confirmation · deux pages A4</h4><p>Vérifiez les deux pages, les signatures et la lisibilité. La copie n’est pas encore enregistrée.</p><ContractPdfPages url={preview.url} title="Aperçu PDF avec signatures de test" onReady={ready=>{setPreviewReady(ready);if(!ready){setChecked(false);setConsent(false);}}}/><a href={preview.url} target="_blank" rel="noreferrer">Ouvrir l’aperçu PDF dans un onglet</a>
+ <label className="dp-check"><input data-validation-field="checked" type="checkbox" disabled={blocked||!previewReady} checked={checked} onChange={e=>setChecked(e.target.checked)}/>J’ai revu les deux pages et les deux signatures dans cet aperçu.</label>
+ <label className="dp-check"><input data-validation-field="consent" type="checkbox" disabled={blocked||!previewReady} checked={consent} onChange={e=>setConsent(e.target.checked)}/>Le client et l’agence acceptent de conserver cette copie de test.</label>
+ <button type="button" className="primary" disabled={blocked||!previewReady||!checked||!consent} onClick={()=>void confirm()}>Confirmer et conserver la copie de test</button></div>}
  {error&&<div className="dp-error" role="alert">{error}{uncertain&&<button type="button" className="secondary" disabled={busy} onClick={()=>void confirm()}>Vérifier la même opération</button>}</div>}
- {showOriginal&&<DocumentViewer reservationId={reservation} contractFile document={{id:original.id,kind:'rental_contract',version:version.version}} onClose={()=>setShowOriginal(false)}/>}
+
  </section>;
 }

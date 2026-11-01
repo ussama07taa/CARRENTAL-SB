@@ -1,0 +1,24 @@
+export type Totals={incoming_centimes:number;outgoing_centimes:number;net_centimes:number;count:number};
+export type Car={id:number;make:string;model:string;plate:string};
+export type Point={date?:string;month?:string;incoming_centimes:number;outgoing_centimes:number};
+export type Due={key?:string;source:string;source_id:number;title:string;party?:string;due_on?:string|null;remaining_centimes:number;vehicle:Car|string|null;shared:boolean};
+export type Report={
+ period:{month:string;from:string;to:string;today:string;month_end:string};
+ vehicle:Car|null;summary:Totals;daily:Point[];trend:Point[];
+ categories:(Totals&{category:string;label:string})[];
+ vehicles:(Car&Totals&{financing_centimes:number})[];
+ unassigned:Record<'agency'|'shared'|'swap',Totals>;
+ excluded:Record<'deposit'|'transfer'|'pending'|'blocked'|'cheque',Totals>;
+ damage_allocations:{amount_centimes:number;count:number};
+ shared_context:Totals;
+ balances:{as_of:string;scope:string;customers:{remaining_centimes:number;credit_centimes:number;deposit_held_centimes:number;pending_centimes:number;refund_due_centimes:number;count:number};customer_rows:Due[];
+ payables:{total_centimes:number;expenses_centimes:number;loans_centimes:number;apport_centimes:number;overdue_centimes:number;month_due_centimes:number;provisional_count:number;undated_count:number};payable_rows:Due[];payable_count:number;shared_payable_centimes:number;supplier_credit_centimes:number;insurance:{approved_remaining_centimes:number;pending_count:number}};
+};
+export type Flow={key:string;source:string;source_id:number;vehicle_id:number|null;vehicle:string|null;report_vehicle_id:number|null;label:string;party:string|null;category:string;occurred_on:string;amount_centimes:number;channel:string;reference:string|null;attribution:string};
+export type FlowQuery={title:string;group?:string;category?:string;direction?:string};
+export type FlowResult={data:Flow[];total:number;page:number;last_page:number;summary:Totals&{allocated_centimes?:number}};
+export const money=(n:number)=>new Intl.NumberFormat('fr-MA',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n/100)+' DH';
+export const shortMoney=(n:number)=>new Intl.NumberFormat('fr-FR',{notation:'compact',maximumFractionDigits:1}).format(n/100);
+export const date=(s:string)=>new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short',year:'numeric'}).format(new Date(s+'T12:00:00'));
+export const monthLabel=(s:string)=>new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric'}).format(new Date(s+'-01T12:00:00'));
+export const sourceLink=(source:string,id:number)=>source==='rental'?'/reservations?dossier='+id:source==='expense'||source==='manual'?'/expenses?expense='+id:source==='incident'?'/incidents?ticket='+id:'/cash';

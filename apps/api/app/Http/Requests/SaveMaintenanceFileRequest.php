@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Http\Requests\Concerns\ValidatesPrivateDocumentUpload;
+use App\Support\Vehicles\MaintenanceAccess;
 use App\Support\Vehicles\MaintenanceWork;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -27,7 +28,14 @@ class SaveMaintenanceFileRequest extends FormRequest
     {
         $today = now('Africa/Casablanca')->toDateString();
 
-        return ['mode' => ['required', Rule::in(['completed', 'garage'])], 'performed_on' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.$today], 'kilometers' => ['nullable', 'integer', 'between:0,9999999'], 'garage' => ['nullable', 'string', 'max:150'], 'notes' => ['nullable', 'string', 'max:2000'], 'paid_centimes' => ['required', 'integer', 'between:0,1000000000'], 'paid_on' => ['nullable', Rule::requiredIf((int) $this->input('paid_centimes') > 0), 'date_format:Y-m-d', 'before_or_equal:'.$today], 'method' => ['nullable', Rule::requiredIf((int) $this->input('paid_centimes') > 0), Rule::in(['cash', 'transfer', 'cheque', 'card'])], 'payment_due_on' => ['nullable', 'date_format:Y-m-d'], 'items' => ['required', 'array', 'min:1', 'max:30'], ...(new MaintenanceWork)->rules('items.*.'), 'file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'], 'request_key' => ['required', 'uuid'], 'company_id' => ['prohibited']];
+        $rules = ['mode' => ['required', Rule::in(['completed', 'garage'])], 'performed_on' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.$today], 'kilometers' => ['nullable', 'integer', 'between:0,9999999'], 'garage' => ['nullable', 'string', 'max:150'], 'notes' => ['nullable', 'string', 'max:2000'], 'paid_centimes' => ['required', 'integer', 'between:0,1000000000'], 'paid_on' => ['nullable', Rule::requiredIf((int) $this->input('paid_centimes') > 0), 'date_format:Y-m-d', 'before_or_equal:'.$today], 'method' => ['nullable', Rule::requiredIf((int) $this->input('paid_centimes') > 0), Rule::in(['cash', 'transfer', 'cheque', 'card'])], 'payment_due_on' => ['nullable', 'date_format:Y-m-d'], 'items' => ['required', 'array', 'min:1', 'max:30'], ...(new MaintenanceWork)->rules('items.*.'), 'file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'], 'request_key' => ['required', 'uuid'], 'duplicate_confirmed' => ['sometimes', 'boolean'], 'company_id' => ['prohibited']];
+        if (! app(MaintenanceAccess::class)->financial($this->user()->id)) {
+            foreach (['items.*.cost_status', 'items.*.amount_centimes', 'paid_centimes', 'paid_on', 'method', 'payment_due_on', 'file', 'duplicate_confirmed'] as $field) {
+                $rules[$field] = ['prohibited'];
+            }
+        }
+
+        return $rules;
     }
 
     public function messages(): array

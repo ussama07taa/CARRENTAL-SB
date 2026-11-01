@@ -25,7 +25,7 @@ class SeedDemoVehicles extends Command
         }
         $company = Company::sole();
         Tenant::run($company->id, function () use ($save): void {
-            $member = CompanyMembership::where('is_primary_responsible', true)->sole();
+            $member = CompanyMembership::where('is_primary_responsible', true)->where('is_active', true)->orderBy('id')->firstOrFail();
             foreach ([['Dacia', 'Logan', 'diesel', 'manual', 42500], ['Renault', 'Clio', 'petrol', 'manual', 18620], ['Volkswagen', 'T-Cross', 'diesel', 'automatic', 31000], ['Hyundai', 'Tucson', 'hybrid', 'automatic', 7900]] as $i => [$make,$model,$fuel,$gear,$km]) {
                 $key = sprintf('10000000-0000-4000-8000-%012d', $i + 1);
                 if (Vehicle::where('creation_key', $key)->exists()) {

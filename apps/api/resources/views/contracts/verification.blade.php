@@ -1,0 +1,13 @@
+@php($ar=($data['language']??'fr')==='ar')
+<!doctype html><html lang="{{ $ar?'ar':'fr' }}" dir="{{ $ar?'rtl':'ltr' }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>{{ $ar?'التحقق من نسخة العقد':'Vérification du contrat' }}</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#f4f7fc;color:#102344;font:16px/1.6 Arial,sans-serif;padding:32px 16px}main{max-width:560px;margin:5vh auto;background:white;border:1px solid #dce4f0;border-top:4px solid #004fff;border-radius:16px;padding:28px}h1{font-size:26px;line-height:1.3;margin:8px 0 24px}.eyebrow{color:#004fff;font-size:13px;font-weight:bold}.status{background:#eef4ff;border-radius:8px;padding:14px 16px;font-weight:bold}.status.old{background:#fff5e8;color:#82420e}dl{margin:24px 0}dl div{padding:12px 0;border-bottom:1px solid #e6edf5}dt{font-size:13px;color:#52637a}dd{margin:3px 0 0;font-weight:bold;overflow-wrap:anywhere}p{font-size:14px;color:#52637a}.privacy{border-top:1px solid #e6edf5;padding-top:16px}@media(max-width:420px){main{margin:12px auto;padding:22px}h1{font-size:23px}}</style></head><body><main>
+<div class="eyebrow">{{ $ar?'التحقق من الوثيقة':'VÉRIFICATION DU DOCUMENT' }}</div><h1>{{ $ar?'نسخة عقد الكراء':'Version du contrat' }}</h1>
+@if($data)
+<div class="status {{ $data['newer_issued']?'old':'' }}">{{ $data['newer_issued']?($ar?'صدرت نسخة أحدث من هذا العقد':'Une version plus récente a été émise'):($ar?'آخر نسخة صادرة مسجلة':'Dernière version émise enregistrée') }}</div>
+<dl><div><dt>{{ $ar?'الوكالة':'Agence' }}</dt><dd>{{ $data['agency'] }}</dd></div><div><dt>{{ $ar?'مرجع العقد':'Référence du contrat' }}</dt><dd><bdi>{{ $data['reference'] }}</bdi></dd></div><div><dt>{{ $ar?'رقم النسخة':'Version' }}</dt><dd>{{ $data['version'] }}</dd></div><div><dt>{{ $ar?'تاريخ الإصدار — توقيت المغرب':'Émission — heure du Maroc' }}</dt><dd><bdi>{{ $data['issued_at'] }}</bdi></dd></div></dl>
+<p>{{ $ar?'قارن المرجع ورقم النسخة مع الوثيقة. هذه الصفحة تتحقق من وجود النسخة فقط؛ لا تصادق على التوقيع أو على محتوى الورقة المعروضة.':'Comparez la référence et la version avec votre document. Cette page confirme uniquement l’existence de la version ; elle ne certifie ni la signature ni le contenu de la copie présentée.' }}</p>
+@else
+<div class="status old">Lien de vérification invalide ou version indisponible.</div><p>Vérifiez le QR code ou contactez l’agence.</p>
+@endif
+<p class="privacy">{{ $ar?'لا تعرض هذه الصفحة بيانات الزبون أو السيارة، ولا تتيح تحميل العقد.':'Aucune donnée du client ou du véhicule n’est affichée. Aucun téléchargement du contrat n’est proposé.' }}</p>
+</main></body></html>

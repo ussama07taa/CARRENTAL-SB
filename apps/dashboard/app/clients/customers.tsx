@@ -1,4 +1,12 @@
 'use client';
+import Link from 'next/link';
+import ExcelExchange from '../_components/excel-exchange';
+import {moroccoDateTimeFormat} from '../_lib/morocco-time';
+
+import {Eye,Pencil,Phone,Plus,RefreshCw,UserRound,FileCheck2,History,Mail,CalendarDays} from 'lucide-react';
+import './client-layout.css';
+import CustomerRentals from './customer-rentals';
+import DocumentOcr from './document-ocr';
 import {useCreateShortcut} from '../_lib/use-create-shortcut';
 import {validateFields,focusFieldError} from '../_lib/form-validation';
 import FieldHelp from '../_components/field-help';
@@ -17,7 +25,7 @@ type Activity = { action: string; actor: string; created_at: string };
 type Listing = { data: Customer[]; total: number; page: number; last_page: number };
 type Conflict = { code?: string; message: string; customer_id?: number; duplicates?: Customer[] };
 const empty: Fields = { first_name: '', last_name: '', phone: '', secondary_phone: '', email: '', city: '', address: '', language: 'fr', identity_type: '', identity_number: '', licence_number: '', licence_expires_on: '' };
-const date = (value: string) => new Intl.DateTimeFormat('fr-MA', { dateStyle: 'medium', timeZone: 'Africa/Casablanca' }).format(new Date(value));
+const date = (value: string) => moroccoDateTimeFormat('fr-MA', { dateStyle: 'medium', timeZone: 'Africa/Casablanca' }).format(new Date(value));
 const initials = (c: Fields) => (c.first_name[0] ?? '') + (c.last_name[0] ?? '');
 function values(c: Customer): Fields {
   return Object.fromEntries(Object.keys(empty).map(key => [key, c[key as keyof Fields] ?? ''])) as Fields;
@@ -39,6 +47,7 @@ export default function Customers() {
   const [flash, setFlash] = useState('');
   const [opened, setOpened] = useState(false);
   const [mode, setMode] = useState<'view' | 'edit' | 'create'>('view');
+  const [viewTab,setViewTab]=useState('contact');
   const [section, setSection] = useState<'information' | 'documents'>('information');
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [activity, setActivity] = useState<Activity[]>([]);
@@ -46,7 +55,9 @@ export default function Customers() {
   const [pendingPhotos, setPendingPhotos] = useState<PendingPhotos>({});
   const [checkingPhotos,setCheckingPhotos]=useState<Partial<Record<DocumentSlot,boolean>>>({});
   const photoChecking=useCallback((slot:DocumentSlot,checking:boolean)=>setCheckingPhotos(current=>current[slot]===checking?current:{...current,[slot]:checking}),[]);
-  const photosChecking=Object.values(checkingPhotos).some(Boolean);
+  const [ocrBusy,setOcrBusy]=useState<Partial<Record<DocumentSlot,boolean>>>({});
+  const ocrCallbacks=useRef<Record<DocumentSlot,(busy:boolean)=>void>>({identity_front:busy=>setOcrBusy(c=>c.identity_front===busy?c:{...c,identity_front:busy}),identity_back:busy=>setOcrBusy(c=>c.identity_back===busy?c:{...c,identity_back:busy}),licence_front:busy=>setOcrBusy(c=>c.licence_front===busy?c:{...c,licence_front:busy}),licence_back:busy=>setOcrBusy(c=>c.licence_back===busy?c:{...c,licence_back:busy})});
+  const photosChecking=Object.values(checkingPhotos).some(Boolean)||Object.values(ocrBusy).some(Boolean);
   const [canManageDocuments, setCanManageDocuments] = useState(true);
   const [saveProgress, setSaveProgress] = useState('');
   const [form, setForm] = useState<Fields>({ ...empty });
@@ -106,9 +117,9 @@ export default function Customers() {
     setMode('create'); setKey(crypto.randomUUID()); setErrors({}); setError(''); setConflict(null); setFlash('');
     setOpening(false); setOpened(true);
   }
-  async function openCustomer(id: number, bypassWarning = false) {
+  async function openCustomer(id: number, bypassWarning = false, editing = false) {
     if (saving || (!bypassWarning && !mayLeave())) return;
-    const sequence = ++openSequence.current;
+    const sequence = ++openSequence.current; setViewTab('contact');
     setSection('information');
     setOpened(true); setOpening(true); setMode('view'); setCustomer(null); setPendingPhotos({}); setDocuments([]); setConflict(null); setError(''); setErrors({}); setFlash('');
     try {
@@ -118,7 +129,7 @@ export default function Customers() {
       const data = await response.json();
       if (sequence === openSequence.current) {
         setCustomer(data.data); setActivity(data.activity); setDocuments(data.documents ?? []); setCanManageDocuments(data.can_manage_documents === true);
-        setForm(values(data.data)); setBaseline(values(data.data));
+        setForm(values(data.data)); setBaseline(values(data.data)); if(editing)setMode('edit');
       }
     } catch (e) { if (sequence === openSequence.current) setError(e instanceof Error ? e.message : 'Connexion impossible.'); }
     finally { if (sequence === openSequence.current) setOpening(false); }
@@ -183,7 +194,7 @@ export default function Customers() {
   function submit(e: FormEvent) { e.preventDefault(); void save(); }
   function field(name: keyof Fields, label: string, type = 'text', required = false, hint?: string) {
     const max = ({ first_name: 100, last_name: 100, phone: 30, secondary_phone: 30, email: 254, city: 100, address: 500, identity_number: 50, licence_number: 50 } as Partial<Record<keyof Fields, number>>)[name];
-    return <div className={'client-field ' + (name === 'address' ? 'span-two' : '')}>
+    return <div className={'client-field ' + (['address','phone'].includes(name) ? 'span-two' : '')}>
       <label htmlFor={'client-' + name}>{label}{required && <span className="required-dot" aria-label="obligatoire"> *</span>}<FieldHelp field={name} label={label}/></label>
       <input aria-label={label} id={'client-' + name} name={name} value={form[name]} type={type} required={required} maxLength={max} autoComplete={name === 'first_name' ? 'given-name' : name === 'last_name' ? 'family-name' : name === 'phone' ? 'tel' : name === 'email' ? 'email' : 'off'} aria-invalid={!!errors[name]?.length} aria-describedby={errors[name]?.length || hint ? 'help-' + name : undefined}
         onChange={e => { setForm({ ...form, [name]: e.target.value }); setConflict(null); setErrors(prev => ({ ...prev, [name]: [] })); }} />
@@ -195,9 +206,11 @@ export default function Customers() {
   }
 
   function photo(slot: DocumentSlot, label: string) {
-    return <PhotoTile key={slot} slot={slot} label={label} serverError={errors['photo_'+slot]?.[0]} customerId={customer?.id} record={documents.find(d => d.slot === slot)} pending={pendingPhotos[slot]} editable={mode !== 'view' && canManageDocuments} disabled={saving} onCheckingChange={photoChecking}
+    return <div key={slot}><PhotoTile slot={slot} label={label} serverError={errors['photo_'+slot]?.[0]} customerId={customer?.id} record={documents.find(d => d.slot === slot)} pending={pendingPhotos[slot]} editable={mode !== 'view' && canManageDocuments} disabled={saving} onCheckingChange={photoChecking}
       onSelect={(target,file)=>{setErrors(v=>({...v,['photo_'+target]:[]}));setPendingPhotos(current=>({...current,[target]:{file,key:crypto.randomUUID(),previousId:documents.find(d=>d.slot===target)?.id??null}}));}}
-      onRemove={target => setPendingPhotos(current => { const next = { ...current }; delete next[target]; return next; })} />;
+      onRemove={target => setPendingPhotos(current => { const next = { ...current }; delete next[target]; return next; })} />
+      {opened && mode !== 'view' && canManageDocuments && pendingPhotos[slot] && (slot.startsWith('licence') || form.identity_type !== 'passport') && <DocumentOcr key={pendingPhotos[slot]!.key} values={form} customerId={customer?.id} disabled={saving} onBusyChange={ocrCallbacks.current[slot]} source={{file:pendingPhotos[slot]!.file,kind:slot.startsWith('licence')?'permis':'cin'}} onApply={patch=>setForm(current=>({...current,...patch}))}/>}
+    </div>;
   }
 
   function documentCards() {
@@ -224,37 +237,37 @@ export default function Customers() {
       const next = event.key === 'Home' ? 'information' : event.key === 'End' ? 'documents' : section === 'information' ? 'documents' : 'information';
       setSection(next); document.getElementById('section-tab-' + next)?.focus();
     }}>
-      <button type="button" role="tab" id="section-tab-information" aria-selected={section === 'information'} aria-controls="section-information" tabIndex={section === 'information' ? 0 : -1} onClick={() => setSection('information')}><span className="section-number">01</span><span>Informations du client<small>Identité & coordonnées</small></span></button>
-      <button type="button" role="tab" id="section-tab-documents" aria-selected={section === 'documents'} aria-controls="section-documents" tabIndex={section === 'documents' ? 0 : -1} onClick={() => setSection('documents')}><span className="section-number">02</span><span>Documents & photos<small>{Object.keys(pendingPhotos).length ? Object.keys(pendingPhotos).length + ' photo(s) à enregistrer' : documents.length ? documents.length + ' photo(s) enregistrée(s)' : 'Pièce d’identité & permis'}</small></span>{Object.keys(pendingPhotos).length > 0 && <span className="pending-indicator" aria-label="Photos non enregistrées" />}</button>
+      <button type="button" role="tab" id="section-tab-information" aria-selected={section === 'information'} aria-controls="section-information" tabIndex={section === 'information' ? 0 : -1} onClick={() => setSection('information')}><UserRound size={18} aria-hidden="true"/><span>Informations du client<small>Identité & coordonnées</small></span></button>
+      <button type="button" role="tab" id="section-tab-documents" aria-selected={section === 'documents'} aria-controls="section-documents" tabIndex={section === 'documents' ? 0 : -1} onClick={() => setSection('documents')}><FileCheck2 size={18} aria-hidden="true"/><span>Documents & photos<small>{Object.keys(pendingPhotos).length ? Object.keys(pendingPhotos).length + ' photo(s) à enregistrer' : documents.length ? documents.length + ' photo(s) enregistrée(s)' : 'Pièce d’identité & permis'}</small></span>{Object.keys(pendingPhotos).length > 0 && <span className="pending-indicator" aria-label="Photos non enregistrées" />}</button>
     </div>;
   }
 
   return <section className="clients-section">
-    <div className="clients-heading"><div><p className="eyebrow">RELATION CLIENT</p><h1>Vos clients, bien suivis.</h1><p>Un seul fichier par personne. Retrouvez-le à chaque visite.</p></div><button className="primary add-client" onClick={create}><span aria-hidden="true">＋</span> Nouveau client</button></div>
+    <div className="clients-heading"><div><h1>Clients</h1><p>Coordonnées, documents et historique de vos clients.</p></div><div className="clients-heading-actions"><button className="client-icon" aria-label="Actualiser les clients" title="Actualiser les clients" disabled={loading} onClick={()=>setReload(v=>v+1)}><RefreshCw size={18}/></button><ExcelExchange kind="customers" filters={{q:search}} onImported={()=>setReload(v=>v+1)}/><button className="primary add-client" onClick={create}><Plus size={18} aria-hidden="true"/> Nouveau client</button></div></div>
     {flash && !opened && <div className="save-notice" role="status">✓ {flash}</div>}
     <section className="client-directory" aria-label="Répertoire clients">
       <div className="directory-title"><div><h2>Répertoire clients</h2><span>{loading ? 'Actualisation…' : listing ? listing.total + (listing.total === 1 ? ' fichier' : ' fichiers') + (search ? ' trouvé(s)' : ' enregistrés') : 'Liste indisponible'}</span></div><span className="privacy-label"><Lock /> Espace privé de l’agence</span></div>
-      <div className="client-search"><Search /><FieldHelp field="search" label="Rechercher un client"/><input aria-label="Rechercher un client" placeholder="Nom, téléphone, pièce d’identité ou référence…" maxLength={100} value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />{search && <button className="clear-search" aria-label="Effacer la recherche" onClick={() => { setSearch(''); setPage(1); }}>×</button>}</div>
+      <div className="client-search"><Search /><FieldHelp field="search" label="Rechercher un client"/><input data-validation-field="search" aria-label="Rechercher un client" placeholder="Nom, téléphone, pièce d’identité ou référence…" maxLength={100} value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />{search && <button className="clear-search" aria-label="Effacer la recherche" onClick={() => { setSearch(''); setPage(1); }}>×</button>}</div>
       {listError ? <div className="directory-empty" role="alert"><h3>Connexion interrompue</h3><p>{listError}</p><button className="secondary" onClick={() => setReload(n => n + 1)}>Réessayer</button></div> :
         <div className="table-scroller" aria-busy={loading}>
           <table className="client-table"><thead><tr><th>Client</th><th>Téléphone</th><th>Ville</th><th>Dernière mise à jour</th><th><span className="sr-only">Action</span></th></tr></thead>
-            <tbody>{!loading && listing?.data.map(c => <tr key={c.id}>
+            <tbody>{!loading && listing?.data.map(c => <tr key={c.id} className="client-clickable" onClick={e=>{if(!(e.target as HTMLElement).closest('button,a'))void openCustomer(c.id);}}>
               <td><div className="customer-cell"><span className={'avatar avatar-' + c.id % 4} aria-hidden="true">{initials(c)}</span><div><strong>{c.first_name} {c.last_name}</strong><small>{c.reference}</small><small className="mobile-phone">{c.phone}</small></div></div></td>
-              <td className="phone-cell">{c.phone}</td><td>{c.city || <span className="missing-value">À compléter</span>}</td><td className="date-cell">{date(c.updated_at)}</td>
-              <td><button className="open-client" onClick={() => void openCustomer(c.id)} aria-label={'Ouvrir le fichier de ' + c.first_name + ' ' + c.last_name}>Ouvrir <span aria-hidden="true">↗</span></button></td>
+              <td className="phone-cell"><a href={"tel:"+c.phone.replace(/[^+0-9]/g,'')}>{c.phone}</a></td><td>{c.city || <span className="missing-value">À compléter</span>}</td><td className="date-cell">{date(c.updated_at)}</td>
+              <td><div className="client-row-actions"><button className="open-client client-icon" title="Consulter le client" onClick={() => void openCustomer(c.id)} aria-label={'Ouvrir le fichier de ' + c.first_name + ' ' + c.last_name}><Eye size={18}/></button><button className="client-icon" title="Modifier le client" aria-label={'Modifier le fichier de '+c.first_name+' '+c.last_name} onClick={()=>void openCustomer(c.id,false,true)}><Pencil size={18}/></button><a className="client-icon" href={'tel:'+c.phone.replace(/[^+0-9]/g,'')} title="Appeler le client" aria-label={'Appeler '+c.first_name+' '+c.last_name}><Phone size={18}/></a></div></td>
             </tr>)}</tbody></table>
           {loading && <div className="directory-empty loading-state" role="status"><span className="loading-dot" /> Chargement des clients…</div>}
           {!loading && listing?.data.length === 0 && <div className="directory-empty"><span className="empty-monogram" aria-hidden="true"><Search /></span><h3>{search ? 'Aucun client ne correspond.' : 'Votre répertoire commence ici.'}</h3><p>{search ? 'Essayez un autre nom, un numéro ou une référence.' : 'Le nom et le téléphone suffisent pour créer le premier fichier.'}</p><button className="secondary" onClick={search ? () => { setSearch(''); setPage(1); } : create}>{search ? 'Effacer la recherche' : 'Ajouter un client'}</button></div>}
         </div>}
       {listing && !listError && <div className="directory-footer"><span>Les pièces d’identité restent dans le fichier du client.</span><div className="pagination"><button aria-label="Page précédente" disabled={loading || page <= 1} onClick={() => setPage(p => p - 1)}>←</button><span>{page} / {listing.last_page}</span><button aria-label="Page suivante" disabled={loading || page >= listing.last_page} onClick={() => setPage(p => p + 1)}>→</button></div></div>}
     </section>
-    <div className="client-bottom-note"><span className="note-line" /><p>Enregistrez l’essentiel maintenant.<br /><strong>Complétez le fichier quand vous avez les informations.</strong></p><span className="note-index">01 / CLIENTS</span></div>
 
-    <dialog ref={dialog} className="customer-dialog" aria-labelledby="customer-dialog-title" onCancel={e => { e.preventDefault(); close(); }} onClose={e => { if (e.target === e.currentTarget) setOpened(false); }}>
+
+    <dialog ref={dialog} className={"customer-dialog"+(mode!=='view'?' customer-form-dialog':'')} aria-labelledby="customer-dialog-title" onCancel={e => { e.preventDefault(); close(); }} onClose={e => { if (e.target === e.currentTarget) setOpened(false); }}>
       <div className="drawer-top"><span className="eyebrow">{mode === 'create' ? 'NOUVEAU FICHIER' : customer?.reference ?? 'FICHIER CLIENT'}</span><button className="close-drawer" aria-label="Fermer le fichier" disabled={saving} onClick={close}>×</button></div>
       {opening ? <div className="drawer-body directory-empty" role="status">Ouverture du fichier…</div> : <>
-        <div className="drawer-heading"><div><h2 id="customer-dialog-title">{mode === 'create' ? 'Ajouter un client' : mode === 'edit' ? 'Modifier le fichier' : customer ? customer.first_name + ' ' + customer.last_name : 'Fichier indisponible'}</h2><p>{mode === 'create' ? '3 champs pour commencer. Le reste peut attendre.' : mode === 'edit' ? 'Les changements seront conservés dans l’historique.' : 'Coordonnées, identité et historique au même endroit.'}</p></div>{mode === 'view' && customer && <span className={'avatar avatar-large avatar-' + customer.id % 4} aria-hidden="true">{initials(customer)}</span>}</div>
-        {(customer || mode === 'create') && sectionNavigation()}
+        <div className="drawer-heading"><div><h2 id="customer-dialog-title">{mode === 'create' ? 'Ajouter un client' : mode === 'edit' ? 'Modifier le fichier' : customer ? customer.first_name + ' ' + customer.last_name : 'Fichier indisponible'}</h2><p>{mode === 'create' ? 'Créez son fichier pour le retrouver à chaque réservation.' : mode === 'edit' ? 'Les changements seront conservés dans l’historique.' : 'Coordonnées, identité et historique au même endroit.'}</p></div>{mode === 'view' && customer && <span className={'avatar avatar-large avatar-' + customer.id % 4} aria-hidden="true">{initials(customer)}</span>}</div>
+        {mode !== 'view' && (customer || mode === 'create') && sectionNavigation()}
         {error && <div className="notice error drawer-message" role="alert">{error}</div>}
         {flash && mode === 'view' && customer && <div className="save-notice drawer-message" role="status">✓ {flash}</div>}
         {conflict && <div className="conflict-notice drawer-message" role="alert"><strong>Une vérification est nécessaire</strong><p>{conflict.message}</p>
@@ -264,20 +277,31 @@ export default function Customers() {
           {conflict.code === 'CUSTOMER_CHANGED' && customer && <button className="secondary" onClick={() => void openCustomer(customer.id)}>Recharger le fichier</button>}
         </div>}
         {mode === 'view' && customer ? <>
-          <div className="drawer-body">
-            <div role="tabpanel" id="section-information" aria-labelledby="section-tab-information" hidden={section !== 'information'}>
-            <section className="profile-section"><h3><span>01</span> Coordonnées</h3><dl className="profile-grid">{detail('Téléphone principal', customer.phone)}{detail('Téléphone secondaire', customer.secondary_phone)}{detail('E-mail', customer.email)}{detail('Langue de communication', customer.language === 'ar' ? 'Arabe' : 'Français')}{detail('Ville', customer.city)}{detail('Adresse', customer.address)}</dl></section>
-            <section className="profile-section"><h3><span>03</span> Dernières activités</h3><ol className="activity-list">{activity.map((event, i) => <li key={i}><span className="activity-dot" /><div><strong>{event.action === 'created' ? 'Fichier créé' : event.action === 'document_added' ? 'Photo du document enregistrée' : 'Fichier modifié'}</strong><p>{event.actor} · {date(event.created_at)}</p></div></li>)}</ol></section>
+          <div className="client-view-tabs" role="tablist" aria-label="Rubriques du client" onKeyDown={event=>{
+            if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+            event.preventDefault();const keys=['contact','rentals','documents','history'];const i=keys.indexOf(viewTab);
+            const next=event.key==='Home'?keys[0]:event.key==='End'?keys[keys.length-1]:keys[(i+(event.key==='ArrowRight'?1:keys.length-1))%keys.length];
+            setViewTab(next);document.getElementById('client-view-'+next)?.focus();
+          }}>
+            {[{key:'contact',label:'Coordonnées',Icon:UserRound},{key:'rentals',label:'Locations',Icon:CalendarDays},{key:'documents',label:'Identité et permis',Icon:FileCheck2},{key:'history',label:'Historique',Icon:History}].map(({key,label,Icon})=><button key={key} id={'client-view-'+key} role="tab" aria-selected={viewTab===key} aria-controls={'client-panel-'+key} tabIndex={viewTab===key?0:-1} onClick={()=>setViewTab(key)}><Icon size={18}/>{label}</button>)}
+          </div>
+          <div className="drawer-body client-view-body">
+            <div role="tabpanel" id="client-panel-contact" aria-labelledby="client-view-contact" hidden={viewTab!=='contact'}>
+              <div className="client-contact-actions"><Link className="primary" href={"/reservations?create_for="+customer.id}><Plus size={16}/> Nouvelle réservation</Link><a className="secondary" href={'tel:'+customer.phone.replace(/[^+0-9]/g,'')}><Phone size={16}/> Appeler</a>{customer.email&&<a className="secondary" href={'mailto:'+customer.email}><Mail size={16}/> E-mail</a>}</div>
+              <section className="client-simple-card"><header><h3>Coordonnées du client</h3><button className="secondary" onClick={()=>{setSection('information');edit();}}><Pencil size={16}/> Modifier</button></header><dl className="profile-grid client-details">{detail('Téléphone principal',customer.phone)}{detail('Téléphone secondaire',customer.secondary_phone)}{detail('E-mail',customer.email)}{detail('Ville',customer.city)}{detail('Adresse',customer.address)}{detail('Langue de communication',({fr:'Français',ar:'Arabe',en:'Anglais',es:'Espagnol'}[customer.language]??customer.language))}</dl></section>
+              <p className="client-record-note">Créé le {date(customer.created_at)} · Mis à jour le {date(customer.updated_at)}</p>
             </div>
-            <div role="tabpanel" id="section-documents" aria-labelledby="section-tab-documents" hidden={section !== 'documents'}>{documentCards()}</div>
-          </div><div className="drawer-footer"><button className="secondary" onClick={close}>Fermer</button><button className="primary" onClick={edit}>Modifier le fichier <span aria-hidden="true">↗</span></button></div>
+            <div role="tabpanel" id="client-panel-rentals" aria-labelledby="client-view-rentals" hidden={viewTab!=='rentals'}>{viewTab==='rentals'&&<CustomerRentals key={customer.id} customerId={customer.id}/>}</div>
+            <div role="tabpanel" id="client-panel-documents" aria-labelledby="client-view-documents" hidden={viewTab!=='documents'}><div className="client-panel-heading"><h3>Identité et permis</h3><button className="secondary" onClick={()=>{setSection('documents');edit();}}><Pencil size={16}/> Modifier</button></div>{documentCards()}</div>
+            <div role="tabpanel" id="client-panel-history" aria-labelledby="client-view-history" hidden={viewTab!=='history'}><div className="client-panel-heading"><h3>Dernières activités</h3><span>{activity.length} événement(s)</span></div><ol className="activity-list">{activity.map((event,i)=><li key={i}><span className="activity-dot"/><div><strong>{event.action==='excel_imported'?'Importé depuis Excel':event.action==='created'?'Fichier créé':event.action==='document_added'?'Photo du document enregistrée':'Fichier modifié'}</strong><p>{event.actor} · {date(event.created_at)}</p></div></li>)}</ol>{activity.length===0&&<p>Aucune activité enregistrée.</p>}</div>
+          </div><div className="drawer-footer"><button className="secondary" onClick={close}>Fermer</button></div>
         </> : mode !== 'view' ? <form ref={formRef} onSubmit={submit} noValidate>
           <fieldset disabled={saving} className="customer-fieldset"><div className="drawer-body">
             <div role="tabpanel" id="section-information" aria-labelledby="section-tab-information" hidden={section !== 'information'}>
-            <section className="profile-section"><h3><span>01</span> L’essentiel <small>Obligatoire</small></h3><div className="client-form-grid">{field('first_name', 'Prénom', 'text', true)}{field('last_name', 'Nom', 'text', true)}{field('phone', 'Téléphone principal', 'tel', true, 'Ex. 0612345678 ou +33612345678')}</div></section>
-            <details className="optional-details" open={mode === 'edit' || Object.keys(errors).some(k => !['first_name', 'last_name', 'phone'].includes(k) && errors[k]?.length)}><summary><span>02</span><div>Informations complémentaires<small>Facultatif · maintenant ou plus tard</small></div><span className="details-plus" aria-hidden="true">＋</span></summary>
+            <section className="profile-section"><h3>Identité et contact <small>* Champs obligatoires</small></h3><div className="client-form-grid">{field('first_name', 'Prénom', 'text', true)}{field('last_name', 'Nom', 'text', true)}{field('phone', 'Téléphone principal', 'tel', true, 'Ex. 0612345678 ou +33612345678')}</div></section>
+            <details className="optional-details" open={Object.keys(errors).some(k => !['first_name', 'last_name', 'phone'].includes(k) && errors[k]?.length)}><summary><span>02</span><div>Informations complémentaires<small>Facultatif · maintenant ou plus tard</small></div><span className="details-plus" aria-hidden="true">＋</span></summary>
               <div className="client-form-grid">{field('secondary_phone', 'Téléphone secondaire', 'tel')}{field('email', 'E-mail', 'email')}{field('city', 'Ville')}
-                <div className="client-field"><label htmlFor="client-language">Langue de communication<FieldHelp field={"language"} label={"Langue de communication"}/></label><select name="language" aria-invalid={!!errors.language?.length} aria-describedby={errors.language?.length?"error-language":undefined} aria-label="Langue de communication" id="client-language" value={form.language} onChange={e => setForm({ ...form, language: e.target.value })}><option value="fr">Français</option><option value="ar">Arabe</option></select>{errors.language?.[0]&&<small id="error-language" className="field-error">{errors.language[0]}</small>}</div>
+                <div className="client-field"><label htmlFor="client-language">Langue de communication<FieldHelp field={"language"} label={"Langue de communication"}/></label><select name="language" aria-invalid={!!errors.language?.length} aria-describedby={errors.language?.length?"error-language":undefined} aria-label="Langue de communication" id="client-language" value={form.language} onChange={e => setForm({ ...form, language: e.target.value })}><option value="fr">Français</option><option value="ar">Arabe</option><option value="en">Anglais</option><option value="es">Espagnol</option></select>{errors.language?.[0]&&<small id="error-language" className="field-error">{errors.language[0]}</small>}</div>
                 {field('address', 'Adresse')}
               </div>
             </details>

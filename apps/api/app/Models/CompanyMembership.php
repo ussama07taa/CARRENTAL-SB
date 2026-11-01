@@ -16,7 +16,7 @@ class CompanyMembership extends Model
 
     protected function casts(): array
     {
-        return ['is_primary_responsible' => 'boolean'];
+        return ['is_primary_responsible' => 'boolean', 'is_active' => 'boolean'];
     }
 
     protected static function booted(): void

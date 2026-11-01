@@ -64,7 +64,10 @@ class DeparturePreparationTest extends TestCase
         $this->command($id, 'documents_checked', ['fingerprint' => $fingerprint, 'identity_original' => false, 'licence_original' => true])->assertUnprocessable();
         $this->command($id, 'documents_checked', ['fingerprint' => $fingerprint, 'identity_original' => true, 'licence_original' => true])->assertCreated()->assertJsonPath('data.documents.verified', true);
         $values = ['version' => $client->version, 'identity_type' => 'cin', 'identity_number' => 'TEST456', 'licence_number' => 'LIC456', 'licence_expires_on' => '2030-02-01'];
-        $this->putJson("/api/v1/reservations/$id/departure/customer", $values)->assertOk();
+        $this->putJson("/api/v1/reservations/$id/departure/customer", $values)->assertOk()
+            ->assertJsonPath('data.documents.customer.identity_number', 'TEST456')
+            ->assertJsonPath('data.documents.verified', false)
+            ->assertJsonPath('data.documents.missing', []);
         $this->assertDatabaseHas('customers', ['id' => $client->id, 'phone' => $client->phone]);
         $this->read($id)->assertJsonPath('data.documents.verified', false);
         $this->command($id, 'documents_checked', ['fingerprint' => $fingerprint, 'identity_original' => true, 'licence_original' => true])->assertConflict();

@@ -43,6 +43,49 @@ class RentalPaymentTest extends TestCase
         return $this->postJson("/api/v1/reservations/$id/payments", ['amount_centimes' => $amount, 'method' => $method, 'received_on' => '2026-10-18', 'reference' => 'TEST-REF', 'receipt_attested' => true, 'request_key' => $key ?? (string) Str::uuid()]);
     }
 
+    public function test_tax_modes_invoice_request_and_frozen_total(): void
+    {
+        [,,,,$id] = $this->fixture();
+        $body = ['total_centimes'=>120000,'vat_mode'=>'included','vat_rate'=>'20','reason'=>'Prix accepté','agreement_confirmed'=>true,'request_key'=>(string) Str::uuid()];
+        $included = $this->postJson("/api/v1/reservations/$id/quote",$body)->assertCreated()->assertJsonPath('financial.total_centimes',120000)->assertJsonPath('financial.tax.net_centimes',100000)->assertJsonPath('financial.tax.vat_centimes',20000)->json('financial.quote_id');
+        $body = [...$body,'expected_quote_id'=>$included,'vat_mode'=>'added','request_key'=>(string) Str::uuid()];
+        $added = $this->postJson("/api/v1/reservations/$id/quote",$body)->assertCreated()->assertJsonPath('financial.total_centimes',144000)->assertJsonPath('financial.tax.net_centimes',120000)->assertJsonPath('financial.tax.vat_centimes',24000)->json('financial.quote_id');
+        $this->postJson("/api/v1/reservations/$id/quote",$body)->assertOk()->assertJsonPath('replayed',true);
+        $request = ['requested'=>true,'request_key'=>(string) Str::uuid()];
+        $revision = $this->postJson("/api/v1/reservations/$id/invoice-request",$request)->assertOk()->assertJsonPath('financial.invoice_requested',true)->assertJsonPath('financial.total_centimes',144000)->json('financial.invoice_request_revision');
+        $this->postJson("/api/v1/reservations/$id/invoice-request",$request)->assertOk();
+        $this->postJson("/api/v1/reservations/$id/invoice-request",['requested'=>false,'request_key'=>(string) Str::uuid()])->assertConflict();
+        $this->hold($id)->assertCreated();
+        $this->pay($id,120000)->assertCreated()->assertJsonPath('financial.remaining_centimes',24000);
+        $this->confirm($id,$added)->assertUnprocessable()->assertJsonPath('code','PAYMENT_INCOMPLETE');
+        $this->pay($id,24000)->assertCreated();
+        $this->confirm($id,$added)->assertCreated()->assertJsonPath('financial.total_centimes',144000);
+        $this->postJson("/api/v1/reservations/$id/quote",[...$body,'expected_quote_id'=>$added,'vat_mode'=>'included','request_key'=>(string) Str::uuid()])->assertUnprocessable()->assertJsonPath('code','PRICE_FROZEN');
+        $this->postJson("/api/v1/reservations/$id/invoice-request",['requested'=>false,'expected_revision'=>$revision,'request_key'=>(string) Str::uuid()])->assertOk()->assertJsonPath('financial.invoice_requested',false)->assertJsonPath('financial.total_centimes',144000);
+        $this->assertSame(144000,(int) DB::table('reservations')->where('id',$id)->value('frozen_total_centimes'));
+        $this->assertSame(2,DB::table('reservation_events')->where('action','invoice_request_updated')->count());
+    }
+
+    public function test_tax_validation_permissions_and_rounding(): void
+    {
+        [$company,$manager,,,$id]=$this->fixture();
+        $body=['total_centimes'=>120000,'reason'=>'Prix accepté','agreement_confirmed'=>true,'request_key'=>(string) Str::uuid()];
+        foreach(['-1','101','20.123','1e1'] as $rate){
+            $this->postJson("/api/v1/reservations/$id/quote",[...$body,'vat_mode'=>'added','vat_rate'=>$rate])->assertUnprocessable()->assertJsonValidationErrors('vat_rate');
+        }
+        $this->postJson("/api/v1/reservations/$id/quote",[...$body,'vat_mode'=>'included'])->assertUnprocessable()->assertJsonValidationErrors('vat_rate');
+        $employee=Tenant::run($company->id,fn()=>CompanyMembership::factory()->create(['is_primary_responsible'=>false]));
+        $this->actingAs($employee->user)->postJson("/api/v1/reservations/$id/invoice-request",['requested'=>true,'request_key'=>(string) Str::uuid()])->assertForbidden();
+        $this->postJson("/api/v1/reservations/$id/quote",[...$body,'vat_mode'=>'added','vat_rate'=>'20'])->assertForbidden();
+        $other=Company::factory()->create();
+        $otherManager=Tenant::run($other->id,fn()=>CompanyMembership::factory()->responsible()->create());
+        $this->actingAs($otherManager->user)->withSession(['company_id'=>$other->id])->postJson("/api/v1/reservations/$id/invoice-request",['requested'=>true,'request_key'=>(string) Str::uuid()])->assertNotFound();
+        $this->assertSame(129000,\App\Support\Reservations\InvoiceTax::forPrice(120000,'7.5','added')['gross_centimes']);
+        $this->assertSame(120000,\App\Support\Reservations\InvoiceTax::forPrice(120000,'0','added')['gross_centimes']);
+        $this->assertSame(1,\App\Support\Reservations\InvoiceTax::forPrice(5,'10','added')['vat_centimes']);
+        $this->assertSame(0,\App\Support\Reservations\InvoiceTax::forPrice(4,'10','added')['vat_centimes']);
+    }
+
     public function test_similar_payment_requires_current_review_and_replay_does_not_add_money(): void
     {
         [,,,,$id] = $this->fixture();

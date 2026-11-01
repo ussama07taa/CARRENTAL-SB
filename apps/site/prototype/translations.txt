@@ -1,0 +1,108 @@
+01 · Votre voiture|01 · Your car|01 · Tu coche
+02 · Votre demande|02 · Your request|02 · Tu solicitud
+1. Comment vous contacter ?|1. How can we contact you?|1. ¿Cómo podemos contactarte?
+2. Où vous retrouver ?|2. Where shall we meet you?|2. ¿Dónde nos encontramos?
+5 places|5 seats|5 plazas
+5 places · Climatisation · Exemple de véhicule|5 seats · Air conditioning · Sample vehicle|5 plazas · Aire acondicionado · Vehículo de ejemplo
+5 portes|5 doors|5 puertas
+À CHACUN SA ROUTE|FIND YOUR OWN WAY|ELIGE TU CAMINO
+À confirmer|To be confirmed|Por confirmar
+À l’aéroport de Tanger|At Tangier airport|En el aeropuerto de Tánger
+À l’aéroport ou à votre hôtel, votre prochaine route commence avec BEN SBIH.|At the airport or your hotel, your next journey starts with BEN SBIH.|En el aeropuerto o en tu hotel, tu próximo viaje empieza con BEN SBIH.
+À votre hôtel|At your hotel|En tu hotel
+Accueil BEN SBIH|BEN SBIH home|Inicio BEN SBIH
+Aéroport de Tanger|Tangier airport|Aeropuerto de Tánger
+Afficher toutes les voitures|Show all cars|Ver todos los coches
+Âge, permis, kilométrage, assurance et caution seront précisés après validation des conditions de l’agence.|Age, driving licence, mileage, insurance and deposit terms will be published once approved by the agency.|Las condiciones de edad, permiso, kilometraje, seguro y fianza se publicarán tras su aprobación por la agencia.
+Aucun paiement en ligne. Les modalités sont convenues avec l’agence.|No online payment. Payment arrangements are agreed with the agency.|No hay pago en línea. Las condiciones de pago se acuerdan con la agencia.
+Aucune demande réelle créée. Aucune voiture bloquée.|No real request created. No car held.|No se ha creado ninguna solicitud real ni se ha bloqueado ningún coche.
+Aucune voiture dans cette catégorie|No cars in this category|No hay coches en esta categoría
+AVANT DE PRENDRE LA ROUTE|BEFORE YOU SET OFF|ANTES DE SALIR
+Caution séparée : 3 000 DH (exemple). Elle ne fait pas partie du prix de location.|Separate deposit: 3,000 MAD (example). It is not included in the rental price.|Fianza aparte: 3000 MAD (ejemplo). No forma parte del precio del alquiler.
+Ces conditions doivent encore être confirmées par l’agence avant publication. Aucun forfait ni couverture ne sont présumés dans cette maquette.|These terms still need agency approval before publication. This mockup does not assume any mileage allowance or insurance cover.|La agencia debe confirmar estas condiciones antes de publicarlas. Esta maqueta no presupone ningún límite de kilometraje ni cobertura de seguro.
+Choisir mes dates|Choose my dates|Elegir mis fechas
+Choisissez des dates valides avant de continuer.|Choose valid dates before continuing.|Elige fechas válidas antes de continuar.
+Choisissez vos dates et votre lieu de livraison. Vos choix vous suivent jusqu’à la demande, sans les saisir à nouveau.|Choose your dates and pickup location. Your choices carry through to your request without entering them again.|Elige tus fechas y el lugar de entrega. Tus opciones se mantienen en la solicitud sin tener que introducirlas de nuevo.
+Choisissez votre lieu. L’agence vous recontacte pour organiser la remise des clés.|Choose your location. The agency will contact you to arrange key handover.|Elige el lugar. La agencia se pondrá en contacto contigo para organizar la entrega de llaves.
+Choisissez votre voiture|Choose your car|Elige tu coche
+Climatisation|Air conditioning|Aire acondicionado
+COMPACTE|COMPACT|COMPACTO
+Compacte|Compact|Compacto
+Confirmez avec l’agence|Confirm with the agency|Confirma con la agencia
+Contact|Contact|Contacto
+Dans le site final, l’agence recevra ces informations et vous contactera pour vérifier les disponibilités et les modalités.|On the final website, the agency will receive these details and contact you to check availability and arrangements.|En el sitio definitivo, la agencia recibirá estos datos y te contactará para comprobar la disponibilidad y las condiciones.
+De la ville aux escapades, prenez votre temps.|From city streets to weekend escapes, take your time.|De la ciudad a una escapada, disfruta a tu ritmo.
+Découvrir|View car|Ver coche
+Demander cette voiture|Request this car|Solicitar este coche
+Départ|Pickup|Recogida
+Départ · date et heure|Pickup · date and time|Recogida · fecha y hora
+DH|MAD|MAD
+Dois-je payer sur le site ?|Do I pay on the website?|¿Tengo que pagar en el sitio web?
+E-mail · facultatif|Email · optional|Correo electrónico · opcional
+Électrique|Electric|Eléctrico
+Envoyez votre demande|Send your request|Envía tu solicitud
+Essayez une autre catégorie pour continuer votre recherche.|Try another category to continue your search.|Prueba otra categoría para continuar la búsqueda.
+Frais de livraison|Delivery fee|Gastos de entrega
+Hôtel|Hotel|Hotel
+Hôtel à Tanger|Hotel in Tangier|Hotel en Tánger
+Hôtel de restitution|Return hotel|Hotel de devolución
+Hôtel ou aéroport à Tanger. Frais de livraison à confirmer avec l’agence.|Hotel or airport in Tangier. Delivery fees must be confirmed with the agency.|Hotel o aeropuerto en Tánger. Los gastos de entrega se confirmarán con la agencia.
+Indiquez le nom de votre hôtel à Tanger dans la demande.|Enter the name of your hotel in Tangier in the request.|Indica el nombre de tu hotel en Tánger en la solicitud.
+jour|day|día
+jours|days|días
+Kilométrage, assurance et conditions|Mileage, insurance and terms|Kilometraje, seguro y condiciones
+Le retour doit être après le départ.|Return must be after pickup.|La devolución debe ser posterior a la recogida.
+Les frais éventuels seront confirmés avant votre accord.|Any additional fees will be confirmed before you agree.|Cualquier gasto adicional se confirmará antes de tu aceptación.
+Lieu de livraison|Pickup location|Lugar de entrega
+Lieu et éventuels frais à valider avec l’agence.|Location and any fees to be agreed with the agency.|Lugar y posibles gastos por confirmar con la agencia.
+Livraison|Delivery|Entrega
+LOCATION DE VOITURES · TANGER|CAR RENTAL · TANGIER|ALQUILER DE COCHES · TÁNGER
+Ma demande confirme-t-elle ma réservation ?|Does my request confirm my booking?|¿Mi solicitud confirma la reserva?
+Maquette de parcours · Conditions commerciales à valider|Journey mockup · Commercial terms awaiting approval|Maqueta del recorrido · Condiciones comerciales por validar
+MAQUETTE INTERACTIVE · Prix et disponibilités illustratifs · Aucun envoi réel|INTERACTIVE MOCKUP · Sample prices and availability · No real submission|MAQUETA INTERACTIVA · Precios y disponibilidad de ejemplo · Sin envío real
+Modifier mes dates ou mon lieu|Change my dates or location|Cambiar fechas o lugar
+Nom complet|Full name|Nombre completo
+Nom de l’hôtel à Tanger|Hotel name in Tangier|Nombre del hotel en Tánger
+Non. L’agence vérifie votre demande et vous contacte. La confirmation vient après accord et vérification du paiement.|No. The agency reviews your request and contacts you. Confirmation follows agreement and payment verification.|No. La agencia revisa tu solicitud y te contacta. La confirmación llega después del acuerdo y la verificación del pago.
+Nos voitures|Our cars|Nuestros coches
+Numéro de vol · facultatif|Flight number · optional|Número de vuelo · opcional
+On se retrouve<br>où vous arrivez.|We meet you<br>where you arrive.|Nos encontramos<br>donde llegas.
+Organisons votre arrivée.|Let’s plan your arrival.|Organicemos tu llegada.
+Où commence votre séjour ?|Where does your stay begin?|¿Dónde empieza tu estancia?
+Photo de démonstration. Équipements à valider pour le véhicule proposé.|Demo photo. Equipment must be confirmed for the offered vehicle.|Foto de demostración. El equipamiento debe confirmarse para el vehículo ofrecido.
+Prototype local : utilisez des coordonnées fictives. Rien n’est envoyé à l’agence.|Local prototype: use fictional contact details. Nothing is sent to the agency.|Prototipo local: utiliza datos ficticios. No se envía nada a la agencia.
+Quelles sont les conditions de location ?|What are the rental terms?|¿Cuáles son las condiciones del alquiler?
+Quelques informations pour organiser votre arrivée.|A few details to help arrange your arrival.|Algunos datos para organizar tu llegada.
+Quelques réponses, simplement.|A few straightforward answers.|Respuestas claras y sencillas.
+Restitution|Return location|Lugar de devolución
+Retour|Return|Devolución
+Retour · date et heure|Return · date and time|Devolución · fecha y hora
+Retour à l’accueil|Back to home|Volver al inicio
+Retour à la voiture|Back to the car|Volver al coche
+Revoir la voiture|Review the car|Revisar el coche
+Sélection de démonstration · disponibilité simulée|Demo selection · simulated availability|Selección de demostración · disponibilidad simulada
+SIMULATION RÉUSSIE · DEMO-WEB-001|SIMULATION COMPLETE · DEMO-WEB-001|SIMULACIÓN COMPLETADA · DEMO-WEB-001
+Simuler l’envoi de ma demande|Simulate sending my request|Simular el envío de mi solicitud
+SUV · Collection démo|SUV · Demo collection|SUV · Colección de demostración
+Tarifs, équipements et conditions illustratifs pour cette maquette. Aucun paiement en ligne.|Prices, equipment and terms are illustrative in this mockup. No online payment.|Los precios, el equipamiento y las condiciones son ilustrativos. No hay pago en línea.
+Téléphone|Phone|Teléfono
+Téléphone avec indicatif|Phone with country code|Teléfono con prefijo internacional
+Total location|Rental total|Total del alquiler
+Toutes les voitures|All cars|Todos los coches
+Type de voiture|Car type|Tipo de coche
+Un départ bien préparé.|A well-prepared start.|Una salida bien preparada.
+Une voiture pour chaque envie.|A car for every journey.|Un coche para cada viaje.
+Voir les voitures|Find cars|Ver coches
+Vos dates. Votre lieu. On s’occupe de la suite.|Your dates. Your location. We’ll take it from there.|Tus fechas. Tu lugar. Nos encargamos del resto.
+Vos voitures pour ces dates|Cars for your dates|Coches para tus fechas
+VOTRE ARRIVÉE, SIMPLIFIÉE|YOUR ARRIVAL, MADE SIMPLE|TU LLEGADA, MÁS FÁCIL
+Votre demande est prête.|Your request is ready.|Tu solicitud está lista.
+VOTRE SÉJOUR|YOUR STAY|TU ESTANCIA
+Votre séjour.<br>Votre voiture.<br><em>Votre liberté.</em>|Your stay.<br>Your car.<br><em>Your freedom.</em>|Tu estancia.<br>Tu coche.<br><em>Tu libertad.</em>
+VOTRE VOITURE À TANGER|YOUR CAR IN TANGIER|TU COCHE EN TÁNGER
+Vous envoyez une demande, pas une réservation confirmée. Aucun paiement ni document d’identité n’est demandé ici.|You are submitting a request, not a confirmed booking. No payment or identity document is required here.|Estás enviando una solicitud, no una reserva confirmada. Aquí no se solicita ningún pago ni documento de identidad.
+Vous pouvez préciser votre vol pour faciliter le rendez-vous.|Add your flight number to help arrange the meeting.|Puedes indicar tu vuelo para facilitar el encuentro.
+TANGER · VOTRE ESCALE|TANGIER · YOUR STOPOVER|TÁNGER · TU DESTINO
+Trouver ma voiture|Find my car|Encontrar mi coche
+Langue|Language|Idioma
+Langue de contact|Contact language|Idioma de contacto

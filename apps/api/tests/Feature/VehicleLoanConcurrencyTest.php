@@ -6,14 +6,79 @@ use App\Models\Company;
 use App\Models\CompanyMembership;
 use App\Models\Vehicle;
 use App\Support\Tenancy\Tenant;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Tests\Support\IsolatedDatabaseMigrations as DatabaseMigrations;
 use Tests\TestCase;
 
 class VehicleLoanConcurrencyTest extends TestCase
 {
     use DatabaseMigrations;
+
+    public function test_two_simultaneous_apport_payments_cannot_spend_the_same_remaining_balance(): void
+    {
+        if (! function_exists('pcntl_fork')) {
+            $this->markTestSkipped('pcntl required.');
+        }
+        $company = Company::factory()->create();
+        [$m, $v] = Tenant::run($company->id, fn () => [CompanyMembership::factory()->responsible()->create(), Vehicle::factory()->create()]);
+        $this->actingAs($m->user)->withSession(['company_id' => $company->id]);
+        $today = now('Africa/Casablanca')->toDateString();
+        $loan = $this->postJson('/api/v1/loans', [
+            'vehicle_id' => $v->id, 'lender' => 'Banque TEST', 'reference' => 'APPORT-RACE',
+            'tracking_from' => $today, 'schedule_confirmed' => true, 'request_key' => (string) Str::uuid(),
+            'purchase' => ['seller' => 'Concession TEST', 'purchased_on' => $today, 'down_payment_due_on' => $today, 'price_centimes' => 20000000, 'down_payment_centimes' => 5000000],
+            'installments' => [['due_on' => $today, 'amount_centimes' => 15000000, 'opening_paid_centimes' => 0]],
+        ])->assertCreated()->json('id');
+        $files = [];
+        $children = [];
+        $start = microtime(true) + 0.3;
+        DB::disconnect();
+        try {
+            for ($i = 0; $i < 2; $i++) {
+                $file = tempnam(sys_get_temp_dir(), 'apport-race-');
+                $files[] = $file;
+                $pid = pcntl_fork();
+                if ($pid === -1) {
+                    throw new \RuntimeException('Cannot fork');
+                }
+                if ($pid === 0) {
+                    try {
+                        while (microtime(true) < $start) {
+                            usleep(1000);
+                        }
+                        $response = $this->postJson("/api/v1/loans/$loan/purchase-payments", [
+                            'amount_centimes' => 5000000, 'method' => 'transfer', 'paid_on' => $today,
+                            'expected_remaining_centimes' => 5000000, 'receipt_confirmed' => true, 'request_key' => (string) Str::uuid(),
+                        ]);
+                        file_put_contents($file, (string) $response->status());
+                    } catch (\Throwable $e) {
+                        file_put_contents($file, $e->getMessage());
+                    }
+                    DB::disconnect();
+                    exit(0);
+                }
+                $children[] = $pid;
+            }
+            foreach ($children as $pid) {
+                pcntl_waitpid($pid, $status);
+                $this->assertSame(0, pcntl_wexitstatus($status));
+            }
+            $results = array_map('file_get_contents', $files);
+            sort($results);
+            $this->assertSame(['201', '409'], $results);
+            $this->assertDatabaseCount('vehicle_purchase_payments', 1);
+            $this->assertDatabaseCount('expense_movements', 0);
+            $this->getJson("/api/v1/loans/$loan")->assertJsonPath('purchase.data.remaining_centimes', 0);
+            $this->getJson('/api/v1/cash?channel=noncash')->assertJsonPath('total', 1)->assertJsonPath('channels.bank.outgoing', 5000000);
+        } finally {
+            foreach ($files as $file) {
+                if (is_file($file)) {
+                    unlink($file);
+                }
+            }
+        }
+    }
 
     public function test_simultaneous_partial_payments_cannot_overpay_an_installment(): void
     {

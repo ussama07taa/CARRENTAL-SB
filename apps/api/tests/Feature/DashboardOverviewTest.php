@@ -94,12 +94,12 @@ class DashboardOverviewTest extends TestCase
         $this->getJson('/api/v1/dashboard/overview?tab=credit')->assertOk()->assertJsonPath('total', 0)->assertJsonPath('summary.loan_remaining_centimes', 0)->assertJsonPath('summary.installments', 0);
     }
 
-    public function test_vignette_without_next_date_remains_visible_even_with_a_file(): void
+    public function test_paid_vignette_with_file_and_no_optional_reminder_is_not_an_alert(): void
     {
         [$company, $member, $vehicle] = $this->agency();
         Tenant::run($company->id, fn () => VehicleDocument::factory()->create(['vehicle_id' => $vehicle->id, 'actor_membership_id' => $member->id, 'kind' => 'tax', 'path' => 'test-private.pdf', 'effective_on' => null, 'expires_on' => null, 'tax_year' => 2026, 'paid_on' => '2026-01-10']));
-        $r = $this->getJson('/api/v1/dashboard/overview?tab=documents&horizon=0')->assertOk()->assertJsonPath('total', 5)->json();
-        $this->assertSame('missing', collect($r['data'])->firstWhere('kind', 'tax')['state']);
+        $r = $this->getJson('/api/v1/dashboard/overview?tab=documents&horizon=0')->assertOk()->assertJsonPath('total', 4)->json();
+        $this->assertNull(collect($r['data'])->firstWhere('kind', 'tax'));
     }
 
     public function test_pagination_filters_and_access_are_isolated_and_fail_closed(): void
@@ -159,13 +159,13 @@ class DashboardOverviewTest extends TestCase
             }
         });
         $all = $this->getJson('/api/v1/dashboard/overview?tab=documents')->assertOk()
-            ->assertJsonPath('summary.documents', 24)->assertJsonPath('summary.documents_missing', 19)
+            ->assertJsonPath('summary.documents', 23)->assertJsonPath('summary.documents_missing', 18)
             ->assertJsonPath('summary.documents_expiring', 4)->assertJsonPath('summary.documents_expired', 1)
             ->assertJsonPath('summary.urgent', 2)->json();
         $keys = [];
-        foreach (['missing' => 19, 'expiring' => 4, 'expired' => 1] as $category => $count) {
+        foreach (['missing' => 18, 'expiring' => 4, 'expired' => 1] as $category => $count) {
             $first = $this->getJson('/api/v1/dashboard/overview?tab=documents&horizon=all&focus='.$category)
-                ->assertOk()->assertJsonPath('total', $count)->assertJsonPath('summary.documents', 24)->json();
+                ->assertOk()->assertJsonPath('total', $count)->assertJsonPath('summary.documents', 23)->json();
             $items = $first['data'];
             for ($page = 2; $page <= $first['last_page']; $page++) {
                 $items = [...$items, ...$this->getJson('/api/v1/dashboard/overview?tab=documents&horizon=all&focus='.$category.'&page='.$page)->assertOk()->json('data')];

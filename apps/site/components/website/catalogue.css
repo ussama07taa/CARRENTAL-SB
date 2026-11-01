@@ -1,0 +1,37 @@
+/* Shared catalogue styling and safe date recovery. */
+.ws-catalog{max-width:1240px;margin:auto;padding:36px 24px 64px}.ws-catalog h1{font-size:36px;letter-spacing:-.04em;margin:10px 0}.ws-catalog>p{max-width:660px;color:#596579;font-size:15px;line-height:1.7}.catalog-dates{margin:26px 0 18px;border:1px solid #e6e8ec;border-radius:16px;background:white}.catalog-dates summary{display:flex;align-items:center;gap:12px;padding:16px 20px;min-height:56px;font-weight:700;cursor:pointer;list-style:none}.catalog-dates summary::-webkit-details-marker{display:none}.catalog-dates summary>svg:last-child{margin-inline-start:auto}.catalog-dates[open] summary{border-bottom:1px solid #e6e8ec}.catalog-dates .ws-search{margin:0;border:0;box-shadow:none}.catalog-date-notice{padding:14px 18px;background:#fff8eb;border:1px solid #f1d8a7;border-radius:12px}.ws-catalog .ws-filter{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:20px 0}.ws-catalog .ws-filter>input{flex:1;min-width:180px;min-height:50px;background:#f4f5f7;border:1px solid transparent;border-radius:12px;padding:12px 16px;font:inherit;font-size:16px}.ws-catalog .ws-filter>label{display:flex;align-items:center;gap:12px;font-size:14px}.ws-catalog .ws-filter select{min-height:48px;border-radius:12px;border:1px solid #e6e8ec;background:white;padding:10px 14px}.ws-catalog .bf-section{padding:12px 0;max-width:none}.ws-catalog .bf-heading{display:none}.ws-catalog .bf-card{box-shadow:none}.ws-catalog .bf-choose{border-radius:12px;background:#111827;color:white}.ws-catalog .ws-status{padding:24px;margin:20px 0}
+@media(max-width:767px){.ws-catalog{padding:24px 16px 30px}.ws-catalog h1{font-size:28px;line-height:1.2}.ws-catalog .ws-eyebrow{font-size:10px}.ws-catalog>p{font-size:14px}.ws-catalog .ws-filter{gap:10px}.ws-catalog .ws-filter>input{width:100%;flex-basis:100%}.ws-catalog .ws-filter>label{width:100%;justify-content:space-between}.ws-catalog .ws-filter select{flex:1;max-width:65%}.catalog-dates .ws-search{padding:16px}.ws-catalog .bf-grid{grid-template-columns:1fr}.ws-catalog .bf-visual{aspect-ratio:1.5}}
+
+/* Fleet landing: photographic introduction and a quiet catalogue canvas. */
+.ws.ws-fleet-page{background:#f5f7fb;min-height:100vh}
+.ws-fleet-page .ws-header{max-width:none;background:white;border-bottom:1px solid #e2e8f2;padding:18px max(24px,calc((100% - 1280px)/2));min-height:88px}
+.ws-fleet-page .ws-header nav a[aria-current=page]{color:#004fff;position:relative}
+.ws-fleet-page .ws-header nav a[aria-current=page]:after{content:'';position:absolute;bottom:-9px;inset-inline:0;height:2px;background:#004fff;border-radius:2px}
+.ws.ws-fleet-page .ws-catalog{max-width:1328px;padding:28px 24px 64px}
+.catalog-hero{position:relative;isolation:isolate;overflow:hidden;min-height:290px;display:flex;align-items:center;border-radius:20px;background:#102344 url('/brand-kit/tanger-banner-wide.webp') center 48%/cover no-repeat;color:white}
+.catalog-hero:before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(7,27,57,.96) 0%,rgba(7,27,57,.82) 40%,rgba(7,27,57,.15) 100%)}
+.catalog-hero-copy{max-width:680px;padding:40px 44px}
+.ws .catalog-hero .ws-eyebrow{color:#b5ceff;font-size:11px;margin:0 0 14px;letter-spacing:.13em}
+.ws .catalog-hero h1{font-size:clamp(30px,3.4vw,46px);color:white;margin:0 0 16px;line-height:1.18;letter-spacing:-.035em}
+.ws .catalog-hero-copy>p:not(.ws-eyebrow){color:#e4ebf7;font-size:15px;line-height:1.8;max-width:490px;margin:0}
+.catalog-location{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:#e4ebf7;margin-top:24px}
+.ws-fleet-page .catalog-dates{margin:20px 0 16px;border-radius:12px;border-color:#dfe6f0;box-shadow:0 3px 14px #10234404;scroll-margin-top:20px}
+.ws-fleet-page .catalog-date-notice{max-width:none;font-size:13px}
+.ws-fleet-page .cf-search{background:white;border-color:#dfe6f0}
+.ws.ws-fleet-page .cf-search input{background:transparent;border:0!important;box-shadow:none!important}
+.ws-fleet-page .cf-sidebar{box-shadow:0 4px 20px #10234404;border-color:#e1e7f0}
+.ws-fleet-page .bf-card{background:white;border-color:#e1e7f0;box-shadow:0 4px 16px #10234404}
+.ws-fleet-page .cf-toolbar select{background:white}
+.ws-fleet-page[dir=rtl] .catalog-hero:before{background:linear-gradient(270deg,rgba(7,27,57,.96),rgba(7,27,57,.82) 40%,rgba(7,27,57,.15))}
+@media(max-width:767px){
+.ws-fleet-page .ws-header{padding:12px 16px;min-height:70px}
+.ws.ws-fleet-page .ws-catalog{padding:16px 16px 32px}
+.ws.ws-fleet-page .catalog-hero{min-height:242px;border-radius:14px;background-position:62% center}
+.ws.ws-fleet-page .catalog-hero-copy{padding:26px 22px}
+.ws.ws-fleet-page .catalog-hero h1{font-size:28px;line-height:1.25;margin:10px 0 12px;max-width:310px}
+.ws.ws-fleet-page .catalog-hero-copy>p:not(.ws-eyebrow){font-size:13px;line-height:1.8}
+.ws.ws-fleet-page .catalog-hero:before{background:linear-gradient(90deg,#071b39ed,#071b39a6)}
+.ws.ws-fleet-page[dir=rtl] .catalog-hero:before{background:linear-gradient(270deg,#071b39ed,#071b39a6)}
+.ws-fleet-page .catalog-location{margin-top:18px;font-size:11px}
+.ws-fleet-page .catalog-dates{margin-top:16px}
+}

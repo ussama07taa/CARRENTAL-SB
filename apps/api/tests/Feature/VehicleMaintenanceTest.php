@@ -92,7 +92,7 @@ class VehicleMaintenanceTest extends TestCase
         $id = $this->postJson($url, $this->input(['kind' => 'repair', 'in_garage' => true]))->assertCreated()->json('id');
         $this->getJson($url)->assertJsonCount(1, 'summary.garage');
         $input = ['returned_on' => '2026-10-02', 'note' => 'Réparation contrôlée, véhicule prêt', 'ready' => true, 'request_key' => (string) Str::uuid()];
-        $this->postJson("$url/$id/return", [...$input, 'ready' => false])->assertUnprocessable();
+        $this->postJson("$url/$id/return", [...$input, 'ready' => null])->assertUnprocessable();
         $this->postJson("$url/$id/return", $input)->assertCreated();
         $this->postJson("$url/$id/return", $input)->assertOk();
         $this->postJson("$url/$id/return", [...$input, 'request_key' => (string) Str::uuid()])->assertUnprocessable();
@@ -155,7 +155,7 @@ class VehicleMaintenanceTest extends TestCase
         $url = "/api/v1/vehicles/$v->id/maintenance";
         $this->getJson($url)->assertUnauthorized();
         $this->login($m);
-        $this->getJson($url)->assertForbidden();
+        $this->getJson($url)->assertOk()->assertJsonPath('can_manage_finance', false)->assertJsonMissingPath('summary.balance_centimes');
         $this->postJson($url, $this->input())->assertForbidden();
     }
 

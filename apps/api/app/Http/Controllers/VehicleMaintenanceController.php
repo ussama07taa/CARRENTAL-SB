@@ -6,7 +6,9 @@ use App\Http\Requests\StoreMaintenancePaymentRequest;
 use App\Http\Requests\StoreVehicleMaintenanceRequest;
 use App\Models\Vehicle;
 use App\Support\Tenancy\Tenant;
+use App\Support\Vehicles\MaintenanceAccess;
 use App\Support\Vehicles\MaintenancePayments;
+use App\Support\Vehicles\MaintenanceReadiness;
 use App\Support\Vehicles\VehicleMaintenance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,11 +24,11 @@ class VehicleMaintenanceController extends Controller
 
     public function index(Request $request, int $vehicle): JsonResponse
     {
-        $this->maintenance->actor($request->user()->id);
+        $this->maintenance->actor($request->user()->id, false);
         $v = Vehicle::findOrFail($vehicle);
         $p = $request->validate(['page' => ['sometimes', 'integer', 'min:1']]);
 
-        return response()->json($this->maintenance->listing($v, (int) ($p['page'] ?? 1)));
+        return response()->json(app(MaintenanceAccess::class)->response($this->maintenance->listing($v, (int) ($p['page'] ?? 1)), $request->user()->id));
     }
 
     public function store(StoreVehicleMaintenanceRequest $request, int $vehicle): JsonResponse
@@ -109,14 +111,17 @@ class VehicleMaintenanceController extends Controller
                 return response()->json(['id' => $old->id]);
             }
 
+            abort_if(isset($input['expected_paid_centimes']) && (int) $input['expected_paid_centimes'] !== $this->maintenance->paid($entry), 409, 'Un paiement a déjà changé ce dossier. Actualisez avant de continuer.');
+            abort_if(isset($input['work_revision']) && (int) $input['work_revision'] !== $e->revision, 409, 'Le prix a changé. Actualisez avant de continuer.');
+
             return response()->json(['id' => $this->maintenance->pay($e, $actor, $input, $hash)], 201);
         });
     }
 
     public function release(Request $request, int $vehicle, int $entry): JsonResponse
     {
-        $actor = $this->maintenance->actor($request->user()->id);
-        $input = $request->validate(['returned_on' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.now('Africa/Casablanca')->toDateString()], 'note' => ['required', 'string', 'max:500'], 'ready' => ['required', 'accepted'], 'request_key' => ['required', 'uuid']]);
+        $actor = $this->maintenance->actor($request->user()->id, false);
+        $input = $request->validate(['returned_on' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.now('Africa/Casablanca')->toDateString()], 'note' => ['required', 'string', 'max:500'], 'ready' => ['required', 'boolean'], 'request_key' => ['required', 'uuid']]);
         $hash = $this->maintenance->hash([...$input, 'vehicle' => $vehicle, 'entry' => $entry]);
 
         return DB::transaction(function () use ($vehicle, $entry, $actor, $input, $hash): JsonResponse {
@@ -129,18 +134,26 @@ class VehicleMaintenanceController extends Controller
             if (! $e->in_garage || $this->maintenance->query('maintenance_returns')->where('maintenance_id', $entry)->exists() || $input['returned_on'] < $e->performed_on) {
                 throw ValidationException::withMessages(['returned_on' => 'Vérifiez la date : cette intervention doit être encore ouverte au garage.']);
             }
-            if (! ($e->items[0]->legacy ?? false)) {
+            if ($input['ready'] && ! ($e->items[0]->legacy ?? false)) {
                 foreach ($e->items as $work) {
                     if (in_array($work->status, ['pending', 'progress'], true)) {
                         throw ValidationException::withMessages(['ready' => 'Terminez les travaux ou reportez-les avec un motif avant de confirmer le retour.']);
                     }
                 }
             }
-            $id = DB::table('maintenance_returns')->insertGetId(['company_id' => Tenant::id(), 'maintenance_id' => $entry, 'actor_membership_id' => $actor, 'returned_on' => $input['returned_on'], 'note' => $input['note'], 'request_key' => $input['request_key'], 'request_hash' => $hash, 'created_at' => now()]);
-            $this->maintenance->audit($vehicle, $actor, 'maintenance_returned', ['maintenance_id' => $entry, 'returned_on' => $input['returned_on'], 'note' => $input['note']]);
+            $id = DB::table('maintenance_returns')->insertGetId(['company_id' => Tenant::id(), 'maintenance_id' => $entry, 'actor_membership_id' => $actor, 'returned_on' => $input['returned_on'], 'ready' => (bool) $input['ready'], 'note' => $input['note'], 'request_key' => $input['request_key'], 'request_hash' => $hash, 'created_at' => now()]);
+            $this->maintenance->audit($vehicle, $actor, 'maintenance_returned', ['maintenance_id' => $entry, 'returned_on' => $input['returned_on'], 'ready' => (bool) $input['ready'], 'note' => $input['note']]);
 
             return response()->json(['id' => $id], 201);
         });
+    }
+
+    public function readiness(Request $request, int $vehicle, int $entry): JsonResponse
+    {
+        $actor = $this->maintenance->actor($request->user()->id, false);
+        $input = $request->validate(['followup_return_id' => ['present', 'nullable', 'integer', 'min:1'], 'revision' => ['required', 'integer', 'min:0'], 'checked_on' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.now('Africa/Casablanca')->toDateString()], 'note' => ['required', 'string', 'max:500'], 'ready' => ['required', 'accepted'], 'request_key' => ['required', 'uuid']]);
+
+        return response()->json(['id' => app(MaintenanceReadiness::class)->save($vehicle, $entry, $actor, $input)], 201);
     }
 
     public function show(Request $request, int $vehicle, int $entry): JsonResponse

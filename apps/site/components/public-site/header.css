@@ -1,0 +1,27 @@
+/* Navigation for the coastal homepage concept. */
+.bh-header{position:relative;z-index:10;background:var(--surface)}
+.bh-header-main{width:calc(100% - var(--gutter)*2);max-width:var(--content);min-height:88px;margin:auto;display:flex;align-items:center;gap:36px;border-bottom:1px solid var(--line)}
+.bh-brand{display:flex;align-items:center;flex-shrink:0;min-height:48px}.bh-brand img{width:192px;height:auto;display:block}
+.bh-nav{display:flex;align-items:center;gap:28px;margin-inline-start:16px}
+.bh-nav a{display:flex;align-items:center;min-height:48px;position:relative;white-space:nowrap;font-size:14px;font-weight:650;color:var(--muted)}.bh-nav a[aria-current=page]{color:var(--navy)}.bh-nav a[aria-current=page]::after{content:'';position:absolute;bottom:4px;inset-inline:0;height:2px;background:var(--blue)}.bh-nav a:hover{color:var(--blue)}
+.bh-header-actions{display:flex;align-items:center;gap:24px;margin-inline-start:auto}
+.bh-contact{display:flex;flex-direction:column;align-items:flex-start;gap:0}.bh-contact a{display:inline-flex;align-items:center;gap:7px;font-size:12px;line-height:1.5;font-weight:650;white-space:nowrap;min-height:24px}.bh-phone svg{width:14px;color:var(--blue)}.bh-contact .bh-whatsapp{color:var(--muted);font-size:11px}.bh-whatsapp svg{width:14px;height:14px}.bh-contact a:hover{color:var(--blue)}
+.bh-languages{position:relative;display:flex;align-items:center;gap:6px;min-height:44px;border-inline-start:1px solid var(--line);padding-inline-start:16px}.bh-languages>svg{color:var(--muted)}.bh-languages select{display:block;min-height:44px;border:0;background:white;color:var(--navy);font-size:13px;font-weight:650;padding:8px 0;width:66px;font-family:'Manrope Variable','Noto Sans Arabic Variable',sans-serif}
+.bh-header-cta{display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 16px;min-height:48px;background:var(--navy);color:white!important;border-radius:8px;font-size:13px;font-weight:650;white-space:nowrap}.bh-header-cta:hover{background:var(--blue)}
+.bh-menu-toggle,.bh-mobile-menu{display:none}
+@media(max-width:1350px){.bh-header-main{gap:24px}.bh-brand img{width:176px}.bh-nav{margin:0;gap:20px}.bh-header-actions{gap:16px}}
+@media(max-width:1100px){
+.bh-nav{display:none}.bh-menu-toggle{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:44px;height:44px;background:white;color:var(--navy);border:1px solid var(--line);border-radius:8px;padding:0}
+.bh-menu-toggle[aria-expanded=true]{background:var(--wash);color:var(--blue)}
+.bh-mobile-menu{position:absolute;top:calc(100% + 8px);inset-inline-end:var(--gutter);width:320px;max-width:calc(100% - var(--gutter)*2);display:flex;flex-direction:column;gap:4px;background:white;border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 12px 30px #1023441a}
+.bh-mobile-menu a{display:flex;justify-content:space-between;align-items:center;min-height:48px;padding:12px;border-radius:6px;font-size:15px;font-weight:650}.bh-mobile-menu a:hover{background:var(--wash)}.bh-mobile-menu a[aria-current=page]{color:var(--blue)}.bh-mobile-menu .bh-menu-booking{background:var(--blue);color:white;margin-top:8px}
+}
+@media(max-width:767px){
+.bh-header-main{display:grid;grid-template-columns:minmax(0,1fr) auto 44px;grid-template-areas:'brand language menu' 'contact contact contact';gap:0 8px;min-height:0;padding-top:8px}
+.bh-brand{grid-area:brand;min-height:56px}.bh-brand img{width:160px;max-width:100%}.bh-header-actions{display:contents}.bh-header-cta{display:none}
+.bh-languages{grid-area:language;border:0;padding:0;gap:4px}.bh-languages>svg{width:15px}.bh-languages select{width:54px;font-size:12px}
+.bh-menu-toggle{grid-area:menu}
+.bh-contact{grid-area:contact;flex-direction:row;align-items:center;justify-content:space-between;border-top:1px solid var(--line);margin-top:4px}.bh-contact a,.bh-contact .bh-whatsapp{font-size:12px;min-height:44px}.bh-contact svg{width:15px;height:15px}
+.bh-mobile-menu{inset-inline:var(--gutter);width:auto;max-width:none}
+}
+@media(max-width:360px){.bh-brand img{width:136px}.bh-header-main{gap:0 6px}.bh-languages>svg{display:none}}

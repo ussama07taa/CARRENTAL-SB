@@ -39,7 +39,7 @@ class Tenant
     public static function forUser(User $user, int $companyId, Closure $callback): mixed
     {
         abort_unless($user->exists && DB::table('company_memberships')
-            ->where('company_id', $companyId)->where('user_id', $user->getKey())->exists(),
+            ->where('company_id', $companyId)->where('user_id', $user->getKey())->where('is_active', true)->exists(),
             403, 'Agence inaccessible.');
 
         return self::run($companyId, $callback);

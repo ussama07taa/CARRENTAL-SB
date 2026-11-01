@@ -1,0 +1,7 @@
+Asset: hero-front-suv.png
+Mode: new transparent image generated with imagegen, 2026-10-28.
+Generic illustrative vehicle, not the agency's real fleet or a claimed model.
+Layout reference: user's attached SUV rental landing-page design.
+
+Prompt:
+Create a photorealistic premium automotive advertising cutout, transparent background. One graphite metallic modern luxury compact SUV, completely generic unbranded design (not a specific car brand), viewed DIRECTLY FROM THE FRONT with extremely subtle view of driver's side (almost symmetrical frontal view), full car visible including entire roof, wing mirrors, both front wheels and tyres. Camera at headlight height, realistic proportions, clean detailed grille, subtle cool white LED headlights, windshield with natural reflections. Paint dark graphite with refined studio highlights. Front grille flows naturally with NO license plate, no rectangular plate cover, no badges, no logos, no words. Car isolated on true transparent background, grounded with soft natural contact shadow only. Composition centered, margins around entire car, no surrounding scenery, no frame, no graphic decoration. Impeccable automotive commercial photo realism, no exaggerated sci-fi features. Output square.

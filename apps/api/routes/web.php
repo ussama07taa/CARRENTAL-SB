@@ -1,9 +1,13 @@
 <?php
 
 use App\Http\Controllers\Auth\SessionController;
+use App\Http\Controllers\CashController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerDocumentController;
+use App\Http\Controllers\DamageTicketController;
+use App\Http\Controllers\DashboardActivityController;
 use App\Http\Controllers\DashboardOverviewController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\MaintenanceCancellationController;
 use App\Http\Controllers\MaintenanceFileController;
 use App\Http\Controllers\MaintenanceFollowupController;
@@ -12,10 +16,13 @@ use App\Http\Controllers\MaintenancePaymentCancellationController;
 use App\Http\Controllers\MaintenancePaymentCorrectionController;
 use App\Http\Controllers\MaintenanceRefundCancellationController;
 use App\Http\Controllers\MaintenanceRefundController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReservationCancellationController;
 use App\Http\Controllers\ReservationContractController;
 use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\ReservationDateCorrectionController;
 use App\Http\Controllers\ReservationDepartureController;
+use App\Http\Controllers\ReservationDriverController;
 use App\Http\Controllers\ReservationExtensionController;
 use App\Http\Controllers\ReservationForeignTravelController;
 use App\Http\Controllers\ReservationFuelController;
@@ -36,6 +43,7 @@ use App\Http\Controllers\VehicleMaintenanceController;
 use App\Http\Controllers\VehicleOdometerController;
 use App\Http\Controllers\VehiclePhotoController;
 use App\Http\Controllers\VehiclePricingController;
+use App\Http\Controllers\VehiclePurchasePaymentController;
 use App\Http\Middleware\PrivateResponse;
 use App\Http\Middleware\RequireCompany;
 use Illuminate\Support\Facades\Route;
@@ -46,19 +54,22 @@ Route::prefix('api/v1/pricing')->middleware(['auth:web', RequireCompany::class, 
     Route::post('/simulate', [VehiclePricingController::class, 'simulate'])->middleware('throttle:60,1');
 });
 Route::prefix('api/v1/reservations')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class])->group(function (): void {
-    Route::get('/{reservation}/drivers', [\App\Http\Controllers\ReservationDriverController::class, 'show'])->whereNumber('reservation');
-    Route::post('/{reservation}/drivers/new', [\App\Http\Controllers\ReservationDriverController::class, 'create'])->whereNumber('reservation')->middleware('throttle:30,1');
-    Route::post('/{reservation}/drivers', [\App\Http\Controllers\ReservationDriverController::class, 'store'])->whereNumber('reservation')->middleware('throttle:30,1');
+    Route::get('/{reservation}/drivers', [ReservationDriverController::class, 'show'])->whereNumber('reservation');
+    Route::post('/{reservation}/drivers/new', [ReservationDriverController::class, 'create'])->whereNumber('reservation')->middleware('throttle:30,1');
+    Route::post('/{reservation}/drivers', [ReservationDriverController::class, 'store'])->whereNumber('reservation')->middleware('throttle:30,1');
     Route::get('/', [ReservationController::class, 'index']);
     Route::get('/availability', [ReservationController::class, 'availability']);
     Route::get('/planning', [ReservationController::class, 'planning']);
+    Route::get('/departure-notifications', [ReservationController::class, 'departureNotifications']);
     Route::post('/', [ReservationController::class, 'store'])->middleware('throttle:30,1');
     Route::post('/{reservation}/hold', [ReservationController::class, 'hold'])->whereNumber('reservation')->middleware('throttle:30,1');
+    Route::post('/{reservation}/invoice-request', [ReservationPaymentController::class, 'invoiceRequest'])->whereNumber('reservation')->middleware('throttle:30,1');
     Route::post('/{reservation}/quote', [ReservationPaymentController::class, 'quote'])->whereNumber('reservation')->middleware('throttle:30,1');
     Route::get('/{reservation}/price-calculation', [ReservationPaymentController::class, 'calculation'])->whereNumber('reservation');
     Route::get('/{reservation}/departure/inspection', [ReservationInspectionController::class, 'show'])->whereNumber('reservation');
     Route::post('/{reservation}/departure/inspection', [ReservationInspectionController::class, 'store'])->whereNumber('reservation')->middleware('throttle:30,1');
     Route::get('/{reservation}/departure/inspection/photos/{photo}/content', [ReservationInspectionController::class, 'content'])->whereNumber(['reservation', 'photo']);
+    Route::get('/{reservation}/invoice-preview', [\App\Http\Controllers\RentalInvoicePreviewController::class, 'show'])->whereNumber('reservation')->middleware('throttle:rental-contracts');
     Route::get('/{reservation}/departure/contract', [ReservationContractController::class, 'show'])->whereNumber('reservation');
     Route::post('/{reservation}/departure/contract', [ReservationContractController::class, 'issue'])->whereNumber('reservation')->middleware('throttle:rental-contracts');
     Route::post('/{reservation}/departure/contract/{contract}/retry', [ReservationContractController::class, 'retry'])->whereNumber(['reservation', 'contract'])->middleware('throttle:rental-contract-render-retry');
@@ -70,7 +81,7 @@ Route::prefix('api/v1/reservations')->middleware(['auth:web', RequireCompany::cl
     Route::get('/{reservation}/departure/contract/files/{file}/content', [ReservationContractController::class, 'content'])->whereNumber(['reservation', 'file']);
     Route::get('/{reservation}/return', [ReservationReturnController::class, 'show'])->whereNumber('reservation');
     Route::get('/{reservation}/settlement', [ReservationSettlementController::class, 'show'])->whereNumber('reservation');
-    Route::post('/{reservation}/date-corrections', [\App\Http\Controllers\ReservationDateCorrectionController::class, 'store'])->whereNumber('reservation')->middleware('throttle:30,1');
+    Route::post('/{reservation}/date-corrections', [ReservationDateCorrectionController::class, 'store'])->whereNumber('reservation')->middleware('throttle:30,1');
     Route::get('/{reservation}/extensions', [ReservationExtensionController::class, 'show'])->whereNumber('reservation');
     Route::get('/{reservation}/extensions/quote', [ReservationExtensionController::class, 'quote'])->whereNumber('reservation');
     Route::post('/{reservation}/extensions', [ReservationExtensionController::class, 'store'])->whereNumber('reservation')->middleware('throttle:30,1');
@@ -96,12 +107,15 @@ Route::prefix('api/v1/reservations')->middleware(['auth:web', RequireCompany::cl
     Route::get('/{reservation}/foreign-travel/{authorization}/{format}', [ReservationForeignTravelController::class, 'content'])->whereNumber(['reservation', 'authorization'])->where('format', 'pdf|docx');
     Route::post('/{reservation}/departure', [ReservationDepartureController::class, 'store'])->whereNumber('reservation')->middleware('throttle:30,1');
     Route::put('/{reservation}/departure/customer', [ReservationDepartureController::class, 'customer'])->whereNumber('reservation')->middleware('throttle:30,1');
+    Route::post('/{reservation}/payments/{payment}/proofs', [\App\Http\Controllers\RentalPaymentProofController::class, 'store'])->whereNumber(['reservation','payment'])->middleware('throttle:30,1');
+    Route::get('/{reservation}/payments/{payment}/proofs/{proof}', [\App\Http\Controllers\RentalPaymentProofController::class, 'content'])->whereNumber(['reservation','payment','proof']);
     Route::post('/{reservation}/payments', [ReservationPaymentController::class, 'payment'])->whereNumber('reservation')->middleware('throttle:30,1');
     Route::post('/{reservation}/payments/{payment}/verify', [ReservationPaymentController::class, 'verify'])->whereNumber(['reservation', 'payment'])->middleware('throttle:30,1');
     Route::post('/{reservation}/confirm', [ReservationPaymentController::class, 'confirm'])->whereNumber('reservation')->middleware('throttle:30,1');
     Route::get('/{reservation}', [ReservationController::class, 'show'])->whereNumber('reservation');
 });
 
+Route::get('/api/v1/dashboard/activity', [DashboardActivityController::class, 'index'])->middleware(['auth:web', RequireCompany::class, PrivateResponse::class]);
 Route::get('/api/v1/dashboard/overview', [DashboardOverviewController::class, 'index'])->middleware(['auth:web', RequireCompany::class, PrivateResponse::class]);
 
 Route::get('/', fn () => response()->json(['service' => 'Ben Sbih API', 'health' => '/api/v1/health']));
@@ -114,9 +128,12 @@ Route::prefix('api/v1/auth')->middleware(PrivateResponse::class)->group(function
 });
 
 Route::prefix('api/v1/customers')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class])->group(function (): void {
+    Route::get('/ocr', [\App\Http\Controllers\CustomerOcrController::class, 'status']);
+    Route::post('/ocr', \App\Http\Controllers\CustomerOcrController::class)->middleware('throttle:6,1');
     Route::get('/', [CustomerController::class, 'index'])->name('customers.index');
     Route::post('/', [CustomerController::class, 'store'])->name('customers.store');
     Route::get('/{customer}', [CustomerController::class, 'show'])->whereNumber('customer')->name('customers.show');
+    Route::get('/{customer}/reservations', [CustomerController::class, 'reservations'])->whereNumber('customer')->name('customers.reservations');
     Route::put('/{customer}', [CustomerController::class, 'update'])->whereNumber('customer')->name('customers.update');
     Route::post('/{customer}/documents', [CustomerDocumentController::class, 'store'])->whereNumber('customer')->middleware('throttle:30,1')->name('customers.documents.store');
     Route::get('/{customer}/documents/{document}/content', [CustomerDocumentController::class, 'content'])->whereNumber(['customer', 'document'])->name('customers.documents.content');
@@ -143,6 +160,7 @@ Route::prefix('api/v1/vehicles')->middleware(['auth:web', RequireCompany::class,
     Route::get('/{vehicle}/maintenance/{entry}', [VehicleMaintenanceController::class, 'show'])->whereNumber(['vehicle', 'entry']);
     Route::post('/{vehicle}/maintenance/{entry}/payments', [VehicleMaintenanceController::class, 'pay'])->whereNumber(['vehicle', 'entry']);
     Route::post('/{vehicle}/maintenance/{entry}/return', [VehicleMaintenanceController::class, 'release'])->whereNumber(['vehicle', 'entry']);
+    Route::post('/{vehicle}/maintenance/{entry}/readiness', [VehicleMaintenanceController::class, 'readiness'])->whereNumber(['vehicle', 'entry']);
     Route::get('/{vehicle}/maintenance/{entry}/content', [VehicleMaintenanceController::class, 'content'])->whereNumber(['vehicle', 'entry']);
     Route::get('/{vehicle}/documents/history', [VehicleDocumentController::class, 'history'])->whereNumber('vehicle');
     Route::get('/{vehicle}/documents', [VehicleDocumentController::class, 'index'])->whereNumber('vehicle');
@@ -159,10 +177,13 @@ Route::prefix('api/v1/vehicles')->middleware(['auth:web', RequireCompany::class,
 
 Route::get('/api/v1/maintenance/overview', [MaintenanceOverviewController::class, 'index'])->middleware(['auth:web', RequireCompany::class, PrivateResponse::class]);
 
-Route::post('/api/v1/loans/{loan}/payments/{payment}/corrections', [VehicleLoanPaymentCorrectionController::class, 'store'])->whereNumber(['loan', 'payment'])->middleware(['auth:web', RequireCompany::class, PrivateResponse::class]);
-Route::post('/api/v1/loans/{loan}/payments/{payment}/cancellations', [VehicleLoanPaymentCancellationController::class, 'store'])->whereNumber(['loan', 'payment'])->middleware(['auth:web', RequireCompany::class, PrivateResponse::class]);
+Route::post('/api/v1/loans/{loan}/payments/{payment}/corrections', [VehicleLoanPaymentCorrectionController::class, 'store'])->whereNumber(['loan', 'payment'])->middleware(['auth:web', RequireCompany::class, PrivateResponse::class, \App\Http\Middleware\RequireFinancialManager::class]);
+Route::post('/api/v1/loans/{loan}/payments/{payment}/cancellations', [VehicleLoanPaymentCancellationController::class, 'store'])->whereNumber(['loan', 'payment'])->middleware(['auth:web', RequireCompany::class, PrivateResponse::class, \App\Http\Middleware\RequireFinancialManager::class]);
 
-Route::prefix('api/v1/loans')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class])->group(function (): void {
+Route::post('/api/v1/loans/{loan}/purchase-payments', [VehiclePurchasePaymentController::class, 'store'])->whereNumber('loan')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class, \App\Http\Middleware\RequireFinancialManager::class, 'throttle:30,1']);
+Route::post('/api/v1/loans/{loan}/purchase-payments/{payment}', [VehiclePurchasePaymentController::class, 'store'])->whereNumber(['loan', 'payment'])->middleware(['auth:web', RequireCompany::class, PrivateResponse::class, \App\Http\Middleware\RequireFinancialManager::class, 'throttle:30,1']);
+
+Route::prefix('api/v1/loans')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class, \App\Http\Middleware\RequireFinancialManager::class])->group(function (): void {
     Route::get('/', [VehicleLoanController::class, 'index']);
     Route::post('/', [VehicleLoanController::class, 'store'])->middleware('throttle:30,1');
     Route::get('/{loan}', [VehicleLoanController::class, 'show'])->whereNumber('loan');
@@ -173,8 +194,85 @@ Route::prefix('api/v1/loans')->middleware(['auth:web', RequireCompany::class, Pr
 });
 
 Route::prefix('api/v1/damages')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class])->group(function (): void {
-    Route::get('/', [\App\Http\Controllers\DamageTicketController::class, 'index']);
-    Route::post('/', [\App\Http\Controllers\DamageTicketController::class, 'store'])->middleware('throttle:30,1');
-    Route::get('/{ticket}', [\App\Http\Controllers\DamageTicketController::class, 'show'])->whereNumber('ticket');
-    Route::post('/{ticket}', [\App\Http\Controllers\DamageTicketController::class, 'store'])->whereNumber('ticket')->middleware('throttle:30,1');
+    Route::get('/', [DamageTicketController::class, 'index']);
+    Route::post('/', [DamageTicketController::class, 'store'])->middleware('throttle:30,1');
+    Route::get('/{ticket}', [DamageTicketController::class, 'show'])->whereNumber('ticket');
+    Route::post('/{ticket}', [DamageTicketController::class, 'store'])->whereNumber('ticket')->middleware('throttle:30,1');
+});
+
+Route::prefix('api/v1/expenses')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class, \App\Http\Middleware\RequireFinancialManager::class])->group(function (): void {
+    Route::get('/', [ExpenseController::class, 'index']);
+    Route::post('/', [ExpenseController::class, 'store'])->middleware('throttle:30,1');
+    Route::get('/payables', [ExpenseController::class, 'payables']);
+    Route::get('/export', [ExpenseController::class, 'export'])->middleware('throttle:10,1');
+    Route::get('/{expense}', [ExpenseController::class, 'show'])->whereNumber('expense');
+    Route::post('/{expense}', [ExpenseController::class, 'update'])->whereNumber('expense')->middleware('throttle:30,1');
+    Route::post('/{expense}/movements', [ExpenseController::class, 'movement'])->whereNumber('expense')->middleware('throttle:30,1');
+    Route::post('/{expense}/cancel', [ExpenseController::class, 'cancel'])->whereNumber('expense')->middleware('throttle:30,1');
+    Route::post('/{expense}/documents', [ExpenseController::class, 'document'])->whereNumber('expense')->middleware('throttle:30,1');
+    Route::get('/{expense}/documents/{document}', [ExpenseController::class, 'content'])->whereNumber(['expense', 'document']);
+});
+
+Route::prefix('api/v1/cash')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class, \App\Http\Middleware\RequireFinancialManager::class])->group(function (): void {
+    Route::get('/', [CashController::class, 'index']);
+    Route::post('/entries', [CashController::class, 'save'])->middleware('throttle:30,1');
+    Route::get('/entries/{entry}', [CashController::class, 'entry'])->whereNumber('entry');
+    Route::post('/entries/{entry}', [CashController::class, 'save'])->whereNumber('entry')->middleware('throttle:30,1');
+    Route::post('/counts', [CashController::class, 'count'])->middleware('throttle:30,1');
+});
+
+Route::prefix('api/v1/reports')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class, \App\Http\Middleware\RequireFinancialManager::class])->group(function (): void {
+    Route::get('/', [ReportController::class, 'index']);
+    Route::get('/movements', [ReportController::class, 'movements']);
+});
+
+Route::get('api/v1/fines/rental-lookup', \App\Http\Controllers\FineRentalLookupController::class)->middleware(['auth:web', RequireCompany::class, PrivateResponse::class, 'throttle:60,1']);
+Route::prefix('api/v1/fines')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class])->group(function (): void {
+ Route::get('/', [\App\Http\Controllers\FineController::class,'index']);
+ Route::post('/', [\App\Http\Controllers\FineController::class,'store'])->middleware('throttle:30,1');
+ Route::get('/{fine}', [\App\Http\Controllers\FineController::class,'show'])->whereNumber('fine');
+ Route::post('/{fine}/events', [\App\Http\Controllers\FineController::class,'event'])->whereNumber('fine')->middleware('throttle:30,1');
+ Route::post('/{fine}/documents', [\App\Http\Controllers\FineController::class,'document'])->whereNumber('fine')->middleware('throttle:30,1');
+ Route::get('/{fine}/documents/{document}', [\App\Http\Controllers\FineController::class,'content'])->whereNumber(['fine','document']);
+});
+
+Route::prefix('api/v1/employees')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class])->group(function (): void {
+ Route::get('/', [\App\Http\Controllers\EmployeeController::class,'index']);
+ Route::post('/', [\App\Http\Controllers\EmployeeController::class,'store'])->middleware('throttle:15,1');
+ Route::put('/{member}/profile', [\App\Http\Controllers\EmployeeController::class,'profile'])->whereNumber('member')->middleware('throttle:15,1');
+ Route::post('/{member}/password', [\App\Http\Controllers\EmployeeController::class,'password'])->whereNumber('member')->middleware('throttle:10,1');
+ Route::put('/{member}', [\App\Http\Controllers\EmployeeController::class,'update'])->whereNumber('member')->middleware('throttle:15,1');
+});
+
+// Excel exchange: existing agency membership access, no financial write permission.
+Route::prefix('api/v1/excel/{kind}')->where(['kind'=>'vehicles|customers|maintenance'])->middleware(['auth:web', RequireCompany::class, PrivateResponse::class])->group(function (): void {
+    Route::get('/template', [\App\Http\Controllers\ExcelExchangeController::class, 'template']);
+    Route::get('/export', [\App\Http\Controllers\ExcelExchangeController::class, 'export'])->middleware('throttle:10,1');
+    Route::post('/preview', [\App\Http\Controllers\ExcelExchangeController::class, 'preview'])->middleware('throttle:10,1');
+    Route::post('/confirm', [\App\Http\Controllers\ExcelExchangeController::class, 'confirm'])->middleware('throttle:10,1');
+});
+
+Route::get('api/v1/settings/backups', \App\Http\Controllers\BackupStatusController::class)->middleware(['auth:web', RequireCompany::class, PrivateResponse::class, \App\Http\Middleware\RequireFinancialManager::class]);
+
+Route::post('api/v1/settings/backups', [\App\Http\Controllers\BackupStatusController::class, 'create'])->middleware(['auth:web', RequireCompany::class, PrivateResponse::class, \App\Http\Middleware\RequireFinancialManager::class, 'throttle:5,1']);
+
+Route::post('api/v1/settings/backups/{backup}/download', [\App\Http\Controllers\BackupStatusController::class, 'download'])->where('backup', '[0-9]{8}T[0-9]{12}Z')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class, \App\Http\Middleware\RequireFinancialManager::class, 'throttle:3,1']);
+
+Route::get('/verify-contract/{token}', \App\Http\Controllers\ContractVerificationController::class)->where('token', '[A-Za-z0-9_.-]{1,100}')->middleware('throttle:30,1');
+
+// Single-agency first-run setup. Closed on configured databases; requires a private installation code.
+Route::get('api/v1/installation', [\App\Http\Controllers\InstallationController::class, 'status'])->middleware([PrivateResponse::class,'throttle:30,1']);
+Route::post('api/v1/installation', [\App\Http\Controllers\InstallationController::class, 'store'])->middleware([PrivateResponse::class,'throttle:5,1']);
+Route::get('api/v1/agency-branding', [\App\Http\Controllers\InstallationController::class, 'branding'])->middleware([PrivateResponse::class,'throttle:60,1']);
+Route::get('api/v1/agency-branding/logo', [\App\Http\Controllers\InstallationController::class, 'logo'])->middleware('throttle:60,1');
+
+Route::prefix('api/v1/settings/agency')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class])->group(function (): void {
+ Route::get('/', [\App\Http\Controllers\AgencyProfileController::class, 'show']);
+ Route::post('/', [\App\Http\Controllers\AgencyProfileController::class, 'update'])->middleware('throttle:15,1');
+});
+
+Route::prefix('api/v1/reservations/{reservation}/invoice')->whereNumber('reservation')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class])->group(function (): void {
+ Route::get('/', [\App\Http\Controllers\RentalInvoiceController::class,'show']);
+ Route::post('/', [\App\Http\Controllers\RentalInvoiceController::class,'issue'])->middleware('throttle:rental-contracts');
+ Route::get('/content', [\App\Http\Controllers\RentalInvoiceController::class,'content']);
 });

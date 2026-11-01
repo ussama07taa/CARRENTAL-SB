@@ -1,0 +1,2 @@
+import {notFound} from 'next/navigation';
+export default function Page(){if(process.env.NODE_ENV==='production')notFound();return <main style={{background:'#eef2f8',minHeight:'100vh',padding:'20px 0',textAlign:'center'}}><p style={{fontSize:13}}>Aperçu mobile · 390 px</p><iframe title="Banner automobile mobile" src="/design-lab/car" style={{width:390,maxWidth:'100%',height:844,border:'1px solid #ccd5e5',borderRadius:22,background:'white'}}/></main>}

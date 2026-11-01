@@ -11,6 +11,9 @@ class RequestAvailability
     public function blockingReasons(string $start, string $end): array
     {
         $reasons = array_fill_keys($this->garageVehicles(), 'Au garage · retour non enregistré');
+        foreach ($this->maintenanceUnreadyVehicles() as $id) {
+            $reasons[$id] ??= 'Retour du garage · disponibilité à valider';
+        }
         foreach ($this->overdueVehicles() as $id) {
             $reasons[$id] = 'Location en retard · retour réel non enregistré';
         }
@@ -38,7 +41,12 @@ class RequestAvailability
 
     public function blockedVehicles(): array
     {
-        return array_values(array_unique([...$this->garageVehicles(), ...$this->overdueVehicles()]));
+        return array_values(array_unique([...$this->garageVehicles(), ...$this->maintenanceUnreadyVehicles(), ...$this->overdueVehicles()]));
+    }
+
+    public function maintenanceUnreadyVehicles(): array
+    {
+        return collect(app(MaintenanceOverview::class)->snapshot()['rows'])->where('category', 'readiness')->pluck('vehicle.id')->unique()->values()->all();
     }
 
     public function garageVehicles(): array

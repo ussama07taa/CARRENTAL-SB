@@ -10,11 +10,13 @@ use App\Models\Vehicle;
 use App\Models\VehiclePhoto;
 use App\Support\Reservations\FleetPlanning;
 use App\Support\Reservations\RentalPayment;
+use App\Support\Reservations\RentalReturn;
 use App\Support\Reservations\RentalSettlement;
 use App\Support\Reservations\RequestAvailability;
 use App\Support\Reservations\RequestPeriod;
 use App\Support\Reservations\TemporaryHold;
 use App\Support\Tenancy\Tenant;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,9 +27,38 @@ use Illuminate\Validation\Rule;
 
 class ReservationController extends Controller
 {
+    public function departureNotifications(Request $request): JsonResponse
+    {
+        $input = $request->validate(['page' => ['nullable', 'integer', 'min:1']]);
+        $now = CarbonImmutable::now('Africa/Casablanca');
+        $end = $now->startOfDay()->addDays(2)->utc();
+        $query = Reservation::where('reservations.status', 'confirmee')
+            ->whereRaw('COALESCE(assignment_starts_at, starts_at) < ?', [$end])
+            ->join('customers as c', fn ($join) => $join->on('c.id', '=', 'reservations.customer_id')->on('c.company_id', '=', 'reservations.company_id'))
+            ->join('vehicles as v', fn ($join) => $join->on('v.id', '=', 'reservations.vehicle_id')->on('v.company_id', '=', 'reservations.company_id'));
+        $total = (clone $query)->count();
+        $today = (clone $query)->whereRaw('COALESCE(assignment_starts_at, starts_at) < ?', [$now->startOfDay()->addDay()->utc()])->count();
+        $last = max(1, (int) ceil($total / 6));
+        $page = min($input['page'] ?? 1, $last);
+        $rows = $query->orderByRaw('COALESCE(assignment_starts_at, starts_at)')->orderBy('reservations.id')
+            ->skip(($page - 1) * 6)->take(6)->get(['reservations.*', 'c.first_name', 'c.last_name', 'v.make', 'v.model', 'v.plate']);
+
+        return response()->json(['total' => $total, 'urgent' => $today, 'page' => $page, 'last_page' => $last,
+            'data' => $rows->map(function ($row) use ($now): array {
+                $at = ($row->assignment_starts_at ?? $row->starts_at)->setTimezone('Africa/Casablanca');
+
+                return ['id' => $row->id, 'customer' => trim($row->first_name.' '.$row->last_name),
+                    'vehicle' => trim($row->make.' '.$row->model), 'plate' => $row->plate,
+                    'at' => $at->format('Y-m-d\TH:i'),
+                    'state' => $at < $now ? 'overdue' : ($at->toDateString() === $now->toDateString() ? 'due' : 'tomorrow'),
+                    'href' => '/reservations?'.http_build_query(['dossier' => $row->id, 'tab' => 'operations']),
+                ];
+            })->all(), 'generated_at' => $now->toIso8601String()]);
+    }
+
     public function planning(Request $request, FleetPlanning $planning): JsonResponse
     {
-        $input = $request->validate(['from' => ['required', 'date_format:Y-m-d'], 'days' => ['required', 'integer', 'min:1', 'max:31'], 'q' => ['nullable', 'string', 'max:100'], 'filter' => ['nullable', Rule::in(['all', 'requests', 'garage'])], 'page' => ['nullable', 'integer', 'min:1']]);
+        $input = $request->validate(['from' => ['required', 'date_format:Y-m-d'], 'days' => ['required', 'integer', 'min:1', 'max:31'], 'q' => ['nullable', 'string', 'max:100'], 'filter' => ['nullable', Rule::in(['all', 'requests', 'garage'])], 'state' => ['nullable', Rule::in(['all', 'request', 'hold', 'confirmed', 'out', 'cancelled', 'returned', 'garage'])], 'page' => ['nullable', 'integer', 'min:1']]);
 
         app(TemporaryHold::class)->expire();
 
@@ -45,7 +76,7 @@ class ReservationController extends Controller
         if (! Schema::hasTable('reservations')) {
             return response()->json(['code' => 'REQUESTS_NOT_READY', 'message' => 'La création des demandes est en cours de préparation.'], 503);
         }
-        $input = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'page' => ['nullable', 'integer', 'min:1']]);
+        $input = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'page' => ['nullable', 'integer', 'min:1'], 'status' => ['nullable', Rule::in(['demande', 'temporaire', 'confirmee', 'en_location', 'retournee', 'annulee'])], 'vehicle_id' => ['nullable', 'integer', 'min:1'], 'source' => ['nullable', Rule::in(['website', 'agency'])], 'sort' => ['nullable', Rule::in(['newest', 'departure'])]]);
         $search = mb_strtolower(trim($input['q'] ?? ''));
         app(TemporaryHold::class)->expire();
         $holdService = app(TemporaryHold::class);
@@ -55,18 +86,38 @@ class ReservationController extends Controller
         $customers = Customer::get()->keyBy('id');
         $vehicles = Vehicle::get()->keyBy('id');
         $items = Reservation::orderByDesc('id')->get()->map(fn (Reservation $row): array => $this->present($row, $customers[$row->customer_id], $vehicles[$row->vehicle_id], $holds, $minutes, $holdReady));
+        $vehicleOptions = $items->pluck('vehicle')->unique('id')->sortBy(fn ($v) => $v['make'].' '.$v['model'])->values();
         if ($search !== '') {
             $items = $items->filter(fn (array $row): bool => str_contains(mb_strtolower($row['reference'].' '.implode(' ', $row['customer']).' '.implode(' ', $row['vehicle'])), $search));
+        }
+        if (! empty($input['vehicle_id'])) {
+            $items = $items->where('vehicle.id', (int) $input['vehicle_id']);
+        }
+        if (! empty($input['source'])) {
+            $items = $items->filter(fn ($row) => ($row['source'] ?? 'agency') === $input['source']);
+        }
+        $counts = $items->countBy('status')->all();
+        $matchingTotal = $items->count();
+        if (! empty($input['status'])) {
+            $items = $items->where('status', $input['status']);
+        }
+        if (($input['sort'] ?? 'newest') === 'departure') {
+            $items = $items->sortBy('starts_local');
         }
         $total = $items->count();
         $last = max(1, (int) ceil($total / 15));
         $page = min((int) ($input['page'] ?? 1), $last);
 
         $selected = $items->values()->slice(($page - 1) * 15, 15)->values();
-        $accounts = app(RentalSettlement::class)->briefs(Reservation::whereIn('id', $selected->pluck('id'))->get());
-        $selected = $selected->map(fn ($row) => [...$row, 'account' => $accounts[$row['id']] ?? null]);
+        $records = Reservation::whereIn('id', $selected->pluck('id'))->get()->keyBy('id');
+        $accounts = app(RentalSettlement::class)->briefs($records);
+        $covers = VehiclePhoto::whereIn('vehicle_id', $selected->pluck('vehicle.id'))->where('slot', 'cover')->orderByDesc('version')->get()->unique('vehicle_id')->keyBy('vehicle_id');
+        $selected = $selected->map(fn ($row) => [...$row, 'account' => $accounts[$row['id']] ?? null,
+            'total_centimes' => app(RentalPayment::class)->summary($records[$row['id']])['total_centimes'] ?? null,
+            'vehicle' => [...$row['vehicle'], 'cover_id' => $covers->get($row['vehicle']['id'])?->id],
+        ]);
 
-        return response()->json(['data' => $selected, 'total' => $total, 'page' => $page, 'last_page' => $last]);
+        return response()->json(['data' => $selected, 'total' => $total, 'page' => $page, 'last_page' => $last, 'counts' => $counts, 'matching_total' => $matchingTotal, 'vehicles' => $vehicleOptions]);
     }
 
     public function availability(Request $request, RequestPeriod $periods, RequestAvailability $availability): JsonResponse
@@ -91,7 +142,7 @@ class ReservationController extends Controller
             $page = min((int) ($input['page'] ?? 1), $last);
             $selected = $items->values()->slice(($page - 1) * 12, 12);
             $covers = VehiclePhoto::whereIn('vehicle_id', $selected->pluck('id'))->where('slot', 'cover')->orderByDesc('version')->get()->unique('vehicle_id')->keyBy('vehicle_id');
-            $unready = app(\App\Support\Reservations\RentalReturn::class)->unreadyVehicles();
+            $unready = app(RentalReturn::class)->unreadyVehicles();
             $rows = $selected->map(fn (Vehicle $vehicle): array => [...$vehicle->only(['id', 'plate', 'make', 'model', 'year', 'current_odometer']), 'readiness_warning' => in_array($vehicle->id, $unready, true) ? 'Retour précédent : disponibilité après contrôle à valider avant la remise des clés.' : null, 'cover_id' => $covers->get($vehicle->id)?->id, 'available' => ! in_array($vehicle->id, $blocked, true), 'reason' => $reasons[$vehicle->id] ?? null])->values();
 
             return response()->json(['data' => $rows, 'available_count' => $available->count(), 'unavailable_count' => $unavailable->count(), 'total' => $items->count(), 'page' => $page, 'last_page' => $last, 'period' => $period, 'checked_at' => now()->toIso8601String()]);
@@ -135,10 +186,10 @@ class ReservationController extends Controller
     {
         app(TemporaryHold::class)->expire();
         $record = Reservation::findOrFail($reservation);
-        $events = DB::table('reservation_events as e')->join('company_memberships as m', function ($join): void {
+        $events = DB::table('reservation_events as e')->leftJoin('company_memberships as m', function ($join): void {
             $join->on('m.id', '=', 'e.actor_membership_id')->on('m.company_id', '=', 'e.company_id');
-        })->join('users as u', 'u.id', '=', 'm.user_id')->where('e.company_id', Tenant::id())->where('e.reservation_id', $record->id)->orderBy('e.id')->get(['e.action', 'e.data', 'e.created_at', 'u.name as actor']);
-        foreach ($events as $event) {
+        })->leftJoin('users as u', 'u.id', '=', 'm.user_id')->where('e.company_id', Tenant::id())->where('e.reservation_id', $record->id)->orderBy('e.id')->get(['e.action', 'e.data', 'e.created_at', 'u.name as actor']);
+        foreach ($events as $event) { $event->actor ??= "Site web";
             if (str_starts_with($event->action, 'foreign_')) {
                 $event->data = json_encode(collect(json_decode($event->data, true))->only(['reason', 'countries', 'transit_countries', 'starts_local', 'ends_local', 'insurer', 'insurance_reference', 'insurance_starts_on', 'insurance_expires_on', 'request_id', 'issue_id'])->all());
             }
@@ -146,7 +197,7 @@ class ReservationController extends Controller
 
         $actor = CompanyMembership::where('user_id', $request->user()->id)->firstOrFail();
 
-        return response()->json(['data' => [...$this->present($record), 'account' => app(RentalSettlement::class)->briefs(collect([$record]))[$record->id] ?? null], 'events' => $events, 'financial' => app(RentalPayment::class)->summary($record), 'can_manage_price' => $actor->is_primary_responsible, 'can_verify_transfer' => $actor->is_primary_responsible]);
+        return response()->json(['data' => [...$this->present($record), 'cover_id' => VehiclePhoto::where('vehicle_id', $record->vehicle_id)->where('slot', 'cover')->orderByDesc('version')->value('id'), 'account' => app(RentalSettlement::class)->briefs(collect([$record]))[$record->id] ?? null], 'events' => $events, 'financial' => app(RentalPayment::class)->summary($record), 'can_manage_price' => $actor->is_primary_responsible, 'can_verify_transfer' => $actor->is_primary_responsible]);
     }
 
     public function hold(Request $request, int $reservation, TemporaryHold $holds): JsonResponse
@@ -177,6 +228,6 @@ class ReservationController extends Controller
         $blocks = in_array($record->status, ['confirmee', 'en_location'], true) || ($record->status === 'temporaire' && $record->hold_expires_at > now());
         $conflicts = $hold->conflicts($record, $holds, $minutes);
 
-        return ['active_extension_id' => $record->active_extension_id, 'active_swap_id' => $record->active_swap_id, 'assignment_starts_local' => $record->assignment_starts_at?->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'has_departed' => $record->active_swap_id !== null || in_array($record->status, ['en_location', 'retournee'], true), 'hold_ready' => $holdReady ?? $hold->ready(), 'hold_expires_at' => $record->hold_expires_at?->toIso8601String(), 'blocked_until_local' => $record->blocked_until?->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'preparation_minutes' => $record->preparation_minutes, 'conflicts' => $conflicts, 'hold_expired' => $record->status === 'demande' && $record->hold_expires_at !== null, 'id' => $record->id, 'reference' => 'DEM-'.str_pad((string) $record->id, 6, '0', STR_PAD_LEFT), 'status' => in_array($record->status, ['confirmee', 'en_location', 'retournee', 'annulee'], true) ? $record->status : ($blocks ? 'temporaire' : 'demande'), 'blocks_vehicle' => $blocks, 'overdue' => $record->status === 'en_location' && $record->ends_at <= now(), 'vehicle_overdue' => Reservation::where('vehicle_id', $record->vehicle_id)->where('id', '<>', $record->id)->where('status', 'en_location')->where('ends_at', '<=', now())->exists(), 'customer' => $customer->only(['id', 'first_name', 'last_name', 'phone']), 'vehicle' => $vehicle->only(['id', 'plate', 'make', 'model']), 'starts_local' => $record->starts_at->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'ends_local' => $record->ends_at->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'timezone' => RequestPeriod::TIMEZONE, 'duration_minutes' => (int) $record->starts_at->diffInMinutes($record->ends_at), 'created_at' => $record->created_at->toIso8601String()];
+        return ['source' => $record->source ?? 'agency', 'language' => $record->language ?? 'fr', 'website_request' => $record->website_request, 'active_extension_id' => $record->active_extension_id, 'active_swap_id' => $record->active_swap_id, 'assignment_starts_local' => $record->assignment_starts_at?->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'has_departed' => $record->active_swap_id !== null || in_array($record->status, ['en_location', 'retournee'], true), 'hold_ready' => $holdReady ?? $hold->ready(), 'hold_expires_at' => $record->hold_expires_at?->toIso8601String(), 'blocked_until_local' => $record->blocked_until?->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'preparation_minutes' => $record->preparation_minutes, 'conflicts' => $conflicts, 'hold_expired' => $record->status === 'demande' && $record->hold_expires_at !== null, 'id' => $record->id, 'reference' => 'DEM-'.str_pad((string) $record->id, 6, '0', STR_PAD_LEFT), 'status' => in_array($record->status, ['confirmee', 'en_location', 'retournee', 'annulee'], true) ? $record->status : ($blocks ? 'temporaire' : 'demande'), 'blocks_vehicle' => $blocks, 'overdue' => $record->status === 'en_location' && $record->ends_at <= now(), 'vehicle_overdue' => Reservation::where('vehicle_id', $record->vehicle_id)->where('id', '<>', $record->id)->where('status', 'en_location')->where('ends_at', '<=', now())->exists(), 'customer' => $customer->only(['id', 'first_name', 'last_name', 'phone']), 'vehicle' => $vehicle->only(['id', 'plate', 'make', 'model']), 'starts_local' => $record->starts_at->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'ends_local' => $record->ends_at->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'timezone' => RequestPeriod::TIMEZONE, 'duration_minutes' => (int) $record->starts_at->diffInMinutes($record->ends_at), 'created_at' => $record->created_at->toIso8601String()];
     }
 }

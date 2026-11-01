@@ -1,0 +1,27 @@
+'use client';
+import InspectionCamera from './inspection-camera';
+import {useEffect,useState} from 'react';
+type Evidence={id:string;name:string;type:string;blob:Blob;url:string;archived?:boolean;scope?:string};
+const database='bensbih-inspection-prototype';
+async function openDb(){return new Promise<IDBDatabase>((resolve,reject)=>{const r=indexedDB.open(database,1);r.onupgradeneeded=()=>r.result.createObjectStore('media',{keyPath:'id'});r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+async function store(mode:'read'|'put'|'delete',value?:unknown){const db=await openDb();try{return await new Promise<unknown>((resolve,reject)=>{const tx=db.transaction('media',mode==='read'?'readonly':'readwrite');const os=tx.objectStore('media');const r=mode==='read'?os.getAll():mode==='put'?os.put(value):os.delete(value as string);tx.oncomplete=()=>resolve(r.result);tx.onerror=()=>reject(tx.error);});}finally{db.close();}}
+export async function clearPrototypeMedia(){const db=await openDb();try{await new Promise<void>((resolve,reject)=>{const tx=db.transaction('media','readwrite');tx.objectStore('media').clear();tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}finally{db.close();}}
+// Preserve the previous evidence before reopening a validated inspection.
+export async function archiveInspectionMedia(){const db=await openDb();try{await new Promise<void>((resolve,reject)=>{const tx=db.transaction('media','readwrite'),os=tx.objectStore('media'),r=os.getAll();r.onsuccess=()=>{for(const row of r.result){if(row.archived||row.scope)continue;os.put({...row,archived:true});os.put({...row,id:crypto.randomUUID(),archived:false});}};tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}finally{db.close();}}
+export async function inspectionDraft(scope:string,operation:'begin'|'commit'|'discard',target?:string){
+ const db=await openDb();try{await new Promise<void>((resolve,reject)=>{const tx=db.transaction('media','readwrite'),os=tx.objectStore('media'),r=os.getAll();r.onsuccess=()=>{for(const row of r.result){
+  if(operation==='begin'&&!row.archived&&row.scope===target)os.put({...row,id:crypto.randomUUID(),scope});
+  if(operation==='discard'&&row.scope===scope)os.delete(row.id);
+  if(operation==='commit'){if(!row.archived&&row.scope===target)os.put({...row,archived:true});if(row.scope===scope)os.put({...row,scope:target});}
+ }};tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}finally{db.close();}
+}
+export default function InspectionMedia({readOnly=false,scope,onChange,onBusy,title='Photos et vidéos du départ'}:{title?:string;readOnly?:boolean;scope?:string;onChange?:()=>void;onBusy?:(busy:boolean)=>void}){
+ const [camera,setCamera]=useState(false);
+ const [items,setItems]=useState<Evidence[]>([]),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);
+ useEffect(()=>{let active=true;const urls:string[]=[];store('read').then(rows=>{if(!active)return;setItems((rows as Evidence[]).filter(row=>!row.archived&&row.scope===scope).map(row=>{const url=URL.createObjectURL(row.blob);urls.push(url);return {...row,url};}));}).catch(()=>setError('Le stockage local des médias est indisponible.'));return()=>{active=false;urls.forEach(URL.revokeObjectURL);};},[revision,scope]);
+ useEffect(()=>{onBusy?.(busy);},[busy,onBusy]);
+ async function add(files:FileList|File[]|null,propagate=false){if(!files)return;setBusy(true);setError('');try{const chosen=Array.from(files);if(items.length+chosen.length>20)throw Error('Maximum 20 médias pour cet essai.');if(chosen.some(f=>!['image/jpeg','image/png','image/webp','video/mp4','video/webm'].includes(f.type)||f.size>50*1024*1024))throw Error('Images JPG, PNG, WebP et vidéos MP4/WebM uniquement, 50 Mo maximum par fichier.');if([...items.map(i=>i.blob),...chosen].reduce((n,f)=>n+f.size,0)>200*1024*1024)throw Error('Maximum 200 Mo au total pour cet essai.');for(const file of chosen)await store('put',{id:crypto.randomUUID(),name:file.name,type:file.type,blob:file,scope});onChange?.();}catch(e){setError((e as Error).message||'Enregistrement local impossible.');if(propagate)throw e;}finally{setRevision(r=>r+1);setBusy(false);}}
+ return <section className="ls-media"><h3>{title}</h3><p>Photos et vidéos locales d’exemple. Les changements seront appliqués avec « Enregistrer ».</p>{!readOnly&&<div className="ls-media-actions"><button type="button" className="ls-primary" disabled={busy||camera} onClick={()=>setCamera(true)}>Ouvrir la caméra</button><label className="ls-upload-button">Ajouter des photos / vidéos<input aria-label="Ajouter des fichiers" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple disabled={busy} onChange={e=>{void add(e.target.files);e.target.value='';}}/></label></div>}
+ {!readOnly&&camera&&<InspectionCamera onCapture={file=>add([file],true)} onClose={()=>setCamera(false)}/>}
+ {error&&<p role="alert">{error}</p>}<span role="status">{busy?'Enregistrement…':`${items.length} média(s)`}</span><div className="ls-media-grid">{items.map(i=><figure key={i.id}>{i.type.startsWith('video/')?<video src={i.url} controls preload="metadata"/>:<a href={i.url} target="_blank" rel="noreferrer"><img src={i.url} alt={i.name}/></a>}<figcaption>{i.name}</figcaption>{!readOnly&&<button disabled={busy} onClick={async()=>{setBusy(true);try{await store('delete',i.id);onChange?.();setRevision(r=>r+1);}catch{setError('Suppression impossible.');}finally{setBusy(false);}}}>Retirer {i.name}</button>}</figure>)}</div></section>;
+}

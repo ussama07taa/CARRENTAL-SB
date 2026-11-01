@@ -48,7 +48,7 @@ class RentalContract
         $lines = ($pricing['agreement_mode'] ?? null) === 'calculated' ? ($pricing['lines'] ?? []) : [];
         $rates = collect($lines)->pluck('daily_centimes')->unique();
 
-        return ['layout' => 4, 'pricing_half_day_units' => ! $reservation->active_swap_id && isset($pricing['lines']) && count($pricing['lines']) > 0 ? collect($pricing['lines'])->sum('half_day_units') + ($reservation->active_extension_id ? app(RentalExtension::class)->halfDayAddition($reservation->id) : 0) : null, 'pricing_agreement_mode' => $pricing['agreement_mode'] ?? null, 'fuel' => Vehicle::findOrFail($reservation->vehicle_id)->fuel,
+        return ['tax' => $financial['tax'] ?? null, 'layout' => 5, 'document_design' => 'professional-2026-10', 'agency_profile' => app(AgencyDocumentProfile::class)->current(), 'locations' => collect($reservation->website_request ?? [])->only(['pickup', 'dropoff', 'pickup_detail', 'dropoff_detail'])->all(), 'pricing_half_day_units' => ! $reservation->active_swap_id && isset($pricing['lines']) && count($pricing['lines']) > 0 ? collect($pricing['lines'])->sum('half_day_units') + ($reservation->active_extension_id ? app(RentalExtension::class)->halfDayAddition($reservation->id) : 0) : null, 'pricing_agreement_mode' => $pricing['agreement_mode'] ?? null, 'fuel' => Vehicle::findOrFail($reservation->vehicle_id)->fuel,
             'verified_payment_methods' => $methods, 'verified_centimes' => $financial['verified_centimes'] ?? null,
             'remaining_centimes' => $financial['remaining_centimes'] ?? null,
             'agreed_daily_centimes' => $rates->count() === 1 ? $rates->first() : null,
@@ -128,7 +128,7 @@ class RentalContract
     public function issue(int $reservation, CompanyMembership $actor, array $input): array
     {
         abort_unless(Schema::hasTable('rental_contract_versions'), 503, 'Le contrat attend l’activation de la mise à jour.');
-        abort_unless(config('rental_contracts.demo_only') && app()->environment(['demo', 'testing', 'local']), 422, 'Le modèle de contrat réel doit être validé avant émission.');
+        abort_unless(config('rental_contracts.real_documents_enabled') || (config('rental_contracts.demo_only') && app()->environment(['demo', 'testing', 'local'])), 422, 'L’émission des contrats n’est pas activée.');
         $hash = hash('sha256', json_encode([$reservation, $input]));
 
         return DB::transaction(function () use ($reservation, $actor, $input, $hash): array {

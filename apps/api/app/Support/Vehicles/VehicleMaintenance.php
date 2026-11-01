@@ -19,10 +19,10 @@ class VehicleMaintenance
         return DB::table($table)->where('company_id', Tenant::id());
     }
 
-    public function actor(int $user): int
+    public function actor(int $user, bool $financial = true): int
     {
         $m = CompanyMembership::where('user_id', $user)->firstOrFail();
-        abort_unless($m->is_primary_responsible, 403, 'Le suivi financier des interventions est réservé au responsable.');
+        abort_unless(! $financial || $m->is_primary_responsible, 403, 'Le suivi financier des interventions est réservé au responsable.');
 
         return $m->id;
     }
@@ -113,7 +113,7 @@ class VehicleMaintenance
         $paid = $cash->pluck('net_centimes', 'maintenance_id');
         $returns = $snapshot !== null ? $snapshot['returns'] : $this->query('maintenance_returns')->whereIn('maintenance_id', $ids)->get()->keyBy('maintenance_id');
         if ($snapshot === null) {
-            $snapshot = ['cash' => $cash, 'returns' => $returns, 'works' => $this->query('maintenance_work_items')->whereIn('maintenance_id', $ids)->selectRaw('DISTINCT ON (item_key) *')->orderBy('item_key')->orderByDesc('version')->get()->sortBy('id')->groupBy('maintenance_id'), 'events' => $this->query('maintenance_followups')->whereIn('maintenance_id', $ids)->orderBy('id')->get()->groupBy('maintenance_id'), 'cancellations' => app(MaintenanceCancellations::class)->rows($ids->all())];
+            $snapshot = ['cash' => $cash, 'returns' => $returns, 'works' => $this->query('maintenance_work_items')->whereIn('maintenance_id', $ids)->selectRaw('DISTINCT ON (item_key) *')->orderBy('item_key')->orderByDesc('version')->get()->sortBy('id')->groupBy('maintenance_id'), 'events' => $this->query('maintenance_followups')->whereIn('maintenance_id', $ids)->orderBy('id')->get()->groupBy('maintenance_id'), 'readiness' => $this->query('maintenance_readiness')->whereIn('maintenance_id', $ids)->get()->groupBy('maintenance_id'), 'cancellations' => app(MaintenanceCancellations::class)->rows($ids->all())];
         }
         $all = $all->map(fn ($e) => (new MaintenanceWork)->financial($e, $snapshot));
         $active = $all->filter(fn ($e) => ! $e->cancellation && collect($e->items)->contains(fn ($i) => $i->status !== 'cancelled'));
@@ -148,6 +148,7 @@ class VehicleMaintenance
             $e->has_file = $e->path !== null;
             $e->returned_on = $returns[$e->id]->returned_on ?? null;
             $e->in_garage = (bool) $e->in_garage;
+            $e->readiness_pending = app(MaintenanceReadiness::class)->pending($e, $snapshot);
             $e->garage_open = $e->in_garage && ! $e->returned_on;
             if ($e->garage_open) {
                 $garage[] = ['id' => $e->id, 'title' => $e->title, 'since' => $e->performed_on];

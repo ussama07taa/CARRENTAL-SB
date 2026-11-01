@@ -1,0 +1,20 @@
+'use client';
+import {useEffect,useId,useRef,useState} from 'react';
+import {Paperclip,X} from 'lucide-react';
+import {api,apiMutation} from '../_lib/auth-client';
+export type ProofFile={file:File;key:string};
+export async function uploadPaymentProof(reservation:number,payment:number,proof:ProofFile){
+ const data=new FormData();data.append('file',proof.file);data.append('request_key',proof.key);
+ const response=await apiMutation(`reservations/${reservation}/payments/${payment}/proofs`,'POST',data);
+ if(!response.ok){const result=await response.json();throw Error(Object.values(result.errors??{}).flat().join(' ')||result.message||'Impossible de joindre le justificatif.');}
+}
+export function PaymentProofPicker({value,onChange,disabled=false}:{value:ProofFile|null;onChange:(value:ProofFile|null)=>void;disabled?:boolean}){
+ const [error,setError]=useState(''),[preview,setPreview]=useState('');const input=useRef<HTMLInputElement>(null),picker=useRef<HTMLButtonElement>(null);const errorId=useId();
+ useEffect(()=>{if(!value||!value.file.type.startsWith('image/')){setPreview('');return;}const url=URL.createObjectURL(value.file);setPreview(url);return()=>URL.revokeObjectURL(url);},[value]);
+ return <div className="rp-proof"><div><span className="rp-proof-label"><Paperclip size={16}/> Justificatif du paiement <small>Facultatif</small></span><button ref={picker} type="button" className="secondary rp-proof-choose" aria-invalid={!!error} aria-describedby={error?errorId:undefined} disabled={disabled} onClick={()=>input.current?.click()}><Paperclip size={16}/>{value?'Choisir un autre fichier':'Ajouter une photo ou un PDF'}</button><input hidden ref={input} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" aria-invalid={!!error} aria-label="Justificatif du paiement" disabled={disabled} onChange={e=>{const file=e.target.files?.[0];setError('');if(!file)return;const message=!['image/jpeg','image/png','image/webp','application/pdf'].includes(file.type)?'Choisissez un PDF ou une image JPG, PNG ou WebP.':file.size>5*1024*1024?'Le fichier dépasse 5 Mo.':'';if(message){setError(message);e.target.value='';onChange(null);picker.current?.focus();return;}onChange({file,key:crypto.randomUUID()});}}/></div><small>Photo du reçu bancaire ou ticket carte · JPG, PNG, WebP ou PDF · 5 Mo maximum.</small>{error&&<p id={errorId} className="rp-field-error" role="alert">{error}</p>}{value&&<div className="rp-proof-selected">{preview&&<img src={preview} alt="Aperçu du justificatif sélectionné"/>}<span>{value.file.name}</span><button type="button" className="secondary" disabled={disabled} onClick={()=>{onChange(null);setError('');if(input.current)input.current.value='';}}><X size={14}/> Retirer</button></div>}</div>;
+}
+export function PaymentProofs({reservation,payment,proofs,canAttach,onSaved}:{canAttach:boolean;reservation:number;payment:number;proofs:{id:number}[];onSaved:()=>void}){
+ const [open,setOpen]=useState(false),[value,setValue]=useState<ProofFile|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');const lock=useRef(false);
+ async function save(){if(!value||lock.current)return;lock.current=true;setBusy(true);setError('');try{await uploadPaymentProof(reservation,payment,value);setValue(null);setOpen(false);onSaved();}catch(e){setError(e instanceof Error?e.message:'Échec du transfert.');}finally{lock.current=false;setBusy(false);}}
+ return <div className="rp-proof-history">{proofs.map((p,i)=><a key={p.id} href={`${api}/api/v1/reservations/${reservation}/payments/${payment}/proofs/${p.id}`} target="_blank" rel="noreferrer"><Paperclip size={14}/> Voir le justificatif{proofs.length>1?` ${i+1}`:''}</a>)}<button type="button" className="secondary" onClick={()=>setOpen(!open)} disabled={busy||!canAttach}>{open?'Fermer':'+ Joindre un justificatif'}</button>{open&&<><PaymentProofPicker value={value} onChange={setValue} disabled={busy}/>{error&&<p role="alert" className="rp-field-error">{error}</p>}<button type="button" className="secondary" disabled={!value||busy} onClick={()=>void save()}>{busy?'Envoi en cours…':'Joindre au paiement'}</button></>}</div>;
+}

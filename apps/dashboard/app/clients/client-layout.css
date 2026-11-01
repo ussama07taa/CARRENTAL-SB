@@ -1,0 +1,141 @@
+/* Client directory and reusable file: white surfaces, brand blue, readable text. */
+.clients-section{color:#171b22;min-width:0}
+.clients-section .clients-heading{margin:0 0 24px;gap:20px;flex-wrap:wrap}
+.clients-section .clients-heading h1{font-size:28px;letter-spacing:-.7px;margin:0 0 6px;font-weight:700;color:#171b22}
+.clients-section .clients-heading p:last-child{margin:0;color:#424b57;font-size:14px}
+.clients-heading-actions,.client-row-actions,.client-contact-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.clients-section .client-icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:44px;height:44px;padding:0;min-width:44px;border:1px solid #dfe3e9;border-radius:8px;background:#fff;color:#252c36;text-decoration:none;cursor:pointer}
+.clients-section .client-icon:hover{color:#004fff;background:#edf3ff;border-color:#a8c2ff}
+.clients-section button:focus-visible,.clients-section a:focus-visible{outline:3px solid #004fff;outline-offset:3px}
+.clients-section .client-icon:disabled{opacity:.5;cursor:wait}
+.clients-section .client-directory{border-radius:12px;box-shadow:none}
+.clients-section .directory-title{padding:20px 22px 16px}
+.clients-section .directory-title h2{color:#171b22}
+.clients-section .directory-title>div>span{color:#424b57}
+.clients-section .client-search{margin:0 22px 20px}
+.clients-section .client-search input{background:#fff;color:#171b22}
+.clients-section .client-table th{background:#f8f9fb;color:#454e5b;font-size:11px;padding:14px 18px;letter-spacing:.5px}
+.clients-section .client-table td{padding:14px 18px;color:#171b22;font-size:14px}
+.clients-section .client-table td:first-child,.clients-section .client-table th:first-child{padding-left:22px}
+.clients-section .client-clickable{cursor:pointer}
+.clients-section .client-table tbody tr:hover{background:#f3f7ff}
+.clients-section .customer-cell small,.clients-section .missing-value,.clients-section .date-cell{color:#4a5360}
+.clients-section .customer-cell strong{font-size:14px;color:#171b22}
+.clients-section .avatar{border-radius:50%;background:#edf3ff;color:#004fff}
+.clients-section .phone-cell a{color:inherit;text-decoration:none}
+.clients-section .phone-cell a:hover{text-decoration:underline;color:#004fff}
+.clients-section .client-row-actions{flex-wrap:nowrap;justify-content:flex-end}
+.clients-section .directory-footer{padding:16px 22px;color:#424b57}
+.clients-section .pagination button{width:40px;height:40px}
+.clients-section .customer-dialog{background:#fff;border-radius:16px;width:min(960px,calc(100vw - 32px));color:#171b22}
+.clients-section .customer-dialog>.drawer-top,.clients-section .customer-dialog>.drawer-heading{background:#004fff;color:#fff}
+.clients-section .customer-dialog>.drawer-top{padding:18px 24px 0}
+.clients-section .customer-dialog>.drawer-heading{padding:12px 24px 24px;gap:16px}
+.clients-section .customer-dialog>.drawer-heading h2{color:#fff;font-size:26px;overflow-wrap:anywhere}
+.clients-section .customer-dialog>.drawer-heading p,.clients-section .customer-dialog>.drawer-top .eyebrow{color:#fff}
+.clients-section .close-drawer{background:#ffffff18;border:1px solid #ffffff55;color:#fff;width:40px;height:40px;border-radius:8px}
+.clients-section .customer-dialog .avatar-large{background:#ffffff22;color:#fff;border:1px solid #ffffff55}
+.client-view-tabs{display:flex;flex-shrink:0;gap:4px;padding:0 24px;border-bottom:1px solid #e1e6ee;overflow-x:auto;background:#fff}
+.client-view-tabs button{display:flex;align-items:center;gap:8px;min-height:56px;white-space:nowrap;padding:14px 16px;border:0;border-bottom:3px solid transparent;background:#fff;font-size:14px;font-weight:600;color:#424b57}
+.client-view-tabs button[aria-selected=true]{color:#004fff;border-bottom-color:#004fff}
+.clients-section .customer-dialog .drawer-body{padding:24px;background:#fff}
+.client-contact-actions{margin-bottom:20px}
+.clients-section .client-contact-actions .secondary,.clients-section .client-simple-card header button,.client-panel-heading button{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.clients-section .client-simple-card{margin:0;border:1px solid #e1e6ee;border-radius:12px;padding:20px}
+.clients-section .client-simple-card header,.client-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+.clients-section .client-simple-card h3,.client-panel-heading h3{font-size:16px;margin:0;color:#171b22}
+.clients-section .customer-dialog .client-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;margin:0}
+.client-details>div{padding:16px 0;border-bottom:1px solid #edf0f4;min-width:0}
+.clients-section .client-details dt{font-size:12px;color:#4a5360;margin-bottom:6px}
+.clients-section .client-details dd{color:#171b22;overflow-wrap:anywhere;font-size:14px;margin:0}
+.client-record-note,.client-panel-heading>span{font-size:12px;color:#4a5360;line-height:1.6}
+.client-record-note{margin:18px 0 0}
+.clients-section .documents-intro{display:none}
+.clients-section .document-card{box-shadow:none;border:1px solid #e1e6ee;border-radius:12px}
+.clients-section .activity-list{margin:0;padding:0;list-style:none}
+.clients-section .activity-list li{padding:18px 0;border-bottom:1px solid #edf0f4}
+.clients-section .activity-list p{color:#4a5360;line-height:1.6}
+.clients-section .customer-dialog .drawer-footer{box-shadow:none;border-top:1px solid #e1e6ee;background:#fff}
+@media(max-width:680px){
+.clients-section .clients-heading{gap:16px}.clients-heading-actions{width:100%}
+.clients-section .directory-title{padding:18px 16px}.clients-section .directory-title>div{align-items:flex-start;flex-direction:column;gap:6px}.clients-section .privacy-label{display:none}
+.clients-section .client-search{margin:0 16px 16px}.clients-section .client-search input{font-size:13px}
+.clients-section .client-table th:nth-child(2),.clients-section .client-table td:nth-child(2),.clients-section .client-table th:nth-child(3),.clients-section .client-table td:nth-child(3),.clients-section .client-table th:nth-child(4),.clients-section .client-table td:nth-child(4){display:none}
+.clients-section .client-table td,.clients-section .client-table td:first-child,.clients-section .client-table th:first-child{padding:12px}
+.clients-section .customer-cell{gap:8px}.clients-section .customer-cell strong{font-size:13px;overflow-wrap:anywhere}.clients-section .customer-cell .avatar{display:none}.clients-section .customer-cell .mobile-phone{display:block;font-size:12px}
+.clients-section .client-row-actions{gap:4px}.clients-section .client-icon{width:40px;min-width:40px;height:44px}
+.clients-section .directory-footer{padding:12px;gap:10px}.clients-section .directory-footer>span{font-size:11px}
+.clients-section .customer-dialog{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);border-radius:12px}
+.clients-section .customer-dialog>.drawer-top{padding:12px 16px 0}.clients-section .customer-dialog>.drawer-heading{padding:10px 16px 18px}.clients-section .customer-dialog>.drawer-heading h2{font-size:22px}.clients-section .avatar-large{display:none}
+.client-view-tabs{padding:0 8px}.client-view-tabs button{padding:12px;min-height:50px;font-size:13px}
+.clients-section .customer-dialog .drawer-body{padding:16px}.clients-section .client-simple-card{padding:16px}.clients-section .customer-dialog .client-details{grid-template-columns:1fr}
+.clients-section .customer-dialog .drawer-footer{padding:12px 16px}.client-panel-heading{flex-wrap:wrap}
+}
+
+/* Customer editor: centered, focused form with a persistent action bar. */
+.clients-section .customer-form-dialog{width:min(720px,calc(100vw - 40px));height:min(760px,calc(100dvh - 48px));max-height:calc(100dvh - 48px);inset:0;margin:auto;border:0;border-radius:16px;box-shadow:0 24px 80px #10182830}
+.clients-section .customer-form-dialog>.drawer-top{padding:20px 28px 0;border:0;min-height:30px}
+.clients-section .customer-form-dialog>.drawer-top .eyebrow{font-size:10px;letter-spacing:1.4px;line-height:20px}
+.clients-section .customer-form-dialog .close-drawer{position:absolute;top:16px;right:20px;width:40px;height:40px}
+.clients-section .customer-form-dialog>.drawer-heading{padding:10px 28px 24px}
+.clients-section .customer-form-dialog>.drawer-heading h2{font-size:26px;margin:0 0 8px;line-height:1.25;padding-right:30px}
+.clients-section .customer-form-dialog>.drawer-heading p{margin:0;font-size:13px;line-height:1.5}
+.clients-section .customer-form-dialog .file-sections{display:flex;gap:20px;padding:0 28px;border-bottom:1px solid #e4e7ec;background:#fff;overflow-x:auto}
+.clients-section .customer-form-dialog .file-sections>button{display:flex;align-items:center;gap:8px;border:0;border-bottom:3px solid transparent;border-radius:0;min-height:58px;padding:14px 0;background:#fff;box-shadow:none;color:#475467;white-space:nowrap;font-size:14px}
+.clients-section .customer-form-dialog .file-sections>button[aria-selected=true]{color:#004fff;border-bottom-color:#004fff;box-shadow:none;background:#fff}
+.clients-section .customer-form-dialog .file-sections small{display:none}
+.clients-section .customer-form-dialog>form,.clients-section .customer-form-dialog .customer-fieldset{overflow:hidden;min-height:0}
+.clients-section .customer-form-dialog .drawer-body{padding:28px;flex:1 1 auto;scroll-padding:24px}
+.clients-section .customer-form-dialog .profile-section{padding:0;margin:0;border:0;border-radius:0;background:#fff}
+.clients-section .customer-form-dialog .profile-section h3{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 24px;font-size:16px;line-height:1.5;color:#182230}
+.clients-section .customer-form-dialog .profile-section h3 small{font-size:12px;font-weight:400;color:#667085;letter-spacing:0}
+.clients-section .customer-form-dialog .client-form-grid{gap:20px}
+.clients-section .customer-form-dialog .client-field{min-width:0}
+.clients-section .customer-form-dialog .client-field.span-two{grid-column:1/-1}
+.clients-section .customer-form-dialog .client-field label{font-size:14px;font-weight:600;color:#344054;margin-bottom:8px;line-height:1.5}
+.clients-section .customer-form-dialog .client-field input,.clients-section .customer-form-dialog .client-field select{height:48px;font-size:16px;padding:10px 14px;border:1px solid #cfd5df;border-radius:8px;box-shadow:0 1px 2px #10182805;color:#182230;background:#fff}
+.clients-section .customer-form-dialog .client-field input:focus,.clients-section .customer-form-dialog .client-field select:focus{border-color:#004fff;outline:3px solid #004fff18;outline-offset:1px}
+.clients-section .customer-form-dialog .client-field input[aria-invalid=true]{border-color:#d92d20;background:#fff;box-shadow:none}
+.clients-section .customer-form-dialog .client-field small{font-size:12px;line-height:1.5;margin-top:6px;color:#667085}
+.clients-section .customer-form-dialog .client-field .field-error{color:#b42318}
+.clients-section .customer-form-dialog .drawer-message{margin:16px 28px 0;padding:12px 14px;font-size:13px;line-height:1.5;border-radius:8px;flex-shrink:0}
+.clients-section .customer-form-dialog .optional-details{margin-top:24px;border:1px solid #e4e7ec;border-radius:10px;background:#fff}
+.clients-section .customer-form-dialog .optional-details summary{padding:16px;min-height:66px;gap:12px}
+.clients-section .customer-form-dialog .optional-details summary>span:first-child{display:none}
+.clients-section .customer-form-dialog .optional-details summary small{font-size:12px;line-height:1.5;margin-top:4px;color:#667085}
+.clients-section .customer-form-dialog .optional-details>.client-form-grid{padding:4px 16px 20px}
+.clients-section .customer-form-dialog .form-privacy{margin:18px 0 0;font-size:12px;color:#667085;line-height:1.5}
+.clients-section .customer-form-dialog .document-cards{margin-top:0;gap:16px;grid-template-columns:1fr}
+.clients-section .customer-form-dialog .document-photos{grid-template-columns:repeat(2,minmax(0,1fr))}
+.clients-section .customer-form-dialog .drawer-footer{padding:16px 28px;gap:12px;background:#fafbfc;border-top:1px solid #e4e7ec}
+.clients-section .customer-form-dialog .drawer-footer .primary{min-width:164px}
+@media(max-width:600px){
+.clients-section .customer-form-dialog{width:calc(100vw - 16px);height:calc(100dvh - 16px);max-height:calc(100dvh - 16px);border-radius:12px}
+.clients-section .customer-form-dialog>.drawer-top{padding:16px 20px 0}
+.clients-section .customer-form-dialog .close-drawer{top:12px;right:16px}
+.clients-section .customer-form-dialog>.drawer-heading{padding:10px 20px 20px}
+.clients-section .customer-form-dialog>.drawer-heading h2{font-size:23px}
+.clients-section .customer-form-dialog .file-sections{padding:0 20px;gap:18px}
+.clients-section .customer-form-dialog .file-sections>button{font-size:12px;min-height:52px;gap:6px}
+.clients-section .customer-form-dialog .file-sections>button>svg{width:16px}
+.clients-section .customer-form-dialog .drawer-body{padding:20px}
+.clients-section .customer-form-dialog .profile-section h3{align-items:flex-start;flex-direction:column;gap:4px;margin-bottom:20px}
+.clients-section .customer-form-dialog .client-form-grid{grid-template-columns:1fr;gap:18px}
+.clients-section .customer-form-dialog .drawer-message{margin:12px 20px 0}
+.clients-section .customer-form-dialog .drawer-footer{padding:14px 20px}
+.clients-section .customer-form-dialog .drawer-footer button{font-size:13px}
+.clients-section .customer-form-dialog .drawer-footer .primary{min-width:0}
+.clients-section .customer-form-dialog .document-photos{grid-template-columns:1fr}
+}
+
+.customer-rentals .client-panel-heading{align-items:flex-start}.customer-rentals .client-panel-heading p{font-size:13px;color:#475467;line-height:1.6;margin:8px 0 0}
+.customer-rentals-scroll{overflow-x:auto;border:1px solid #e4e7ec;border-radius:10px}.customer-rentals table{border-collapse:collapse;width:100%;text-align:left;font-size:13px}.customer-rentals th{background:#f8fafc;font-size:12px;color:#475467;font-weight:600;padding:14px 16px}.customer-rentals td{padding:16px;border-top:1px solid #e4e7ec;vertical-align:middle}.customer-rentals tbody tr{cursor:pointer}.customer-rentals tbody tr:hover{background:#f5f8ff}.customer-rentals td strong,.customer-rentals td small{display:block;margin-top:6px}.customer-rentals td small{color:#475467;font-size:12px}.customer-rentals td a:not(.client-icon){color:#004fff;text-decoration:none;font-weight:600}.rental-state{display:inline-block;padding:5px 8px;border-radius:6px;background:#f2f4f7;color:#344054;font-size:12px;white-space:nowrap}.rental-state-confirmee{background:#eaf7ef;color:#166534}.rental-state-en_location{background:#eef2ff;color:#4338ca}.rental-state-demande,.rental-state-temporaire{background:#fff4dc;color:#854d0e}.rental-state-annulee{background:#fff0ef;color:#b42318}.customer-rentals-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;font-size:12px;color:#475467}.customer-rentals-footer>div{display:flex;gap:8px}.customer-rentals-empty{text-align:center;padding:40px 16px;color:#475467}.customer-rentals-empty h3{color:#182230;font-size:16px}.customer-rentals-empty svg{color:#004fff}
+@media(max-width:600px){.customer-rentals table{min-width:590px}.customer-rentals th,.customer-rentals td{padding:12px}.customer-rentals .client-panel-heading{flex-wrap:wrap}}
+
+.clients-section .customer-dialog .client-view-body{min-width:0;width:100%;box-sizing:border-box}
+.customer-rentals,#client-panel-rentals{min-width:0;max-width:100%}.customer-rentals-scroll{max-width:100%;min-width:0}
+
+.clients-section .client-view-tabs{width:100%;min-width:0;box-sizing:border-box;position:relative}
+.customer-rentals-scroll{position:relative}
+
+.client-contact-actions .primary,.customer-rentals .client-panel-heading .primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}

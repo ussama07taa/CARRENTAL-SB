@@ -19,7 +19,7 @@ class SessionController extends Controller
             return response()->json(['message' => 'Adresse e-mail ou mot de passe incorrect.'], 401);
         }
         $memberships = DB::table('company_memberships')->where('user_id', Auth::id())->limit(2)->get();
-        if ($memberships->count() !== 1) {
+        if ($memberships->count() !== 1 || ! $memberships->first()->is_active) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
@@ -36,14 +36,15 @@ class SessionController extends Controller
     public function show(Request $request): JsonResponse
     {
         $membership = CompanyMembership::query()->where('user_id', $request->user()->id)->with('company')->sole();
-        $responsible = CompanyMembership::query()->where('is_primary_responsible', true)->with('user')->first();
+        $responsible = CompanyMembership::query()->where('is_primary_responsible', true)->where('is_active', true)->orderBy('id')->with('user')->first();
         abort_unless($responsible, 403, 'Responsable de l’agence indisponible.');
 
         return response()->json([
-            'user' => ['name' => $request->user()->name],
+            'user' => ['id' => $request->user()->id, 'name' => $request->user()->name],
             'company' => ['name' => $membership->company->name],
             'responsible' => ['name' => $responsible->user->name],
             'demo' => app()->environment('demo'),
+            'can_manage_expenses' => (bool) $membership->is_primary_responsible,
         ]);
     }
 

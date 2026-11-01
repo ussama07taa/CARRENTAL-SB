@@ -18,7 +18,7 @@ class Vehicle extends Model
 
     protected function casts(): array
     {
-        return ['equipment' => 'array', 'year' => 'integer', 'seats' => 'integer', 'doors' => 'integer', 'version' => 'integer', 'current_odometer' => 'integer'];
+        return ['published' => 'boolean', 'equipment' => 'array', 'public_description' => 'array', 'custom_equipment' => 'array', 'year' => 'integer', 'seats' => 'integer', 'doors' => 'integer', 'version' => 'integer', 'current_odometer' => 'integer'];
     }
 
     protected $appends = ['reference'];

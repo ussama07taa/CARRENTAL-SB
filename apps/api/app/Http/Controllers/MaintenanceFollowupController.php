@@ -11,7 +11,7 @@ class MaintenanceFollowupController extends Controller
 {
     public function store(SaveMaintenanceFollowupRequest $request, int $vehicle, int $entry, string $item, MaintenanceFollowups $followups, VehicleMaintenance $maintenance): JsonResponse
     {
-        $actor = $maintenance->actor($request->user()->id);
+        $actor = $maintenance->actor($request->user()->id, false);
 
         return response()->json(['id' => $followups->save($vehicle, $entry, $item, $actor, $request->validated())], 201);
     }

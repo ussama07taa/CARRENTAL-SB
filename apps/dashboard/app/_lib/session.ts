@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 
-export type Session = { user: { name: string }; company: { name: string }; responsible: { name: string }; demo: boolean };
+export type Session = { user: { id: number; name: string }; company: { name: string }; responsible: { name: string }; can_manage_expenses?: boolean; demo: boolean };
 export async function readSession(): Promise<{ status: number; session: Session | null }> {
   const incoming = await headers();
   const response = await fetch(`${process.env.API_INTERNAL_URL ?? 'http://127.0.0.1:8000'}/api/v1/auth/me`, {

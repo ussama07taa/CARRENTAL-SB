@@ -1,4 +1,6 @@
 'use client';
+import {moroccoDateTimeFormat} from '../_lib/morocco-time';
+
 
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {CalendarDays, CarFront, Check, ChevronLeft, ChevronRight, Info, Plus, RefreshCw, Search, ShieldCheck, UserRound, X} from 'lucide-react';
@@ -16,18 +18,18 @@ type Available = Page<Car> & {available_count: number; unavailable_count: number
 type Proof = {readiness_warning?:string|null;vehicleId: number; available: boolean; reason: string | null; period: Period; checkedAt: string};
 
 function todayInMorocco() {
-  const parts = new Intl.DateTimeFormat('en', {timeZone:'Africa/Casablanca', year:'numeric', month:'2-digit', day:'2-digit'}).formatToParts(new Date());
+  const parts = moroccoDateTimeFormat('en', {timeZone:'Africa/Casablanca', year:'numeric', month:'2-digit', day:'2-digit'}).formatToParts(new Date());
   const value = (type: string) => parts.find(part => part.type === type)!.value;
   return `${value('year')}-${value('month')}-${value('day')}`;
 }
 const pastDepartureMessage = 'La date de départ est passée. Choisissez une nouvelle date, aujourd’hui ou plus tard (heure du Maroc).';
 
 export type RequestSeed = {vehicle: FleetPreview; start: string; end: string};
-export default function RequestForm({onClose, onSaved, initial}: {onClose: () => void; onSaved: (id: number) => void; initial?: RequestSeed}) {
+export default function RequestForm({onClose, onSaved, initial, initialClient}: {onClose: () => void; onSaved: (id: number) => void; initial?: RequestSeed; initialClient?: Client}) {
   const dialog = useRef<HTMLDialogElement>(null), form = useRef<HTMLFormElement>(null);
   const lock = useRef(false), key = useRef(crypto.randomUUID()), checkController = useRef<AbortController | null>(null);
   const [mode, setMode] = useState<Mode>(initial ? 'vehicle' : 'dates'), [stage, setStage] = useState<Stage>(initial ? 'dates' : 'start');
-  const [client, setClient] = useState<Client | null>(null), [car, setCar] = useState<FleetPreview | null>(initial?.vehicle ?? null);
+  const [client, setClient] = useState<Client | null>(initialClient ?? null), [car, setCar] = useState<FleetPreview | null>(initial?.vehicle ?? null);
   const [start, setStart] = useState(initial?.start ?? ''), [end, setEnd] = useState(initial?.end ?? ''), [proof, setProof] = useState<Proof | null>(null);
   const [query, setQuery] = useState(''), [search, setSearch] = useState(''), [page, setPage] = useState(1), [show, setShow] = useState('available');
   const [clients, setClients] = useState<Page<Client> | null>(null), [fleet, setFleet] = useState<Page<FleetPreview> | null>(null), [available, setAvailable] = useState<Available | null>(null);
@@ -131,7 +133,7 @@ export default function RequestForm({onClose, onSaved, initial}: {onClose: () =>
   }
   function selectCar(vehicle: FleetPreview & {readiness_warning?:string|null}, result?: Available) {
     setCar(vehicle); clear('vehicle_id'); setProof(result ? {readiness_warning: vehicle.readiness_warning, vehicleId: vehicle.id, available: true, reason: null, period: result.period, checkedAt: result.checked_at} : null);
-    if (catalog) navigate('dates');
+    if (catalog) navigate('dates'); else if (result) navigate('client');
   }
   function alternatives() {setMode('dates'); setShow('available'); setCar(null); setProof(null); navigate('cars');}
   function back() {
@@ -179,7 +181,7 @@ export default function RequestForm({onClose, onSaved, initial}: {onClose: () =>
 
   return <dialog ref={dialog} className="rq-dialog rq-create" aria-labelledby="rq-create-title" onCancel={e => {e.preventDefault(); if (!lock.current) close();}}>
     <form ref={form} noValidate onSubmit={e => {e.preventDefault(); submit();}}>
-      <header><div><span className="rq-eyebrow">NOUVEAU DOSSIER</span><h2 id="rq-create-title">Créer une demande</h2><p>Trouvez la voiture pour les bonnes dates, puis choisissez le client.</p></div><button type="button" className="rq-close" disabled={frozen} onClick={close} aria-label="Fermer la création"><X size={21}/></button></header>
+      <header><div><span className="rq-eyebrow">NOUVEAU DOSSIER</span><h2 id="rq-create-title">Créer une demande</h2><p>{initialClient ? 'Le client est sélectionné. Choisissez les dates et la voiture.' : 'Trouvez la voiture pour les bonnes dates, puis choisissez le client.'}</p></div><button type="button" className="rq-close" disabled={frozen} onClick={close} aria-label="Fermer la création"><X size={21}/></button></header>
       <nav className="rq-steps" aria-label="Étapes de la demande">{(mode === 'vehicle' ? ['Voiture', 'Disponibilité', 'Client'] : ['Dates', 'Voiture', 'Client']).map((label, i) => <button type="button" key={label} aria-current={step === i + 1 ? 'step' : undefined} disabled={i + 1 >= step || frozen} onClick={() => navigate(i === 0 ? 'start' : mode === 'vehicle' ? 'dates' : 'cars')}><span>{i + 1 < step ? <Check size={14}/> : i + 1}</span>{label}</button>)}</nav>
       <div className="rq-dialog-body">
         {error && <div className="rq-error" role="alert">{error}{!frozen && !dateScreen && <button type="button" className="secondary" onClick={() => setRetry(n => n + 1)}><RefreshCw size={14}/>Réessayer</button>}</div>}

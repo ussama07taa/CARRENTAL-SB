@@ -16,7 +16,7 @@ class Reservation extends Model
 
     protected function casts(): array
     {
-        return ['assignment_starts_at' => 'immutable_datetime', 'starts_at' => 'immutable_datetime', 'ends_at' => 'immutable_datetime', 'created_at' => 'immutable_datetime', 'hold_expires_at' => 'immutable_datetime', 'blocked_until' => 'immutable_datetime', 'preparation_minutes' => 'integer'];
+        return ['website_request' => 'array', 'assignment_starts_at' => 'immutable_datetime', 'starts_at' => 'immutable_datetime', 'ends_at' => 'immutable_datetime', 'created_at' => 'immutable_datetime', 'hold_expires_at' => 'immutable_datetime', 'blocked_until' => 'immutable_datetime', 'preparation_minutes' => 'integer'];
     }
 
     protected static function booted(): void

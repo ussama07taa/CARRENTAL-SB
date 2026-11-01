@@ -22,7 +22,7 @@ class DamageTicketController extends Controller
     public function index(Request $request, DamageTickets $service)
     {
         $actor = $this->actor($request);
-        $input = $request->validate(['vehicle_id' => ['nullable', 'integer', 'min:1'], 'inspection_id' => ['nullable', 'integer', 'min:1'], 'q' => ['nullable', 'string', 'max:100'], 'page' => ['nullable', 'integer', 'min:1'], 'open' => ['nullable', 'boolean']]);
+        $input = $request->validate(['vehicle_id' => ['nullable', 'integer', 'min:1'], 'inspection_id' => ['nullable', 'integer', 'min:1'], 'q' => ['nullable', 'string', 'max:100'], 'page' => ['nullable', 'integer', 'min:1'], 'open' => ['nullable', 'boolean'], 'status' => ['nullable', Rule::in(['active', 'closed'])]]);
         $context = null;
         if (! empty($input['inspection_id'])) {
             $context = $service->inspection($input['inspection_id']);
@@ -30,8 +30,8 @@ class DamageTicketController extends Controller
         }
         $selectedVehicle = ! empty($input['vehicle_id']) ? Vehicle::findOrFail($input['vehicle_id']) : null;
         $rows = $service->query()->when(! empty($input['vehicle_id']), fn ($q) => $q->where('vehicle_id', $input['vehicle_id']))->when(! empty($input['q']), fn ($q) => $q->where(function ($q) use ($input) {
-            $q->where('title', 'ilike', '%'.$input['q'].'%')->orWhere('zone', 'ilike', '%'.$input['q'].'%');
-        }))->when($request->boolean('open'), fn ($q) => $q->where('closed', false))->orderBy('closed')->orderBy('follow_up_on')->orderByDesc('id')->paginate(20);
+            $q->where('title', 'ilike', '%'.$input['q'].'%')->orWhere('zone', 'ilike', '%'.$input['q'].'%')->orWhereIn('vehicle_id', Vehicle::query()->where(fn ($v) => $v->where('make', 'ilike', '%'.$input['q'].'%')->orWhere('model', 'ilike', '%'.$input['q'].'%')->orWhere('plate', 'ilike', '%'.$input['q'].'%'))->select('id'));
+        }))->when(isset($input['status']), fn ($q) => $q->where('closed', $input['status'] === 'closed'))->when($request->boolean('open'), fn ($q) => $q->where('closed', false))->orderBy('closed')->orderBy('follow_up_on')->orderByDesc('id')->paginate(20);
         $vehicles = Vehicle::whereIn('id', $rows->pluck('vehicle_id'))->get()->keyBy('id');
         $rows->getCollection()->transform(fn ($row) => (object) [...(array) $row, 'vehicle_label' => ($vehicles[$row->vehicle_id]->make ?? '').' '.($vehicles[$row->vehicle_id]->model ?? ''), 'plate' => $vehicles[$row->vehicle_id]->plate ?? '']);
 
@@ -72,6 +72,6 @@ class DamageTicketController extends Controller
             abort_if($input['responsibility'] === 'none' && $input['amount_centimes'] !== 0, 422, 'Sans obligation client, le montant approuvé doit être zéro.');
         }
 
-        return response()->json(['id' => $service->save($actor,$ticket,$input)], 201);
+        return response()->json(['id' => $service->save($actor, $ticket, $input)], 201);
     }
 }

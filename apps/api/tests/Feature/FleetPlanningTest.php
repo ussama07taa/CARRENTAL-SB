@@ -45,6 +45,28 @@ class FleetPlanningTest extends TestCase
         $this->getJson('/api/v1/reservations/availability?starts_local=2026-10-20T10:00&ends_local=2026-10-22T10:00')->assertJsonPath('available_count', 1);
     }
 
+    public function test_cancelled_rental_remains_visible_without_blocking_availability(): void
+    {
+        [, $customer, $vehicle] = $this->agency();
+        $id = $this->requestFor($customer, $vehicle, '2026-10-20T10:00', '2026-10-22T10:00');
+        $this->postJson("/api/v1/reservations/$id/cancellation", ['final_total_centimes' => 0, 'expected_revision' => null, 'reason' => 'Annulation de test', 'agreement_confirmed' => true, 'no_vehicle_handed_over' => true, 'request_key' => (string) Str::uuid()])->assertCreated();
+        $this->getJson('/api/v1/reservations/planning?from=2026-10-19&days=7')->assertOk()
+            ->assertJsonPath('data.0.events.0.id', $id)
+            ->assertJsonPath('data.0.events.0.kind', 'cancelled')
+            ->assertJsonPath('data.0.events.0.blocks_vehicle', false);
+        $this->getJson('/api/v1/reservations/planning?from=2026-10-19&days=7&state=cancelled')->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.vehicle.id', $vehicle->id);
+        $this->getJson('/api/v1/reservations/planning?from=2026-10-19&days=7&state=request')->assertOk()->assertJsonPath('total', 0);
+
+        $this->getJson('/api/v1/reservations/availability?starts_local=2026-10-20T10:00&ends_local=2026-10-22T10:00')->assertJsonPath('available_count', 1);
+        $this->getJson('/api/v1/reservations/planning?from=2026-10-23&days=7')->assertJsonCount(0, 'data.0.events');
+        $requestId = $this->requestFor($customer, $vehicle, '2026-10-20T10:00', '2026-10-22T10:00');
+        $base = '/api/v1/reservations/planning?from=2026-10-19&days=7';
+        $this->getJson($base.'&state=request')->assertOk()->assertJsonCount(1, 'data.0.events')->assertJsonPath('data.0.events.0.id', $requestId)->assertJsonPath('data.0.events.0.kind', 'request');
+        $this->getJson($base.'&state=cancelled')->assertOk()->assertJsonCount(1, 'data.0.events')->assertJsonPath('data.0.events.0.id', $id);
+        $this->getJson($base)->assertOk()->assertJsonCount(2, 'data.0.events');
+
+    }
+
     public function test_garage_has_no_invented_end_and_return_is_visible_in_history(): void
     {
         [, , $vehicle] = $this->agency();
@@ -83,6 +105,7 @@ class FleetPlanningTest extends TestCase
         $base = '/api/v1/reservations/planning?from=2026-10-19&days=7';
         $this->getJson($base)->assertOk()->assertJsonPath('counts.vehicles', 17)->assertJsonPath('counts.requests', 1)->assertJsonCount(15, 'data')->assertJsonMissingPath('balance_centimes');
         $this->getJson($base.'&page=2')->assertJsonCount(2, 'data');
+        $this->getJson($base.'&state=request&page=2')->assertOk()->assertJsonPath('total', 1)->assertJsonPath('page', 1)->assertJsonPath('data.0.vehicle.id', $vehicle->id);
         $this->getJson($base.'&filter=requests')->assertJsonPath('total', 1)->assertJsonPath('data.0.vehicle.id', $vehicle->id);
         $this->getJson($base.'&q='.urlencode($vehicle->plate))->assertJsonPath('total', 1);
         $this->getJson($base.'&q=UNMATCHED-CAR')->assertJsonPath('total', 0)->assertJsonCount(0, 'data');

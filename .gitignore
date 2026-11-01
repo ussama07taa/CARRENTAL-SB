@@ -14,3 +14,14 @@
 **/*.tsbuildinfo
 .DS_Store
 Thumbs.db
+
+# Local credentials, database archives and generated test artifacts
+**/*.private
+**/*.dump
+**/*.sql.gz
+**/__pycache__/
+**/*.py[cod]
+**/.venv/
+**/.pytest_cache/
+**/playwright-report/
+**/test-results/

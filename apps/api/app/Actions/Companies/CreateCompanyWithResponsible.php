@@ -13,8 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 class CreateCompanyWithResponsible
 {
-    /** Operator-only bootstrap. Not public signup or account linking. */
-    public function handle(string $companyName, string $responsibleName, string $email, #[\SensitiveParameter] string $password): Company
+    /** Private CLI or installation-code bootstrap. Not public signup or account linking. */
+    public function handle(string $companyName, string $responsibleName, string $email, #[\SensitiveParameter] string $password, string $source = 'operator_cli'): Company
     {
         $data = Validator::make([
             'company_name' => trim($companyName),
@@ -34,7 +34,7 @@ class CreateCompanyWithResponsible
             ],
         ])->validate();
 
-        return DB::transaction(function () use ($data): Company {
+        return DB::transaction(function () use ($data, $source): Company {
             DB::statement('LOCK TABLE companies IN SHARE ROW EXCLUSIVE MODE');
             if (Company::query()->exists()) {
                 throw ValidationException::withMessages(['company_name' => 'Une agence est déjà configurée. Aucune modification effectuée.']);
@@ -46,7 +46,7 @@ class CreateCompanyWithResponsible
             $user = User::query()->create([
                 'name' => $data['responsible_name'], 'email' => $data['email'], 'password' => $data['password'],
             ]);
-            Tenant::run($company->id, function () use ($company, $user): void {
+            Tenant::run($company->id, function () use ($company, $user, $source): void {
                 $membership = new CompanyMembership;
                 $membership->user_id = $user->id;
                 $membership->is_primary_responsible = true;
@@ -54,7 +54,7 @@ class CreateCompanyWithResponsible
                 DB::table('company_setup_events')->insert([
                     'company_id' => $company->id,
                     'responsible_membership_id' => $membership->id,
-                    'source' => 'operator_cli',
+                    'source' => $source,
                     'operator_name' => posix_getpwuid(posix_geteuid())['name'] ?? 'uid:'.posix_geteuid(),
                     'created_at' => now(),
                 ]);
