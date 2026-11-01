@@ -1,0 +1,46 @@
+/* One locally bundled Arabic family across pages, controls and portal menus. */
+:root { --font-ibm-arabic: 'Tajawal'; --font-arabic: 'Tajawal'; }
+:lang(ar):not(svg):not(svg *) {
+  font-family: var(--font-arabic), Arial, sans-serif !important;
+  letter-spacing: normal !important;
+}
+:lang(ar):is(h1,h2,h3,h4){font-weight:700;line-height:1.55}
+.cp[lang=ar] .fq-intro>p,.cp[lang=ar] .fq-groups section>p,.cp[lang=ar] .fq-question>p {font-size:16px;line-height:2.05;font-weight:400;color:#45536a}
+.cp[lang=ar] .fq-question summary{font-size:16px;line-height:1.85;font-weight:600}
+.cp[lang=ar] .fq-layout aside nav a{font-size:14px;line-height:1.8}
+.cp[lang=ar] .cp-header nav a{font-size:14px}
+.cp[lang=ar] .legal-notice,.cp[lang=ar] .fq-help p,.cp[lang=ar] .cp-form-panel>p{font-size:14px;line-height:1.95}
+.cp[lang=ar] .cp-form label>span,.cp[lang=ar] .cp-contact-grid p,.cp[lang=ar] .cp-contact-grid a{font-size:14px;line-height:1.8}
+.cp[lang=ar] .cp-form :is(input,textarea){font-size:16px;line-height:1.8}
+.cp[lang=ar] :is(.cp-form-note,.cp-contact-grid small,.cp-map p){font-size:12px;line-height:1.9}
+.sf[lang=ar] :is(p,nav a,h3){font-size:14px;line-height:1.9}
+.sf[lang=ar] :is(small,.sf-bottom,.sf-whatsapp){font-size:12px;line-height:1.9}
+@media(max-width:767px){.cp[lang=ar] .fq-groups h2{font-size:21px;line-height:1.7}.cp[lang=ar] .fq-question summary{font-size:15px}.cp[lang=ar] .fq-layout aside nav a{font-size:13px}.cp[lang=ar] .fq-intro>p{font-size:15px}}
+
+/* Arabic reading pages: stronger body strokes and calmer headings. */
+.cp[lang=ar] h1{font-weight:600;line-height:1.55}
+.cp[lang=ar] :is(.fq-groups h2,.fq-help h2){font-weight:600}
+.cp[lang=ar] .fq-intro>p,
+.cp[lang=ar] .fq-groups section>p,
+.cp[lang=ar] .fq-question>p{font-size:18px;font-weight:500;line-height:2;color:#263b55}
+.cp[lang=ar] .fq-layout aside nav a{font-size:15px;font-weight:600;line-height:1.85}
+.cp[lang=ar] :is(.legal-notice,.fq-help p,.cp-form-panel>p){font-size:15px;font-weight:500;color:#263b55}
+.cp[lang=ar] .fq-groups section{padding-bottom:32px}
+@media(max-width:767px){
+.cp[lang=ar] .fq-intro>p,.cp[lang=ar] .fq-groups section>p,.cp[lang=ar] .fq-question>p{font-size:17px;line-height:2}
+.cp[lang=ar] .fq-layout aside nav a{font-size:14px}
+}
+
+/* Consistent Arabic UI scale, including shared header and portal controls. */
+:lang(ar):is(h1,h2,h3,h4){font-weight:700}
+.cp[lang=ar] h1,.cp[lang=ar] :is(.fq-groups h2,.fq-help h2){font-weight:700}
+:lang(ar):is(button,input,select,textarea){font-weight:500}
+.gh[lang=ar]{font-size:15px}
+.gh[lang=ar] .gh-cta{font-size:14px}
+.mn-sheet[lang=ar] .mn-row{font-size:17px}
+.mn-sheet[lang=ar] .mn-links a{font-size:16px}
+.sf[lang=ar] :is(p,nav a,h3){font-size:16px}
+.sf[lang=ar] :is(small,.sf-bottom,.sf-whatsapp){font-size:14px}
+.ws[dir=rtl] .cf-note,.ws[dir=rtl] .cf-fields label{font-size:14px;line-height:1.8}
+.bk[lang=ar]{font-size:16px}
+@media(max-width:767px){.gh[lang=ar] .gh-language>button,.gh[lang=ar] .nh-currency-trigger{font-size:12px}.sf[lang=ar] :is(p,nav a,h3){font-size:15px}}

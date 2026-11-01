@@ -1,0 +1,14 @@
+/* Approved BEN SBIH identity. Operational status colors remain independent. */
+:root {
+ --ui-accent:#004fff;
+ --ui-accent-hover:#003dcc;
+ --ui-navy:#071c47;
+ --ui-text:#0e1318;
+ --ui-muted:#59677e;
+ --ui-surface:#ffffff;
+ --ui-panel:#ffffff;
+ --ui-line:#dce3ed;
+ --ui-selected:#edf3ff;
+ --ui-focus:#004fff;
+ --ui-on-dark:#ffffff;
+}

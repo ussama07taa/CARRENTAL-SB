@@ -23,8 +23,8 @@ class FleetPlanning
             ->filter(fn ($v): bool => $search === '' || str_contains(mb_strtolower($v->plate.' '.$v->make.' '.$v->model), $search));
         $hasReturns = Schema::hasTable('rental_returns');
         $returnRows = $hasReturns ? DB::table('rental_returns')->where('company_id', Tenant::id())->orderBy('id')->get()->keyBy('reservation_id') : collect();
-        $returnPending = app(RentalReturn::class)->unreadyVehicles();
-        $requests = Reservation::where('status', '<>', 'annulee')->whereIn('vehicle_id', $vehicles->modelKeys())
+        $returnPending = array_unique([...app(RentalReturn::class)->unreadyVehicles(), ...app(RequestAvailability::class)->maintenanceUnreadyVehicles()]);
+        $requests = Reservation::whereIn('vehicle_id', $vehicles->modelKeys())
             ->where('starts_at', '<', $until)->where(fn ($q) => $q->where('ends_at', '>', $from)->orWhere('status', 'en_location')->orWhereIn('id', $returnRows->filter(fn ($row) => CarbonImmutable::parse($row->returned_at) > $from)->keys()))->orderBy('starts_at')->orderBy('id')->get();
         $blocked = app(RequestAvailability::class)->garageVehicles();
         $out = Reservation::where('status', 'en_location')->get()->keyBy('vehicle_id');
@@ -35,10 +35,6 @@ class FleetPlanning
         } elseif ($filter === 'requests') {
             $vehicles = $vehicles->whereIn('id', $requests->pluck('vehicle_id'));
         }
-        $total = $vehicles->count();
-        $last = max(1, (int) ceil($total / 15));
-        $page = min((int) ($input['page'] ?? 1), $last);
-        $vehicles = $vehicles->values()->slice(($page - 1) * 15, 15);
         $ids = $vehicles->pluck('id');
         $pastLegs = $hasReturns ? DB::table('rental_pickups as p')->join('rental_returns as returned', function ($join): void {
             $join->on('returned.company_id', '=', 'p.company_id')->on('returned.pickup_id', '=', 'p.id');
@@ -54,7 +50,7 @@ class FleetPlanning
         $cancelled = $maintenance->query('maintenance_cancellations')->whereIn('maintenance_id', $entries->pluck('id'))->get();
         $events = [];
         foreach ($requests->whereIn('vehicle_id', $ids) as $r) {
-            $events[$r->vehicle_id][] = ['key' => 'request-'.$r->id, 'kind' => $r->status === 'retournee' ? 'returned' : ($r->status === 'en_location' ? 'out' : ($r->status === 'confirmee' ? 'confirmed' : (($r->status === 'temporaire' && $r->hold_expires_at > now()) ? 'hold' : 'request'))), 'hold_expires_at' => $r->hold_expires_at?->toIso8601String(), 'id' => $r->id, 'title' => trim($customers[$r->customer_id]->first_name.' '.$customers[$r->customer_id]->last_name), 'reference' => 'DEM-'.str_pad((string) $r->id, 6, '0', STR_PAD_LEFT), 'starts_local' => ($r->assignment_starts_at ?? $r->starts_at)->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'ends_local' => $r->status === 'retournee' && isset($returnRows[$r->id]) ? CarbonImmutable::parse($returnRows[$r->id]->returned_at)->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i') : $r->ends_at->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'overdue' => $r->status === 'en_location' && $r->ends_at <= now(), 'threatened' => $r->status === 'confirmee' && isset($out[$r->vehicle_id]) && $out[$r->vehicle_id]->ends_at <= now(), 'blocks_vehicle' => in_array($r->status, ['confirmee', 'en_location'], true) || ($r->status === 'temporaire' && $r->hold_expires_at > now())];
+            $events[$r->vehicle_id][] = ['key' => 'request-'.$r->id, 'kind' => $r->status === 'annulee' ? 'cancelled' : ($r->status === 'retournee' ? 'returned' : ($r->status === 'en_location' ? 'out' : ($r->status === 'confirmee' ? 'confirmed' : (($r->status === 'temporaire' && $r->hold_expires_at > now()) ? 'hold' : 'request')))), 'hold_expires_at' => $r->hold_expires_at?->toIso8601String(), 'id' => $r->id, 'title' => trim($customers[$r->customer_id]->first_name.' '.$customers[$r->customer_id]->last_name), 'reference' => 'DEM-'.str_pad((string) $r->id, 6, '0', STR_PAD_LEFT), 'starts_local' => ($r->assignment_starts_at ?? $r->starts_at)->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'ends_local' => $r->status === 'retournee' && isset($returnRows[$r->id]) ? CarbonImmutable::parse($returnRows[$r->id]->returned_at)->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i') : $r->ends_at->setTimezone(RequestPeriod::TIMEZONE)->format('Y-m-d\TH:i'), 'overdue' => $r->status === 'en_location' && $r->ends_at <= now(), 'threatened' => $r->status === 'confirmee' && isset($out[$r->vehicle_id]) && $out[$r->vehicle_id]->ends_at <= now(), 'blocks_vehicle' => in_array($r->status, ['confirmee', 'en_location'], true) || ($r->status === 'temporaire' && $r->hold_expires_at > now())];
         }
         foreach ($pastLegs as $leg) {
             $customer = $customers->get($leg->customer_id);
@@ -87,6 +83,19 @@ class FleetPlanning
             }
         }
         $rows = $vehicles->map(fn ($v): array => ['vehicle' => [...$v->only(['id', 'plate', 'make', 'model', 'year', 'current_odometer', 'current_odometer_date']), 'cover_id' => $covers->get($v->id)?->id], 'in_garage' => in_array($v->id, $blocked, true), 'return_pending' => in_array($v->id, $returnPending, true), 'out_now' => isset($out[$v->id]), 'overdue' => isset($out[$v->id]) && $out[$v->id]->ends_at <= now(), 'events' => collect($events[$v->id] ?? [])->sortBy('starts_local')->values()])->values();
+
+        $state = $input['state'] ?? 'all';
+        if ($state !== 'all') {
+            $rows = $rows->map(function ($row) use ($state): array {
+                $row['events'] = $row['events']->filter(fn ($event): bool => (! empty($event['returned_on']) ? 'returned' : $event['kind']) === $state)->values();
+
+                return $row;
+            })->filter(fn ($row): bool => $row['events']->isNotEmpty())->values();
+        }
+        $total = $rows->count();
+        $last = max(1, (int) ceil($total / 15));
+        $page = min((int) ($input['page'] ?? 1), $last);
+        $rows = $rows->slice(($page - 1) * 15, 15)->values();
 
         return ['data' => $rows, 'counts' => $counts, 'total' => $total, 'page' => $page, 'last_page' => $last, 'from' => $from->toDateString(), 'until' => $until->toDateString(), 'today' => now(RequestPeriod::TIMEZONE)->toDateString(), 'checked_at' => now()->toIso8601String()];
     }

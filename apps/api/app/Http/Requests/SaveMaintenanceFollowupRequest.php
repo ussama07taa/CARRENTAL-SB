@@ -21,7 +21,7 @@ class SaveMaintenanceFollowupRequest extends FormRequest
             'follow_up_on' => ['nullable', 'date_format:Y-m-d'],
             'kilometers' => ['nullable', 'integer', 'between:0,9999999'],
             'next_on' => ['nullable', 'date_format:Y-m-d'], 'next_km' => ['nullable', 'integer', 'between:1,9999999'],
-            'ready' => ['exclude_unless:action,return', 'required', 'accepted'],
+            'ready' => ['exclude_unless:action,return', 'required', 'boolean'],
             'note' => ['required', 'string', 'max:500'], 'request_key' => ['required', 'uuid'],
             'amount_centimes' => ['prohibited'], 'paid_centimes' => ['prohibited'], 'cost_status' => ['prohibited'],
         ];

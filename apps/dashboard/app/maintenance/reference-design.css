@@ -1,0 +1,48 @@
+/* Shared maintenance list and working forms, aligned with the rental dossier. */
+.maintenance-overview{background:#f5f6f8;padding:24px;border-radius:16px}
+.maintenance-overview .mo-heading{background:none;border:0;padding:0 0 20px;box-shadow:none}
+.maintenance-overview .mo-kicker{display:none}.maintenance-overview .mo-heading h1{font-size:28px;letter-spacing:-.7px}
+.maintenance-overview .mo-summary{gap:14px}.maintenance-overview .mo-stat{background:#fff;border:1px solid #e8ebf0;border-radius:14px;box-shadow:none;padding:18px;min-height:110px}
+.maintenance-overview .mo-stat strong{font-size:27px}.maintenance-overview .mo-stat small{font-size:12px}
+.maintenance-overview .mo-shortcuts{gap:8px;margin:18px 0;flex-wrap:wrap}.maintenance-overview .mo-shortcuts button{background:#fff;border:1px solid #e6e9ef;border-radius:24px;min-height:44px;box-shadow:none;padding:9px 15px}
+.maintenance-overview .mo-shortcuts button[aria-pressed=true]{background:#152339;color:#fff;border-color:#152339}
+.maintenance-overview .mo-board{background:#fff;border:1px solid #e6e9ef;border-radius:14px;box-shadow:none;overflow:hidden}
+.maintenance-overview .mo-view-switch{padding:14px 18px;gap:8px}.maintenance-overview .mo-view-switch button{border:0;border-radius:8px;background:#f5f6f8;color:#596579}.maintenance-overview .mo-view-switch button[aria-pressed=true]{background:#eaf0ff;color:#2459c7}
+.maintenance-overview .mo-toolbar{padding:16px 18px}.maintenance-overview .mo-view-guide{font-size:12px;background:transparent;border:0}
+.maintenance-overview .dossier-list th,.maintenance-overview .mo-table th{background:#f7f8fa;font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:13px 15px;color:#667085}
+.maintenance-overview .dossier-list td{padding:16px 15px;background:#fff;vertical-align:middle;border-color:#edf0f4}.maintenance-overview .dossier-list tbody tr{cursor:pointer}.maintenance-overview .dossier-list tbody tr:hover td{background:#f6f9ff}
+.maintenance-overview .dl-title{font-size:14px;line-height:1.5}.maintenance-overview .dl-reference{margin-bottom:5px;font-size:11px}.maintenance-overview .dossier-list small{font-size:12px;margin-top:4px}
+.maintenance-overview .dl-state{font-size:11px;padding:4px 7px}.maintenance-overview .dl-money{gap:5px}.maintenance-overview .dl-money>div:last-child{padding-top:5px}
+.maintenance-overview .dl-action button{background:#f3f5f9;color:#2459c7;border:1px solid #e6e9ef;width:44px;height:44px;min-height:44px;padding:10px}.maintenance-overview .dl-open-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.maintenance-overview .dl-action button:focus-visible{outline:2px solid #2463eb;outline-offset:3px}
+.gf-dialog.v-document-dialog{border:1px solid #e2e7ee;border-radius:16px;box-shadow:0 18px 60px #10234420;background:#f5f6f8}
+.gf-dialog .vehicle-header{background:#fff;padding:20px 24px;border-bottom:1px solid #e6e9ef}.gf-dialog .vehicle-header h2{font-size:22px;letter-spacing:-.4px}.gf-dialog .vehicle-header p{font-size:13px;color:#667085}
+.gf-dialog .gf-body{background:#f5f6f8;padding:22px}.gf-dialog .gf-section,.gf-dialog .gf-work-card,.gf-dialog .mf-initial-payment,.gf-dialog .gf-operation{background:#fff;border:1px solid #e6e9ef;border-radius:12px;padding:18px;box-shadow:none}
+.gf-dialog .mf-file-status{gap:12px}.gf-dialog .mf-file-status>div{border:1px solid #e6e9ef;border-radius:12px;background:#fff;padding:16px;box-shadow:none}
+.gf-dialog .gf-choice{gap:12px}.gf-dialog .gf-choice>button{background:#fff;border:1px solid #e6e9ef;border-radius:12px;padding:16px;box-shadow:none}.gf-dialog .gf-choice>button[aria-pressed=true]{background:#edf3ff;border-color:#adc6f8}
+.gf-dialog .m-form-heading{font-size:16px;margin:24px 0 14px}.gf-dialog .v-grid{gap:14px}.gf-dialog .v-field>span{font-size:13px}.gf-dialog :is(input:not([type=checkbox]):not([type=radio]),select,textarea){border-radius:8px;border-color:#dfe4ec;font-size:14px;background:#fff;min-height:44px}
+.gf-dialog .gf-work-card{margin-bottom:14px}.gf-dialog .gf-work-card>header{padding-bottom:12px;border-bottom:1px solid #edf0f4;margin-bottom:14px}
+.gf-dialog table th,.gf-dialog .mf-payment-head{background:#f7f8fa;color:#667085;font-size:11px;text-transform:uppercase;letter-spacing:.4px}.gf-dialog table td{font-size:13px;vertical-align:top}.gf-dialog .vehicle-footer{background:#fff;border-top:1px solid #e6e9ef;padding:16px 22px}.gf-dialog .secondary,.gf-dialog .primary{min-height:44px;border-radius:8px}
+@media(max-width:750px){.maintenance-overview{padding:12px}.maintenance-overview .mo-heading h1{font-size:24px}.maintenance-overview .mo-stat{padding:14px;min-height:90px}.maintenance-overview .dossier-list td{padding:12px}.maintenance-overview .dl-action button{width:100%;gap:8px}.maintenance-overview .dl-open-label{position:static;width:auto;height:auto;clip-path:none}.gf-dialog .vehicle-header{padding:16px}.gf-dialog .gf-body{padding:12px}.gf-dialog .gf-section,.gf-dialog .gf-work-card,.gf-dialog .mf-initial-payment,.gf-dialog .gf-operation{padding:14px}.gf-dialog .vehicle-footer{padding:12px}.gf-dialog .vehicle-header h2{font-size:19px}}
+
+@media(max-width:750px){.maintenance-overview .mo-heading-actions{display:flex!important;flex-wrap:wrap!important;width:100%;min-width:0;gap:8px}.maintenance-overview .mo-heading-actions>*{flex:1 1 120px!important;min-width:0!important;max-width:100%;white-space:normal!important}.maintenance-overview .mo-heading{min-width:0}}
+
+.gf-dialog .vehicle-header h2{color:#12345a!important}.gf-dialog .vehicle-close{color:#52647a!important;background:#f5f6f8!important;border:1px solid #e6e9ef}.gf-dialog .fleet-eyebrow{color:#667085!important}
+
+/* Compact rhythm: consistent 16px section gaps, less repeated vertical framing. */
+.maintenance-overview{padding:20px!important}
+.maintenance-overview .mo-heading{margin:0 0 16px!important;padding:0!important;align-items:center;gap:16px}
+.maintenance-overview .mo-heading h1{margin:0!important;font-size:26px;line-height:1.25}.maintenance-overview .mo-heading p{margin:6px 0 0!important;line-height:1.5}
+.maintenance-overview .mo-summary{margin:0!important;gap:12px!important}
+.maintenance-overview .mo-stat{min-height:0!important;padding:14px 16px!important;gap:12px;align-items:flex-start}
+.maintenance-overview .mo-stat strong{font-size:25px;line-height:1.2}.maintenance-overview .mo-stat small{margin-top:4px;line-height:1.45}.maintenance-overview .mo-stat-label{margin-bottom:4px}
+.maintenance-overview .mo-stat-icon{width:32px;height:32px;flex-shrink:0}
+.maintenance-overview .mo-shortcuts{margin:16px 0!important;gap:8px}
+.maintenance-overview .mo-view-switch{padding:10px 16px!important}.maintenance-overview .mo-view-switch button{min-height:40px;padding:8px 12px}
+.maintenance-overview .mo-toolbar{padding:14px 16px!important;gap:16px}.maintenance-overview .mo-view-title h2{font-size:17px;margin:0 0 4px}.maintenance-overview .mo-view-title p{font-size:12px;line-height:1.4}
+.maintenance-overview .mo-board>.mo-view-guide{margin:0 16px 12px!important;font-size:12px;line-height:1.5}
+.maintenance-overview .dossier-list th{padding:11px 14px!important}.maintenance-overview .dossier-list td{padding:12px 14px!important}
+.maintenance-overview .dossier-list th:last-child{width:64px}.maintenance-overview .dl-action{text-align:right}.maintenance-overview .dl-action button{margin-left:auto}
+.maintenance-overview .dl-money{gap:4px}.maintenance-overview .dl-money>div:last-child{padding-top:4px}.maintenance-overview .dl-plate{margin-top:5px;padding:3px 6px}.maintenance-overview .dl-state{padding:4px 7px}
+.maintenance-overview .mo-heading-actions a{text-decoration:none}
+@media(max-width:750px){.maintenance-overview{padding:12px!important}.maintenance-overview .mo-heading{gap:12px!important}.maintenance-overview .mo-summary{gap:8px!important}.maintenance-overview .mo-stat{padding:12px!important}.maintenance-overview .mo-toolbar{padding:12px!important;flex-wrap:wrap}.maintenance-overview .mo-search{width:100%;min-width:0}.maintenance-overview .mo-view-switch{padding:10px!important}.maintenance-overview .dossier-list td{padding:10px 12px!important}.maintenance-overview .dl-action button{margin:0}.maintenance-overview .mo-board>.mo-view-guide{margin:0 12px 10px!important}}

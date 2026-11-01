@@ -38,6 +38,21 @@ class DamageTicketsTest extends TestCase
         return $this->postJson('/api/v1/damages/'.$id, ['kind' => $kind, 'expected_version' => $version, 'request_key' => (string) Str::uuid(), 'reason' => 'Mise à jour justifiée pour le test', ...$values]);
     }
 
+    public function test_status_and_vehicle_search_filter_before_pagination_without_financial_data(): void
+    {
+        [$company, $owner, $employee, $vehicle] = $this->fixture();
+        $active = $this->postJson('/api/v1/damages', $this->input($owner, $vehicle))->assertCreated()->json('id');
+        $closed = $this->postJson('/api/v1/damages', $this->input($owner, $vehicle))->assertCreated()->json('id');
+        DB::table('damage_tickets')->where('id', $closed)->update(['closed' => true]);
+        $this->actingAs($employee->user);
+        $this->getJson('/api/v1/damages?status=active&q='.urlencode($vehicle->plate))->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $active)->assertJsonMissingPath('data.0.financial');
+        $this->getJson('/api/v1/damages?status=closed')->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $closed);
+        $this->getJson('/api/v1/damages?open=1')->assertOk()->assertJsonPath('total', 1);
+        $this->getJson('/api/v1/damages?status=unknown')->assertUnprocessable();
+        $this->fixture();
+        $this->getJson('/api/v1/damages?status=closed&q='.urlencode($vehicle->plate))->assertOk()->assertJsonPath('total', 0);
+    }
+
     public function test_create_replay_conflict_and_cross_tenant_access(): void
     {
         [$company,$owner,$employee,$vehicle] = $this->fixture();
@@ -118,10 +133,10 @@ class DamageTicketsTest extends TestCase
         $this->assertDatabaseCount('damage_maintenance_links', 1);
         $this->getJson('/api/v1/damages/'.$id)->assertJsonPath('maintenance_ids.0', $maintenance);
         try {
-            DB::transaction(fn () => DB::table('damage_entries')->where('ticket_id',$id)->update(['reason' => 'Modification interdite']));
+            DB::transaction(fn () => DB::table('damage_entries')->where('ticket_id', $id)->update(['reason' => 'Modification interdite']));
             $this->fail('The history must be immutable.');
         } catch (QueryException $e) {
-            $this->assertStringContainsString('append-only',strtolower($e->getMessage()));
+            $this->assertStringContainsString('append-only', strtolower($e->getMessage()));
         }
     }
 }

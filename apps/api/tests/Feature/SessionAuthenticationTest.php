@@ -91,10 +91,11 @@ class SessionAuthenticationTest extends TestCase
         $membership = $this->responsible();
         $this->actingAs($membership->user)->withSession(['company_id' => $membership->company_id])
             ->getJson('/api/v1/auth/me')->assertOk()->assertExactJson([
-                'user' => ['name' => 'Responsable Démo'],
+                'user' => ['id' => $membership->user_id, 'name' => 'Responsable Démo'],
                 'company' => ['name' => 'Agence Démo'],
                 'responsible' => ['name' => 'Responsable Démo'],
                 'demo' => false,
+                'can_manage_expenses' => true,
             ])->assertHeader('Cache-Control', 'max-age=0, no-store, private');
         $this->assertNull(getPermissionsTeamId());
     }

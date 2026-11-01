@@ -13,7 +13,7 @@ class MaintenanceOverview
         $q = mb_strtolower(trim($search));
         $entries = $maintenance->query()->whereIn('vehicle_id', $vehicles->modelKeys())->orderByDesc('performed_on')->orderByDesc('id')->get();
         $ids = $entries->pluck('id');
-        $snapshot = ['cancellations' => app(MaintenanceCancellations::class)->rows($ids->all()), 'entries' => $entries->groupBy('vehicle_id'), 'cash' => app(MaintenancePayments::class)->cash($ids->all()), 'returns' => $maintenance->query('maintenance_returns')->whereIn('maintenance_id', $ids)->get()->keyBy('maintenance_id'), 'works' => $maintenance->query('maintenance_work_items')->whereIn('maintenance_id', $ids)->selectRaw('DISTINCT ON (item_key) *')->orderBy('item_key')->orderByDesc('version')->get()->sortBy('id')->groupBy('maintenance_id'), 'events' => $maintenance->query('maintenance_followups')->whereIn('maintenance_id', $ids)->orderBy('id')->get()->groupBy('maintenance_id')];
+        $snapshot = ['readiness' => $maintenance->query('maintenance_readiness')->whereIn('maintenance_id', $ids)->get()->groupBy('maintenance_id'), 'cancellations' => app(MaintenanceCancellations::class)->rows($ids->all()), 'entries' => $entries->groupBy('vehicle_id'), 'cash' => app(MaintenancePayments::class)->cash($ids->all()), 'returns' => $maintenance->query('maintenance_returns')->whereIn('maintenance_id', $ids)->get()->keyBy('maintenance_id'), 'works' => $maintenance->query('maintenance_work_items')->whereIn('maintenance_id', $ids)->selectRaw('DISTINCT ON (item_key) *')->orderBy('item_key')->orderByDesc('version')->get()->sortBy('id')->groupBy('maintenance_id'), 'events' => $maintenance->query('maintenance_followups')->whereIn('maintenance_id', $ids)->orderBy('id')->get()->groupBy('maintenance_id')];
         $today = now('Africa/Casablanca')->toDateString();
         $rows = [];
         $files = [];
@@ -35,7 +35,12 @@ class MaintenanceOverview
                 $items = collect($entry->items)->filter(fn ($item) => $item->status !== 'cancelled');
                 $workState = $entry->cancellation || $items->isEmpty() ? 'cancelled' : ($items->contains(fn ($item) => in_array($item->status, ['pending', 'progress'], true)) ? 'pending' : ($items->contains('status', 'deferred') ? 'deferred' : 'done'));
                 $garageOpen = collect($data['summary']['garage'])->contains('id', $entry->id);
-                $files[] = [...$base, 'key' => 'file-'.$entry->id, 'category' => 'file', 'entry_id' => $entry->id, 'title' => $entry->title, 'work_titles' => collect($entry->items)->pluck('title')->values()->all(), 'date' => $entry->performed_on, 'km' => $entry->kilometers, 'garage' => $entry->garage, 'garage_open' => $garageOpen, 'work_state' => $workState, 'cancelled' => (bool) $entry->cancellation, 'cost_centimes' => $entry->cost_centimes, 'paid_centimes' => $entry->paid_centimes, 'balance_centimes' => $entry->balance_centimes, 'credit_centimes' => $entry->credit_centimes, 'cost_final' => $entry->cost_final, 'action' => 'open', 'state' => $garageOpen ? 'garage' : $workState, 'attention' => false];
+                $files[] = [...$base, 'key' => 'file-'.$entry->id, 'category' => 'file', 'entry_id' => $entry->id, 'title' => $entry->title, 'work_titles' => collect($entry->items)->pluck('title')->values()->all(), 'date' => $entry->performed_on, 'km' => $entry->kilometers, 'garage' => $entry->garage, 'garage_open' => $garageOpen, 'readiness_pending' => $entry->readiness_pending, 'work_state' => $workState, 'cancelled' => (bool) $entry->cancellation, 'confirmed_cost_centimes' => $entry->cancellation ? 0 : (int) $items->where('cost_status', 'confirmed')->sum('amount_centimes'), 'gross_paid_centimes' => $entry->gross_paid_centimes, 'refunded_centimes' => $entry->refunded_centimes, 'due_on' => $entry->payment_due_on, 'cost_centimes' => $entry->cost_centimes, 'paid_centimes' => $entry->paid_centimes, 'balance_centimes' => $entry->balance_centimes, 'credit_centimes' => $entry->credit_centimes, 'cost_final' => $entry->cost_final, 'unknown_count' => $entry->unknown_count, 'action' => 'open', 'state' => $garageOpen ? 'garage' : $workState, 'attention' => false];
+            }
+            foreach ($data['data'] as $entry) {
+                if ($entry->readiness_pending) {
+                    $rows[] = [...$base, 'key' => $v->id.'-readiness-'.$entry->id, 'category' => 'readiness', 'entry_id' => $entry->id, 'title' => $entry->title, 'date' => $entry->readiness_pending[0]['returned_on'], 'state' => 'unready', 'attention' => true, 'action' => 'ready'];
+                }
             }
             foreach ($data['cancelled'] as $cancelled) {
                 $rows[] = [...$base, 'key' => $v->id.'-cancelled-'.$cancelled->id, 'category' => 'cancelled', 'entry_id' => $cancelled->id, 'title' => $cancelled->title, 'reason' => $cancelled->cancellation->reason, 'date' => substr($cancelled->cancellation->created_at, 0, 10), 'state' => 'cancelled', 'attention' => false, 'action' => 'detail'];
@@ -50,6 +55,11 @@ class MaintenanceOverview
             }
             foreach ($data['summary']['garage'] as $g) {
                 $rows[] = [...$base, 'key' => $v->id.'-garage-'.$g['id'].'-'.($g['item_key'] ?? 'initial'), 'category' => 'garage', 'entry_id' => $g['id'], 'item_key' => $g['item_key'] ?? null, 'title' => $g['title'], 'date' => $g['since'], 'state' => 'garage', 'attention' => true, 'action' => isset($g['item_key']) ? 'followup' : 'return'];
+            }
+            foreach ($data['data'] as $entry) {
+                if (! $entry->cancellation && ! $entry->cost_final) {
+                    $rows[] = [...$base, 'key' => $v->id.'-pricing-'.$entry->id, 'category' => 'pricing', 'entry_id' => $entry->id, 'title' => $entry->title, 'date' => null, 'state' => 'price_pending', 'attention' => true, 'action' => 'price'];
+                }
             }
             foreach ($data['credits'] as $credit) {
                 $rows[] = [...$base, 'key' => $v->id.'-credit-'.$credit['id'], 'category' => 'credits', 'entry_id' => $credit['id'], 'title' => $credit['title'], 'date' => null, 'state' => 'credit', 'attention' => $credit['cost_final'], 'amount_centimes' => $credit['amount_centimes'], 'cost_final' => $credit['cost_final'], 'action' => 'open'];

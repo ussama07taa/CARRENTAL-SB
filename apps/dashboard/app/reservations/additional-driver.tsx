@@ -1,4 +1,5 @@
 'use client';
+import {localFieldError} from '../_lib/form-validation';
 
 import {useEffect,useRef,useState} from 'react';
 import {api,apiMutation} from '../_lib/auth-client';
@@ -30,9 +31,9 @@ export default function AdditionalDriver({id,disabled,onSaved,onBusyChange,onDir
  async function save(){
   if(lock.current||!data)return;
   if(!uncertain){
-   if(reason.trim().length<3){setError('Précisez le motif (au moins 3 caractères).');return;}
-   if(mode==='assigned'&&!selected){setError('Choisissez une personne.');return;}
-   if(mode==='verified'&&(!identity||!licence)){setError('Contrôlez les deux originaux avant de confirmer.');return;}
+   if(reason.trim().length<3){setError(localFieldError('reason','Précisez le motif (au moins 3 caractères).').message);return;}
+   if(mode==='assigned'&&!selected){setError(localFieldError('query','Choisissez une personne.').message);return;}
+   if(mode==='verified'&&!identity){setError(localFieldError('identity','Contrôlez l’original de la pièce d’identité.').message);return;}if(mode==='verified'&&!licence){setError(localFieldError('licence','Contrôlez l’original du permis.').message);return;}
    payload.current={action:mode,expected_revision:data.revision,reason:reason.trim(),request_key:crypto.randomUUID(),...(mode==='assigned'?{customer_id:selected!.id}:{}),...(mode==='verified'?{fingerprint:data.fingerprint,identity_original:true,licence_original:true}:{})};
    if(mode==='new')payload.current={...newPerson,identity_type:'cin',language:'fr',expected_revision:data.revision,reason:reason.trim(),creation_key:crypto.randomUUID(),acknowledge_duplicates:acknowledge};
   }
@@ -73,18 +74,18 @@ export default function AdditionalDriver({id,disabled,onSaved,onBusyChange,onDir
      {mode==='new'&&<>
       <p>Renseignez la personne qui conduira aussi la voiture. Son fichier sera créé et lié à ce dossier en un seul enregistrement.</p>
       {(Object.entries({first_name:'Prénom',last_name:'Nom',phone:'Téléphone',identity_number:'Numéro de CIN',licence_number:'Numéro de permis',licence_expires_on:'Permis valable jusqu’au'}) as [keyof typeof emptyPerson,string][]).map(([key,label])=><label key={key}>{label}<input type={key==='licence_expires_on'?'date':key==='phone'?'tel':'text'} value={newPerson[key]} required maxLength={key==='first_name'||key==='last_name'?100:50} aria-invalid={Boolean(fieldErrors[key]?.length)} aria-describedby={fieldErrors[key]?.length?`driver-${id}-${key}-error`:undefined} onChange={e=>{setNewPerson(v=>({...v,[key]:e.target.value}));setFieldErrors(v=>({...v,[key]:[]}));setAcknowledge(false);setDuplicate('');}}/>{fieldErrors[key]?.length>0&&<span id={`driver-${id}-${key}-error`} role="alert">{fieldErrors[key].join(' ')}</span>}</label>)}
-      {duplicate==='POSSIBLE_DUPLICATE'&&<label className="dp-check"><input type="checkbox" checked={acknowledge} onChange={e=>setAcknowledge(e.target.checked)}/>J’ai vérifié : malgré le nom ou téléphone commun, il s’agit d’une autre personne.</label>}
+      {duplicate==='POSSIBLE_DUPLICATE'&&<label className="dp-check"><input data-validation-field="acknowledge" type="checkbox" checked={acknowledge} onChange={e=>setAcknowledge(e.target.checked)}/>J’ai vérifié : malgré le nom ou téléphone commun, il s’agit d’une autre personne.</label>}
       {duplicate&&<button type="button" className="secondary" onClick={()=>{const q=duplicate==='IDENTITY_ALREADY_USED'?newPerson.identity_number:newPerson.phone;open('assigned');setQuery(q);}}>Rechercher la personne déjà enregistrée</button>}
      </>}
      {mode==='assigned'&&<>
-      <label>Rechercher par nom, téléphone ou CIN<input value={query} onChange={e=>{setQuery(e.target.value);setSelected(null);}} autoComplete="off"/></label>
+      <label>Rechercher par nom, téléphone ou CIN<input data-validation-field="query" value={query} onChange={e=>{setQuery(e.target.value);setSelected(null);}} autoComplete="off"/></label>
       {searching&&<p role="status">Recherche…</p>}
       {!searching&&query.trim().length>=2&&!people.length&&<p>Aucune personne trouvée.</p>}
       {people.map(p=><label className="dp-check" key={p.id}><input type="radio" name={`driver-${id}`} checked={selected?.id===p.id} onChange={()=>setSelected(p)}/>{p.first_name} {p.last_name} · {p.phone}</label>)}
       <button type="button" className="secondary" onClick={()=>open('new')}>Personne introuvable ? Ajouter un nouveau conducteur</button>
      </>}
-     {mode==='verified'&&<><label className="dp-check"><input type="checkbox" checked={identity} onChange={e=>setIdentity(e.target.checked)}/>J’ai contrôlé l’original de l’identité de ce conducteur.</label><label className="dp-check"><input type="checkbox" checked={licence} onChange={e=>setLicence(e.target.checked)}/>J’ai contrôlé l’original et la validité de son permis pour ce départ.</label></>}
-     <label>Motif<textarea value={reason} maxLength={1000} onChange={e=>setReason(e.target.value)} required minLength={3}/></label>
+     {mode==='verified'&&<><label className="dp-check"><input data-validation-field="identity" type="checkbox" checked={identity} onChange={e=>setIdentity(e.target.checked)}/>J’ai contrôlé l’original de l’identité de ce conducteur.</label><label className="dp-check"><input data-validation-field="licence" type="checkbox" checked={licence} onChange={e=>setLicence(e.target.checked)}/>J’ai contrôlé l’original et la validité de son permis pour ce départ.</label></>}
+     <label>Motif<textarea data-validation-field="reason" value={reason} maxLength={1000} onChange={e=>setReason(e.target.value)} required minLength={3}/></label>
      <p>Un changement nécessite une nouvelle version du contrat et sa signature. Les versions précédentes restent conservées.</p>
     </fieldset>
     <div className="dp-actions"><button type="submit" className="primary" disabled={busy||disabled}>{busy?'Enregistrement…':uncertain?'Réessayer la même opération':'Enregistrer'}</button><button type="button" className="secondary" disabled={busy||uncertain} onClick={()=>{setMode('');setError('');}}>Annuler</button></div>

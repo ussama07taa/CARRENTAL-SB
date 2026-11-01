@@ -37,6 +37,31 @@ class ReservationRequestTest extends TestCase
         return $this->postJson("/api/v1/vehicles/$vehicle->id/maintenance/files", ['mode' => 'garage', 'performed_on' => '2026-10-18', 'items' => [['kind' => 'repair', 'title' => 'Réparation test', 'status' => 'progress', 'cost_status' => 'unknown']], 'paid_centimes' => 0, 'request_key' => (string) Str::uuid()])->assertCreated()->json('id');
     }
 
+    public function test_directory_filters_counts_and_pagination_share_the_same_tenant_scope(): void
+    {
+        [$company, $customer, $vehicle] = $this->agency();
+        $other = Tenant::run($company->id, fn () => Vehicle::factory()->create());
+        $ids = [];
+        for ($i = 0; $i < 16; $i++) {
+            $ids[] = $this->postJson('/api/v1/reservations', $this->payload($customer, $vehicle))->assertCreated()->json('data.id');
+        }
+        $second = $this->postJson('/api/v1/reservations', $this->payload($customer, $other))->assertCreated()->json('data.id');
+        DB::table('reservations')->where('id', $second)->update(['status' => 'annulee', 'source' => 'website', 'actor_membership_id' => null, 'website_request' => '{}']);
+        $foreignCompany = Company::factory()->create();
+        Tenant::run($foreignCompany->id, function (): void {
+            $c = Customer::factory()->create();
+            $v = Vehicle::factory()->create();
+            $m = CompanyMembership::factory()->create();
+            \App\Models\Reservation::create(['customer_id' => $c->id, 'vehicle_id' => $v->id, 'actor_membership_id' => $m->id, 'status' => 'demande', 'starts_at' => '2026-10-22 10:00:00', 'ends_at' => '2026-10-25 10:00:00', 'request_key' => (string) Str::uuid(), 'request_hash' => str_repeat('a', 64)]);
+        });
+        $this->getJson('/api/v1/reservations')->assertOk()->assertJsonPath('matching_total', 17)->assertJsonPath('counts.demande', 16)->assertJsonPath('counts.annulee', 1)->assertJsonCount(15, 'data')->assertJsonCount(2, 'vehicles');
+        $this->getJson('/api/v1/reservations?status=demande&page=2')->assertOk()->assertJsonPath('total', 16)->assertJsonPath('matching_total', 17)->assertJsonCount(1, 'data');
+        $this->getJson('/api/v1/reservations?source=website')->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $second);
+        $this->getJson('/api/v1/reservations?vehicle_id='.$vehicle->id.'&source=agency&status=annulee')->assertOk()->assertJsonPath('total', 0)->assertJsonPath('matching_total', 16)->assertJsonPath('counts.demande', 16);
+        $this->getJson('/api/v1/reservations?q=DEM-'.str_pad((string) $second, 6, '0', STR_PAD_LEFT))->assertOk()->assertJsonPath('total', 1);
+        $this->getJson('/api/v1/reservations?status=unknown')->assertUnprocessable();
+    }
+
     public function test_saved_request_is_non_blocking_replay_safe_and_reopens_with_its_history(): void
     {
         [$company, $customer, $vehicle] = $this->agency();

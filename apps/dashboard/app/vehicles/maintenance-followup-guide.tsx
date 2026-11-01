@@ -6,11 +6,11 @@ const choices = {
   start: {title: 'La voiture entre au garage', detail: 'Enregistrer son entrée réelle pour reprendre ce travail.', icon: LogIn},
   complete: {title: 'La prestation est terminée', detail: 'Le travail est fait. Le retour de la voiture se note ensuite.', icon: CheckCircle2},
   defer: {title: 'Reporter à nouveau', detail: 'Le travail attend encore. Indiquez le motif du report.', icon: RotateCcw},
-  return: {title: 'La voiture est revenue', detail: 'Elle est revenue à l’agence et prête à reprendre le service.', icon: ArrowDownLeft},
+  return: {title: 'La voiture est revenue', detail: 'Enregistrer le retour, même si le contrôle reste à faire.', icon: ArrowDownLeft},
 };
 
 export default function MaintenanceFollowupGuide({visit, status, initialOpen, action, onChange, error}: {visit: boolean; status: string; initialOpen: boolean; action: string; onChange: (value: string) => void; error?: string}) {
-  const available: (keyof typeof choices)[] = visit ? status === 'progress' ? ['complete', 'defer'] : ['return'] : ['plan', 'start', 'complete'];
+  const available: (keyof typeof choices)[] = visit ? status === 'progress' ? ['complete', 'defer', 'return'] : ['return'] : ['plan', 'start', 'complete'];
   const current = visit ? status === 'progress' ? 1 : 2 : 0;
   const steps = [{title: 'Entrée au garage', description: 'La voiture est confiée au garage', icon: LogIn}, {title: 'Travail terminé', description: 'La prestation est réalisée', icon: Wrench}, {title: 'Retour à l’agence', description: 'La voiture est récupérée', icon: ArrowDownLeft}];
   return <div className="mf-followup-guide">

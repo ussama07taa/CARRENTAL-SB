@@ -1,0 +1,56 @@
+
+.fleet-shell{background:#f5f6f8;padding:22px;border-radius:16px}
+.fleet-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:18px}.fleet-heading h1{font-size:28px;margin:0;letter-spacing:-.7px;color:#12345a}.fleet-heading p{font-size:13px;color:#667085;margin:6px 0 0}.fleet-heading-actions{display:flex;gap:10px;align-items:center}.fleet-heading .fleet-add{margin:0;display:flex;align-items:center;gap:8px;min-height:44px;border-radius:9px}
+.fleet-shortcuts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px}.fleet-shortcuts>a,.fleet-total{display:flex;align-items:center;gap:14px;padding:16px;background:#fff;border:1px solid #e6e9ef;border-radius:12px;text-decoration:none;color:#12345a}.fleet-shortcuts strong{display:block;font-size:14px}.fleet-shortcuts small{display:block;color:#667085;font-size:12px;margin-top:4px}.fleet-total strong{font-size:27px;line-height:1.2;margin-top:5px}.fleet-shortcut-icon{display:grid;place-items:center;width:42px;height:42px;flex-shrink:0;background:#edf3ff;color:#2459c7;border-radius:11px}.fleet-shortcuts>a:hover{border-color:#b9ccf4;background:#fbfcff}
+.fleet-shell .fleet-toolbar{margin:0 0 16px;gap:12px}.fleet-shell .fleet-search{background:#fff}.fleet-shell .fleet-filters select{background:#fff;min-height:44px}.fleet-shell .fleet-list-heading{margin:0 0 12px}.fleet-shell .fleet-list-heading h2{font-size:15px}
+.fleet-shell .fleet-table-wrap{background:#fff;border:1px solid #e6e9ef;border-radius:12px}.fleet-shell .fleet-table th{background:#f8f9fb;text-transform:uppercase;letter-spacing:.5px;font-size:11px;padding:13px 16px}.fleet-shell .fleet-table td{padding:14px 16px;border-color:#edf0f4;vertical-align:middle}.fleet-shell .fleet-table tbody tr{cursor:pointer}.fleet-shell .fleet-table tbody tr:hover{background:#f7faff}.fleet-shell .vehicle-thumb{width:68px;height:46px;border-radius:8px;background:#edf1f6;color:#8491a5}.fleet-shell .vehicle-name strong{font-size:14px}.fleet-shell .vehicle-daily-rate strong{font-size:16px}.fleet-shell .fleet-table th:last-child{width:154px}
+.fleet-row-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px}.fleet-shell .fleet-icon-action{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0;background:#fff;color:#52647a;border:1px solid #e4e8ef;border-radius:8px;cursor:pointer}.fleet-shell .fleet-icon-action:hover{background:#edf3ff;color:#2463eb;border-color:#bfd1f5}.fleet-shell .fleet-icon-action:focus-visible,.fleet-shortcuts>a:focus-visible{outline:2px solid #2463eb;outline-offset:3px}.fleet-shell .fleet-icon-action:disabled{opacity:.5;cursor:wait}
+@media(max-width:900px){.fleet-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}.fleet-total{grid-column:1/-1}.fleet-shell .fleet-toolbar{flex-wrap:wrap}.fleet-shell .fleet-filters{flex-wrap:wrap;max-width:100%}.fleet-shell .fleet-filters select{min-width:0;flex:1}}
+@media(max-width:650px){.fleet-shell{padding:12px}.fleet-heading{align-items:flex-start;flex-wrap:wrap;gap:12px}.fleet-heading h1{font-size:24px}.fleet-heading-actions{width:100%}.fleet-heading .fleet-add{flex:1;justify-content:center}.fleet-shortcuts{grid-template-columns:1fr;gap:8px}.fleet-total{grid-column:auto}.fleet-shortcuts>a,.fleet-total{padding:12px}.fleet-shell .fleet-table td{padding:10px 12px}.fleet-row-actions{justify-content:flex-start}.fleet-shell .fleet-filters{gap:8px}.fleet-shell .fleet-filters select{flex:1 1 120px}}
+
+.fleet-shell .fleet-heading .fleet-add{background:#2463eb!important;color:#fff!important;border:1px solid #2463eb;padding:11px 16px;font-weight:650;cursor:pointer}.fleet-shell .fleet-heading .fleet-add:hover{background:#1e55cf!important}.fleet-shell .fleet-heading .fleet-add:focus-visible{outline:2px solid #12345a;outline-offset:3px}
+
+.v-public-content{margin-top:24px;padding-top:20px;border-top:1px solid #e6e9ef}.v-public-content header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.v-public-content p{font-size:13px;color:#667085}.v-public-content fieldset{border:1px solid #e6e9ef;border-radius:10px;padding:16px;margin:16px 0}.v-public-content textarea{width:100%;padding:12px;border:1px solid #dfe4ec;border-radius:8px;font:inherit;resize:vertical}.v-public-content h3{font-size:16px}
+
+/* Readable neutral typography for the fleet and its editor. */
+.fleet-shell{--ui-text:#17191c;--ui-muted:#525862;color:#17191c;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5}
+.fleet-shell :is(button,input,select,textarea){font-family:inherit}
+.fleet-shell .fleet-heading h1{color:#17191c;font-size:28px;font-weight:700;letter-spacing:-.5px}
+.fleet-shell .fleet-heading p,.fleet-shell .fleet-shortcuts small{color:#525862;font-size:13px;line-height:1.5}
+.fleet-shell .fleet-shortcuts strong,.fleet-shell .fleet-total strong{color:#17191c}.fleet-shell .fleet-shortcuts a strong{font-size:15px;font-weight:600}
+.fleet-shell .fleet-search input,.fleet-shell .fleet-filters select{font-size:14px;color:#17191c}.fleet-shell input::placeholder,.fleet-shell textarea::placeholder{color:#626872;opacity:1}
+.fleet-shell .fleet-list-heading h2{color:#17191c;font-size:16px;font-weight:700}
+.fleet-shell .fleet-table th{color:#525862;font-size:12px;font-weight:600;letter-spacing:.3px}
+.fleet-shell .fleet-table td{font-size:14px;color:#17191c;line-height:1.5}
+.fleet-shell .vehicle-name strong{color:#17191c;font-size:15px;font-weight:600}
+.fleet-shell .fleet-table small{color:#525862;font-size:12px;line-height:1.5;margin-top:5px}
+.fleet-shell .vehicle-plate{font-size:12px;font-weight:500;color:#292d33;background:#f4f5f7}
+.fleet-shell .vehicle-daily-rate strong{color:#17191c;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.fleet-shell .vehicle-km{font-variant-numeric:tabular-nums}.fleet-shell .fleet-icon-action{color:#414750}
+.fleet-shell .vehicle-dialog{font-family:Arial,Helvetica,sans-serif;color:#17191c}
+.fleet-shell .vehicle-dialog :is(.v-field>span,.v-equipment>span){color:#292d33;font-size:14px}
+.fleet-shell .vehicle-dialog :is(input,select,textarea){font-size:15px;color:#17191c;line-height:1.5}
+.fleet-shell .vehicle-dialog :is(.v-footnote,.v-photo-note,.v-section-heading p,.v-public-content p){color:#525862;font-size:13px;line-height:1.6}
+.fleet-shell .vehicle-dialog :is(.v-section-heading h3,.v-public-content h3){color:#17191c;font-weight:700}
+.fleet-shell .vehicle-dialog .vehicle-header h2{color:#fff}.fleet-shell .vehicle-dialog .vehicle-header p{color:#e1e6ed;font-size:13px}
+@media(max-width:650px){.fleet-shell .fleet-heading h1{font-size:25px}.fleet-shell .fleet-table td{font-size:14px}.fleet-shell .fleet-table small{font-size:12px}}
+
+.fleet-shell :is(p,small,span,strong,th,td,label,button,input,select,textarea,h1,h2,h3,h4){font-family:Arial,Helvetica,sans-serif!important}.fleet-shell :is(.fleet-heading p,.fleet-shortcuts small,.fleet-table small){color:#525862!important}.fleet-shell .fleet-filters select{padding-right:30px;min-width:155px}@media(max-width:650px){.fleet-shell .fleet-filters select{min-width:0}}
+
+/* Keep fleet data on white; reserve fills for interactive feedback. */
+.fleet-shell .fleet-table,.fleet-shell .fleet-table thead,.fleet-shell .fleet-table th,.fleet-shell .fleet-table tbody tr,.fleet-shell .fleet-table td{background:#fff!important;color:#17191c!important}
+.fleet-shell .fleet-table th{border-bottom:1px solid #dfe3e8;color:#292d33!important}
+.fleet-shell .fleet-table td{border-bottom:1px solid #edf0f3}
+.fleet-shell .fleet-table :is(.vehicle-plate,.vehicle-spec,.vehicle-km,.vehicle-daily-rate,.vehicle-name strong){color:#17191c!important}
+.fleet-shell .fleet-table .vehicle-plate{background:transparent!important;border:0!important;padding:0!important;font-size:13px}
+.fleet-shell .fleet-table small{color:#41464f!important}
+.fleet-shell .fleet-table tbody tr:hover td{background:#f8fbff!important}
+.fleet-shell .fleet-table .fleet-icon-action{background:#fff!important;color:#292d33!important;border-color:#e4e7eb}
+.fleet-shell .fleet-table .fleet-icon-action:hover{background:#edf3ff!important;color:#2463eb!important}
+
+/* Vehicle banner uses the blue from the supplied brand mark. */
+.fleet-shell .vehicle-dialog .vehicle-header{background:#004fff;color:#fff}
+.fleet-shell .vehicle-dialog .vehicle-header :is(h2,p,.fleet-eyebrow){color:#fff}
+.fleet-shell .vehicle-dialog .vehicle-header .vehicle-close{background:transparent;color:#fff;border:1px solid #ffffff80}
+.fleet-shell .vehicle-dialog .vehicle-header .vehicle-close:hover{background:#ffffff20}
+.fleet-shell .vehicle-dialog .vehicle-header .vehicle-close:focus-visible{outline:2px solid #fff;outline-offset:3px}

@@ -45,6 +45,7 @@ class MaintenanceFollowups
             abort_if($item->cancellation !== null, 409, 'Ce travail est annulé et ne peut plus être repris.');
             $tracking = $this->tracking($e)[$itemKey];
             $visit = $tracking['visit'];
+            $awaiting = collect(app(MaintenanceReadiness::class)->pending($e))->contains('item_key', $itemKey);
             abort_if($e->revision !== (int) $input['revision'] || $tracking['tracking_revision'] !== (int) $input['tracking_revision'], 409, 'Le suivi a changé. Actualisez le dossier avant de continuer.');
             $action = $input['action'];
             $date = $input['occurred_on'];
@@ -67,13 +68,13 @@ class MaintenanceFollowups
             if ($action === 'complete' && ! in_array($item->status, ['deferred', 'progress'], true)) {
                 throw ValidationException::withMessages(['action' => 'Ce travail est déjà terminé ou ne fait pas partie des travaux à reprendre.']);
             }
-            if ($action === 'complete' && $item->status === 'progress' && ! $visit) {
+            if ($action === 'complete' && $item->status === 'progress' && ! $visit && ! $awaiting) {
                 throw ValidationException::withMessages(['action' => 'Terminez ce travail depuis son dossier initial.']);
             }
-            if ($action === 'return' && (! $visit || ! in_array($item->status, ['done', 'deferred'], true))) {
+            if ($action === 'return' && (! $visit || ($input['ready'] && ! in_array($item->status, ['done', 'deferred'], true)))) {
                 throw ValidationException::withMessages(['ready' => 'Terminez le travail ou reportez-le avec un motif avant le retour.']);
             }
-            if ($action === 'defer' && (! $visit || $item->status !== 'progress')) {
+            if ($action === 'defer' && ((! $visit && ! $awaiting) || $item->status !== 'progress')) {
                 throw ValidationException::withMessages(['action' => 'Seul un travail repris et en cours peut être reporté ici.']);
             }
             if (in_array($action, ['start', 'complete', 'defer'], true)) {
@@ -94,7 +95,7 @@ class MaintenanceFollowups
             } else {
                 $workId = $item->id;
             }
-            $id = DB::table('maintenance_followups')->insertGetId(['company_id' => Tenant::id(), 'maintenance_id' => $entry, 'work_id' => $workId, 'item_key' => $itemKey, 'actor_membership_id' => $actor, 'action' => $action, 'occurred_on' => $date, 'follow_up_on' => in_array($action, ['plan', 'defer'], true) ? ($input['follow_up_on'] ?? null) : null, 'visit_id' => $visit['id'] ?? null, 'note' => $input['note'], 'request_key' => $input['request_key'], 'request_hash' => $hash, 'created_at' => now()]);
+            $id = DB::table('maintenance_followups')->insertGetId(['company_id' => Tenant::id(), 'maintenance_id' => $entry, 'work_id' => $workId, 'item_key' => $itemKey, 'actor_membership_id' => $actor, 'action' => $action, 'occurred_on' => $date, 'follow_up_on' => in_array($action, ['plan', 'defer'], true) ? ($input['follow_up_on'] ?? null) : null, 'visit_id' => $visit['id'] ?? null, 'ready' => $action === 'return' ? (bool) $input['ready'] : null, 'note' => $input['note'], 'request_key' => $input['request_key'], 'request_hash' => $hash, 'created_at' => now()]);
             $this->maintenance->audit($vehicle, $actor, 'maintenance_followup_'.$action, ['maintenance_id' => $entry, 'item_key' => $itemKey, 'followup_id' => $id, 'note' => $input['note']]);
 
             return $id;

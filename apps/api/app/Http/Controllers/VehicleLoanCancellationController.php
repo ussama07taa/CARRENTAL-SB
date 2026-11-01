@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CancelVehicleLoanRequest;
 use App\Support\Tenancy\Tenant;
 use App\Support\Vehicles\VehicleLoans;
+use App\Support\Vehicles\VehiclePurchases;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -29,6 +30,10 @@ class VehicleLoanCancellationController extends Controller
             abort_if(! hash_equals($loans->financialRevision($loan), $input['financial_revision']) || (int) $summary->remaining_centimes !== $input['expected_loan_remaining_centimes'], 409, 'Le dossier a changé. Actualisez les montants avant de confirmer l’annulation.');
             if ((int) $summary->opening_paid_centimes > 0) {
                 throw ValidationException::withMessages(['loan' => 'Annulation bloquée : des montants déjà réglés avant le suivi sont enregistrés dans ce contrat. Ils doivent être vérifiés et régularisés séparément, sans effacer l’historique.']);
+            }
+            $purchase = app(VehiclePurchases::class)->detail($loan);
+            if ($purchase && (int) $purchase['data']->paid_centimes > 0) {
+                throw ValidationException::withMessages(['loan' => 'L’apport contient un paiement comptabilisé. Un versement réel doit rester enregistré ; corrigez uniquement une erreur de saisie.']);
             }
             if ((int) $summary->recorded_paid_centimes > 0) {
                 throw ValidationException::withMessages(['loan' => 'Annulation bloquée : ce contrat contient des paiements encore comptabilisés. Annulez uniquement les saisies erronées ; un paiement réellement effectué doit rester enregistré.']);

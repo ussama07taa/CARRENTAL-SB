@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CancelMaintenanceRequest;
 use App\Support\Tenancy\Tenant;
 use App\Support\Vehicles\MaintenanceFollowups;
+use App\Support\Vehicles\MaintenanceReadiness;
 use App\Support\Vehicles\MaintenanceWork;
 use App\Support\Vehicles\VehicleMaintenance;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +27,7 @@ class MaintenanceCancellationController extends Controller
                 return response()->json(['id' => $old->id], 201);
             }
             $maintenance->assertActive($e);
+            abort_if($input['scope'] === 'file' && app(MaintenanceReadiness::class)->pending($e), 409, 'Validez la disponibilité après le retour avant d’annuler ce dossier.');
             $paid = $maintenance->paid($entry);
             abort_if($e->revision !== (int) $input['revision'] || $e->cancellation_revision !== (int) $input['cancellation_revision'] || $paid !== (int) $input['expected_paid_centimes'], 409, 'Le dossier a changé. Fermez puis rouvrez-le pour vérifier le calcul avant l’annulation.');
             $reason = trim($input['reason']);

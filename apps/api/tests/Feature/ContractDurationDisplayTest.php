@@ -23,6 +23,7 @@ class ContractDurationDisplayTest extends TestCase
             $vehicle = Vehicle::factory()->create();
             $reservation = new Reservation;
             $reservation->vehicle_id = $vehicle->id;
+            $reservation->website_request = ['pickup' => 'airport', 'dropoff' => 'hotel', 'dropoff_detail' => 'Hôtel TEST', 'notes' => 'Private'];
             $financial = \Mockery::mock(RentalPayment::class);
             $financial->shouldReceive('summary')->once()->andReturn(['payments' => [], 'verified_centimes' => 100000, 'remaining_centimes' => 0, 'pricing_snapshot' => ['agreement_mode' => 'negotiated', 'lines' => [['half_day_units' => 2, 'daily_centimes' => 55000], ['half_day_units' => 2, 'daily_centimes' => 55000], ['half_day_units' => 1, 'daily_centimes' => 55000]]]]);
             $this->app->instance(RentalPayment::class, $financial);
@@ -30,6 +31,7 @@ class ContractDurationDisplayTest extends TestCase
             $this->assertSame(5, $display['pricing_half_day_units']);
             $this->assertSame('negotiated', $display['pricing_agreement_mode']);
             $this->assertNull($display['agreed_daily_centimes']);
+            $this->assertSame(['pickup' => 'airport', 'dropoff' => 'hotel', 'dropoff_detail' => 'Hôtel TEST'], $display['locations']);
         });
     }
 
@@ -60,6 +62,37 @@ class ContractDurationDisplayTest extends TestCase
         $this->assertStringContainsString('2 يوم 2 ساعة 3 دقيقة', $html);
         $this->assertStringContainsString('2.5 يوم', $html);
         $this->assertStringContainsString('المدة المحتسبة', $html);
+    }
+
+    public function test_contract_displays_only_the_frozen_agency_profile_and_escapes_it(): void
+    {
+        $snapshot = self::snapshot();
+        $snapshot['presentation']['agency_profile'] = ['name' => 'BEN SBIH TEST <script>', 'address' => 'Adresse enregistrée', 'ice' => 'ICE-TEST', 'rc' => 'RC-TEST'];
+        $html = app(ContractPdf::class)->html($snapshot, 'CTR-TEST-PROFILE');
+        $this->assertStringContainsString('BEN SBIH TEST &lt;script&gt;', $html);
+        $this->assertStringContainsString('Adresse enregistrée', $html);
+        $this->assertStringContainsString('ICE-TEST', $html);
+        $this->assertStringNotContainsString('Rue Tarblous', $html);
+        $this->assertStringNotContainsString('RC 123456', $html);
+        $this->assertStringNotContainsString('<script>', $html);
+    }
+
+    public function test_contract_populates_saved_locations_and_does_not_invent_missing_data(): void
+    {
+        foreach (['fr', 'ar'] as $language) {
+            $snapshot = self::snapshot($language);
+            $snapshot['presentation']['locations'] = ['pickup' => 'airport', 'dropoff' => 'hotel', 'dropoff_detail' => 'Hôtel <TEST>'];
+            $snapshot['presentation']['verified_payment_methods'] = ['carte'];
+            $html = app(ContractPdf::class)->html($snapshot, 'CTR-TEST-LOC');
+            $this->assertStringContainsString('20/10/2026 01:40', $html);
+            $this->assertStringContainsString('Hôtel &lt;TEST&gt;', $html);
+            $this->assertStringContainsString($language === 'fr' ? 'Tanger Aéroport' : 'مطار طنجة', $html);
+            $this->assertStringContainsString($language === 'fr' ? 'Carte bancaire' : 'بطاقة بنكية', $html);
+            $this->assertStringNotContainsString($language === 'fr' ? 'Tarifs convenus du premier / dernier jour' : 'ثمن أول وآخر نهار المتفق عليه', $html);
+            unset($snapshot['presentation']['locations']);
+            $html = app(ContractPdf::class)->html($snapshot, 'CTR-TEST-LOC');
+            $this->assertStringContainsString($language === 'fr' ? 'Non renseigné dans le dossier' : 'غير مسجل في الحجز', $html);
+        }
     }
 
     public function test_old_snapshot_does_not_invent_a_billed_duration_or_hide_a_minute(): void

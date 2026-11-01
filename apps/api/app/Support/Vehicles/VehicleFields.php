@@ -4,7 +4,7 @@ namespace App\Support\Vehicles;
 
 class VehicleFields
 {
-    public const EDITABLE = ['vehicle_type', 'plate', 'make', 'model', 'trim', 'year', 'fuel', 'transmission', 'color', 'seats', 'doors', 'vin', 'equipment'];
+    public const EDITABLE = ['vehicle_type', 'plate', 'make', 'model', 'trim', 'year', 'fuel', 'transmission', 'color', 'seats', 'doors', 'vin', 'equipment', 'published', 'public_description', 'custom_equipment'];
 
     public const EQUIPMENT = ['air_conditioning', 'bluetooth', 'carplay', 'android_auto', 'usb', 'gps', 'parking_sensors', 'rear_camera', 'cruise_control', 'child_seat_mounts', 'sunroof'];
 

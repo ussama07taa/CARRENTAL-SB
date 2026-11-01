@@ -1,0 +1,2 @@
+import {notFound} from 'next/navigation';
+export default function Page(){if(process.env.NODE_ENV==='production')notFound();return <main style={{minHeight:'100vh',background:'#eef1f6',padding:20,display:'flex',justifyContent:'center'}}><iframe title="En-tête · aperçu mobile" src="/design-lab/header" style={{width:390,maxWidth:'100%',height:844,border:'1px solid #d9e0ec',borderRadius:16,background:'white'}}/></main>}

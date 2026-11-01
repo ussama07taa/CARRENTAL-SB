@@ -1,0 +1,2 @@
+import Link from 'next/link';
+export default function FinancialAccess(){return <section className="welcome"><span className="status">Espace employé</span><h1>Accès réservé au responsable</h1><p>Les dépenses, la caisse, les achats et les rapports financiers sont gérés par le responsable de l’agence.</p><p>Retrouvez vos départs, retours et travaux à suivre depuis l’accueil.</p><Link className="primary" href="/">Retour à mon accueil →</Link></section>;}

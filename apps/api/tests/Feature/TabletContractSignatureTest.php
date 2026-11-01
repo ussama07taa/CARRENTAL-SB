@@ -252,27 +252,27 @@ class TabletContractSignatureTest extends TestCase
         $this->assertSame(['especes'], $snapshot['presentation']['verified_payment_methods']);
         $this->assertNull($snapshot['presentation']['agreed_daily_centimes']);
         $this->assertNull($snapshot['presentation']['first_daily_centimes']);
-        $this->getJson("/api/v1/reservations/$id/departure/contract")->assertJsonPath('data.stale', false)->assertJsonPath('data.versions.0.layout', 4);
+        $this->getJson("/api/v1/reservations/$id/departure/contract")->assertJsonPath('data.stale', false)->assertJsonPath('data.versions.0.layout', 5);
         $dir = base_path('../../.local/contract-l4-qa');
         File::ensureDirectoryExists($dir);
         foreach (['fr', 'ar'] as $language) {
             $snapshot['language'] = $language;
             $original = app(ContractPdf::class)->render($snapshot, 'CTR-TEST-L4');
             file_put_contents($dir.'/original-'.$language.'.pdf', $original);
-            $pdf = app(TabletContractPdf::class)->render($original, ['client' => $this->signature(), 'agency' => $this->signature(), 'client_name' => 'Client TEST', 'agency_name' => 'Agence TEST'], 'CTR-TEST-L4', hash('sha256', $original), '2026-10-20 12:00:00');
+            $pdf = app(TabletContractPdf::class)->render($original, ['client' => $this->signature(), 'agency' => $this->signature(), 'client_name' => 'Client TEST', 'agency_name' => 'Agence TEST'], 'CTR-TEST-L4', hash('sha256', $original), '2026-10-20 12:00:00', $snapshot['presentation']['layout']);
             file_put_contents($dir.'/signed-'.$language.'.pdf', $pdf);
             $info = new Process(['pdfinfo', $dir.'/signed-'.$language.'.pdf']);
             $info->mustRun();
             $this->assertMatchesRegularExpression('/Pages:\s+2\s*$/m', $info->getOutput());
             $this->assertStringContainsString('(A4)', $info->getOutput());
-            $this->assertStringContainsString('signatures de test L4', $info->getOutput());
+            $this->assertStringContainsString('signatures dans les cadres', $info->getOutput());
             $text = new Process(['pdftotext', $dir.'/signed-'.$language.'.pdf', '-']);
             $text->mustRun();
             $this->assertStringContainsString('TEST NON CERTIFIÉ', $text->getOutput());
             $this->assertLessThan(5 * 1024 * 1024, strlen($pdf));
             $text = new Process(['pdftotext', $dir.'/original-'.$language.'.pdf', '-']);
             $text->mustRun();
-            $this->assertStringContainsString('MOSWADA · L4', $text->getOutput());
+            $this->assertStringNotContainsString('SIGNATURES DESSINÉES', $text->getOutput());
             if ($language === 'fr') {
                 $this->assertStringContainsString('Espèces', $text->getOutput());
                 $this->assertStringContainsString('Diesel', $text->getOutput());

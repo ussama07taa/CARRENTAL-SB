@@ -8,6 +8,7 @@ use App\Http\Requests\StoreVehicleLoanRequest;
 use App\Models\Vehicle;
 use App\Support\Tenancy\Tenant;
 use App\Support\Vehicles\VehicleLoans;
+use App\Support\Vehicles\VehiclePurchases;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -45,10 +46,13 @@ class VehicleLoanController extends Controller
         }
         if (($input['filter'] ?? 'all') === 'settled') {
             $query->where('s.remaining_centimes', 0);
+            if (app(VehiclePurchases::class)->available()) {
+                $query->whereRaw('COALESCE(purchase.remaining_centimes,0)=0');
+            }
         }
         $page = $query->orderByRaw('CASE WHEN s.overdue_centimes > 0 THEN 0 WHEN s.remaining_centimes > 0 THEN 1 ELSE 2 END')->orderBy('s.next_due_on')->orderByDesc('l.id')->paginate(15);
 
-        return response()->json(['data' => collect($page->items())->map(fn ($r) => $loans->numbers($r)), 'summary' => $loans->numbers($summary), 'total' => $page->total(), 'page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'today' => now('Africa/Casablanca')->toDateString()]);
+        return response()->json(['data' => collect($page->items())->map(fn ($r) => $loans->numbers($r)), 'summary' => $loans->numbers($summary), 'total' => $page->total(), 'page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'purchase_available' => app(VehiclePurchases::class)->available(), 'today' => now('Africa/Casablanca')->toDateString()]);
     }
 
     public function store(StoreVehicleLoanRequest $request, VehicleLoans $loans): JsonResponse
@@ -59,6 +63,18 @@ class VehicleLoanController extends Controller
         unset($input['file']);
         $input['vehicle_id'] = (int) $input['vehicle_id'];
         $input['financed_centimes'] = isset($input['financed_centimes']) ? (int) $input['financed_centimes'] : null;
+        if (! empty($input['purchase'])) {
+            $purchase = &$input['purchase'];
+            $purchase['price_centimes'] = (int) $purchase['price_centimes'];
+            $purchase['down_payment_centimes'] = (int) $purchase['down_payment_centimes'];
+            $purchase['seller'] = trim($purchase['seller']);
+            $financed = $purchase['price_centimes'] - $purchase['down_payment_centimes'];
+            if ($purchase['seller'] === '' || ($input['financed_centimes'] !== null && $input['financed_centimes'] !== $financed)) {
+                throw ValidationException::withMessages(['purchase.seller' => 'Indiquez le vendeur et vérifiez le montant financé : prix moins apport.']);
+            }
+            $input['financed_centimes'] = $financed;
+            unset($purchase);
+        }
         foreach ($input['installments'] as &$row) {
             $row['amount_centimes'] = (int) $row['amount_centimes'];
             $row['opening_paid_centimes'] = (int) $row['opening_paid_centimes'];
@@ -100,6 +116,12 @@ class VehicleLoanController extends Controller
                     $opening += $row['opening_paid_centimes'];
                     $previous = $row['due_on'];
                 }
+                if (! empty($input['purchase']) && array_sum(array_column($input['installments'], 'amount_centimes')) < $input['financed_centimes']) {
+                    throw ValidationException::withMessages(['installments' => 'Le total des échéances est inférieur au montant financé. Reprenez le tableau complet, dernière échéance comprise.']);
+                }
+                if (! empty($input['purchase']) && $opening > 0) {
+                    throw ValidationException::withMessages(['purchase' => 'Un nouvel achat commence sans ancien règlement. Enregistrez les versements réellement effectués depuis le dossier.']);
+                }
                 if ($opening > 0 && ! ($input['opening_confirmed'] ?? false)) {
                     throw ValidationException::withMessages(['opening_confirmed' => 'Confirmez les montants déjà réglés avant le début du suivi. Ils ne créeront pas de nouveaux paiements.']);
                 }
@@ -110,6 +132,9 @@ class VehicleLoanController extends Controller
                 }
                 DB::table('vehicle_loan_installments')->insert($rows);
                 $loan = $loans->loan($id);
+                if (! empty($input['purchase'])) {
+                    app(VehiclePurchases::class)->create($loan, $actor, $input['purchase']);
+                }
                 $loans->audit($loan, $actor, 'loan_created', ['installment_count' => count($rows), 'total_centimes' => array_sum(array_column($rows, 'amount_centimes')), 'opening_paid_centimes' => $opening, 'tracking_from' => $input['tracking_from']]);
                 if ($file) {
                     $loans->document($loan, $actor, $file, $input['request_key'], $hash, $path);
@@ -154,7 +179,7 @@ class VehicleLoanController extends Controller
         }
         $documents = $loans->query('vehicle_loan_documents')->where('loan_id', $loan)->orderByDesc('id')->get(['id', 'mime', 'created_at']);
 
-        return response()->json(['data' => $loans->numbers($data), 'cancellation' => $cancellation, 'installments' => $loans->schedule($loan), 'payments' => $payments, 'corrections' => $corrections, 'cancellations' => $cancellations, 'financial_revision' => $loans->financialRevision($loan), 'documents' => $documents, 'today' => now('Africa/Casablanca')->toDateString()]);
+        return response()->json(['data' => $loans->numbers($data), 'cancellation' => $cancellation, 'installments' => $loans->schedule($loan), 'payments' => $payments, 'corrections' => $corrections, 'cancellations' => $cancellations, 'financial_revision' => $loans->financialRevision($loan), 'purchase' => app(VehiclePurchases::class)->detail($loan), 'documents' => $documents, 'today' => now('Africa/Casablanca')->toDateString()]);
     }
 
     public function pay(StoreVehicleLoanPaymentRequest $request, int $loan, int $installment, VehicleLoans $loans): JsonResponse

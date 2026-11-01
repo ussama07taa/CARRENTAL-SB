@@ -177,6 +177,28 @@ class RentalContractTest extends TestCase
         $this->assertDatabaseCount('rental_contract_files', 3);
     }
 
+    public function test_real_contract_becomes_valid_only_after_verified_signed_copy(): void
+    {
+        config(['rental_contracts.real_documents_enabled'=>true,'rental_contracts.demo_only'=>false,'rental_contracts.model_version'=>'rental-1']);
+        [$company,,,,$id] = $this->readyFile();
+        $v = $this->issue($id, $this->issueInput($id))->assertCreated()->json('data.latest_id');
+        $input = $this->uploadInput();
+        $this->postJson("/api/v1/reservations/$id/departure/contract/$v/signed", $input)->assertUnprocessable();
+        $this->render($company->id, $v);
+        $this->postJson("/api/v1/reservations/$id/departure/contract/$v/signed", $input)->assertCreated()->assertJsonPath('data.signed_verified', false);
+        $this->postJson("/api/v1/reservations/$id/departure/contract/$v/signed", $input)->assertOk()->assertJsonPath('replayed', true);
+        $signed = DB::table('rental_contract_files')->where('kind', 'signed')->first();
+        $verify = ['file_id' => $signed->id, 'signatures_checked' => true, 'reason' => 'Toutes les pages et signatures vérifiées', 'request_key' => (string) Str::uuid()];
+        $this->postJson("/api/v1/reservations/$id/departure/contract/$v/verify", [...$verify, 'signatures_checked' => false])->assertUnprocessable();
+        $this->postJson("/api/v1/reservations/$id/departure/contract/$v/verify", $verify)->assertCreated()->assertJsonPath('data.signed_verified', true)->assertJsonPath('data.valid_for_pickup', true);
+        $this->postJson("/api/v1/reservations/$id/departure/contract/$v/verify", $verify)->assertOk()->assertJsonPath('replayed', true);
+        $this->getJson("/api/v1/reservations/$id/departure")->assertJsonPath('data.contract_signed', true);
+        $this->postJson("/api/v1/reservations/$id/departure/contract/$v/signed", $this->uploadInput())->assertConflict();
+        $this->postJson("/api/v1/reservations/$id/departure/contract/$v/signed", $this->uploadInput($signed->id))->assertCreated()->assertJsonPath('data.signed_verified', false);
+        $this->postJson("/api/v1/reservations/$id/departure/contract/$v/verify", [...$verify, 'request_key' => (string) Str::uuid()])->assertConflict();
+        $this->assertDatabaseCount('rental_contract_files', 3);
+    }
+
     public function test_render_failure_retry_and_duplicate_worker_preserve_one_original(): void
     {
         [$company,,,,$id] = $this->readyFile();
@@ -224,5 +246,33 @@ class RentalContractTest extends TestCase
         $this->issue($id, $this->issueInput($id))->assertCreated();
         $this->expectException(QueryException::class);
         DB::table('rental_contract_versions')->update(['reason' => 'Overwrite']);
+    }
+
+    public function test_agency_profile_changes_preserve_issued_snapshot_and_original_bytes(): void
+    {
+        [$company, , , , $id] = $this->readyFile();
+        $profile = ['name'=>'Agence initiale','address'=>'Adresse initiale','phone'=>'0600000000','ice'=>'123456789012345'];
+        DB::table('agency_profiles')->insert(['company_id'=>$company->id,'details'=>json_encode($profile),'logo_base64'=>base64_encode(file_get_contents(base_path('tests/Fixtures/signature.png'))),'logo_mime'=>'image/png','created_at'=>now(),'updated_at'=>now()]);
+        $version=$this->issue($id,$this->issueInput($id))->assertCreated()->json('data.latest_id');
+        $this->render($company->id,$version);
+        $stored=DB::table('rental_contract_versions')->where('id',$version)->first();
+        $file=DB::table('rental_contract_files')->where('contract_id',$version)->where('kind','original')->first();
+        $url="/api/v1/reservations/$id/departure/contract/files/$file->id/content";
+        $bytes=$this->get($url)->assertOk()->getContent();
+        $revision=$this->getJson('/api/v1/settings/agency')->assertOk()->json('revision');
+        $this->postJson('/api/v1/settings/agency',[...$profile,'name'=>'Agence modifiée','ice'=>'987654321098765','expected_revision'=>$revision,'remove_logo'=>true])->assertOk();
+        $this->assertEquals($stored,DB::table('rental_contract_versions')->where('id',$version)->first());
+        $this->assertEquals($file,DB::table('rental_contract_files')->where('id',$file->id)->first());
+        $this->assertSame($bytes,$this->get($url)->assertOk()->getContent());
+        $saved=json_decode($stored->snapshot,true)['presentation']['agency_profile'];
+        $this->assertSame('Agence initiale',$saved['name']);
+        $this->assertArrayHasKey('logo_data_uri',$saved);
+        $oldLogo=view('contracts.brand-logo',['agency'=>$saved])->render();
+        $this->assertStringContainsString('data:image/png;base64,',$oldLogo);
+        Tenant::run($company->id,function(): void {
+            $next=app(\App\Support\Reservations\AgencyDocumentProfile::class)->current();
+            $this->assertSame('Agence modifiée',$next['name']);
+            $this->assertArrayNotHasKey('logo_data_uri',$next);
+        });
     }
 }

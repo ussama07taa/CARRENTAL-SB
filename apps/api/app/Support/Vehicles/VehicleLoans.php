@@ -78,7 +78,11 @@ class VehicleLoans
     {
         $rows = $this->payments()->where('p.loan_id', $loan)->orderBy('p.id')->select('p.id')->selectRaw('COALESCE(c.id,0) AS correction_id, COALESCE(x.id,0) AS cancellation_id')->get();
 
-        return hash('sha256', $rows->toJson());
+        $purchaseRows = app(VehiclePurchases::class)->available()
+            ? app(VehiclePurchases::class)->currentPayments()->join('vehicle_purchases as vp', 'vp.id', '=', 'pp.purchase_id')->where('vp.company_id', Tenant::id())->where('vp.loan_id', $loan)->orderBy('pp.id')->get(['pp.id', 'pp.version'])
+            : collect();
+
+        return hash('sha256', $rows->toJson().$purchaseRows->toJson());
     }
 
     public function installments(): Builder
@@ -102,6 +106,14 @@ class VehicleLoans
         })->join('vehicles as v', function ($j) {
             $j->on('v.company_id', '=', 'l.company_id')->on('v.id', '=', 'l.vehicle_id');
         })->joinSub($this->statistics(), 's', 's.loan_id', '=', 'l.id')->where('l.company_id', Tenant::id())->select('lc.id as cancellation_id', 'l.id', 'l.vehicle_id', 'l.lender', 'l.reference', 'l.tracking_from', 'l.signed_on', 'l.financed_centimes', 'l.notes', 'l.created_at', 'v.plate', 'v.make', 'v.model', 's.installment_count', 's.total_centimes', 's.opening_paid_centimes', 's.recorded_paid_centimes', 's.remaining_centimes', 's.remaining_count', 's.next_due_on', 's.overdue_centimes', 's.upcoming_centimes', 's.month_centimes');
+
+        if (app(VehiclePurchases::class)->available()) {
+            $query->leftJoinSub(app(VehiclePurchases::class)->summaries(), 'purchase', 'purchase.loan_id', '=', 'l.id')
+                ->addSelect('purchase.id as purchase_id', 'purchase.price_centimes as purchase_price_centimes')
+                ->selectRaw('COALESCE(purchase.remaining_centimes,0) AS down_payment_remaining_centimes');
+        } else {
+            $query->selectRaw('NULL::bigint AS purchase_id, NULL::bigint AS purchase_price_centimes, 0::bigint AS down_payment_remaining_centimes');
+        }
 
         return $includeCancelled ? $query : $query->whereNull('lc.id');
     }

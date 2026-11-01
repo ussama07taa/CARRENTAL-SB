@@ -8,8 +8,8 @@ use Symfony\Component\Process\Process;
 
 class TabletContractPdf
 {
-    /** Preserve issued page content; L4 has reserved, fixed signature rectangles. */
-    public function render(string $original, array $signatures, string $reference, string $originalHash, string $signedAt): string
+    /** Preserve issued page content; Known layouts have reserved, fixed signature rectangles. */
+    public function render(string $original, array $signatures, string $reference, string $originalHash, string $signedAt, ?int $layout = null): string
     {
         $directory = storage_path('app/private/tablet-render/'.Str::uuid());
         File::ensureDirectoryExists($directory, 0700);
@@ -21,7 +21,7 @@ class TabletContractPdf
             abort_unless(preg_match('/^Pages:\s+2\s*$/m', $info->getOutput()), 422, 'Le test tablette nécessite un contrat A4 recto-verso de deux pages.');
             $text = new Process(['pdftotext', '-layout', $source, '-']);
             $text->setTimeout(8)->mustRun();
-            $inPlace = str_contains($text->getOutput(), 'MOSWADA · L4') || str_contains($text->getOutput(), 'MOSWADA v4');
+            $inPlace = in_array($layout, [4, 5], true) || str_contains($text->getOutput(), 'MOSWADA · L4') || str_contains($text->getOutput(), 'MOSWADA v4');
             $pages = [];
             for ($page = 1; $page <= 2; $page++) {
                 $output = $directory.'/page-'.$page.'.svg';
@@ -31,7 +31,7 @@ class TabletContractPdf
                 $pages[] = 'data:image/svg+xml;base64,'.base64_encode(file_get_contents($output));
             }
             $stamp = 'data:image/svg+xml;base64,'.base64_encode(file_get_contents(resource_path('views/contracts/sample-agency-stamp.svg')));
-            $html = view($inPlace ? 'contracts.tablet-in-place' : 'contracts.tablet-signatures', compact('pages', 'signatures', 'reference', 'originalHash', 'signedAt', 'stamp'))->render();
+            $html = view($inPlace ? 'contracts.tablet-in-place' : 'contracts.tablet-signatures', compact('pages', 'signatures', 'reference', 'originalHash', 'signedAt', 'stamp', 'layout'))->render();
 
             return app(ContractPdf::class)->renderHtml($html);
         } finally {

@@ -24,7 +24,7 @@ class SeedDemoCustomers extends Command
         }
         $company = Company::sole();
         Tenant::run($company->id, function () use ($save): void {
-            $member = CompanyMembership::where('is_primary_responsible', true)->sole();
+            $member = CompanyMembership::where('is_primary_responsible', true)->where('is_active', true)->orderBy('id')->firstOrFail();
             $examples = [
                 ['Amine', 'El Mansouri', '+212600000101', 'Casablanca'],
                 ['Salma', 'Bennani', '+212600000102', 'Rabat'],

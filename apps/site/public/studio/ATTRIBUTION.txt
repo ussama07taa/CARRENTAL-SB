@@ -1,0 +1,8 @@
+Local study only, not cleared for public deployment.
+Model: Ferrari 458 Italia by vicent091036.
+Original author link: https://sketchfab.com/models/57bf6cc56931426e87494f554df1dab6
+Acquired from: https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/ferrari.glb
+Reference: https://threejs.org/examples/webgl_materials_car.html
+Adaptations: blue/silver/graphite materials, studio lighting, restricted camera.
+Author license could not be verified from original page on 2026-10-27. Third-party uses cite CC BY 4.0; do not treat those as production clearance. Replace with licensed fleet model before launch. The car is explicitly labelled outside rental fleet.
+Draco decoders copied from installed three package examples/jsm/libs/draco/gltf; retain upstream notices in files. No remote runtime model or decoder requests.

@@ -44,7 +44,7 @@ class SaveCustomerRequest extends FormRequest
             'email' => ['nullable', 'email:rfc', 'max:254'],
             'city' => ['nullable', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:500'],
-            'language' => ['required', Rule::in(['fr', 'ar'])],
+            'language' => ['required', Rule::in(['fr', 'ar', 'en', 'es'])],
             'identity_type' => ['nullable', 'required_with:identity_number', Rule::in(['cin', 'passport'])],
             'identity_number' => ['nullable', 'required_with:identity_type', 'string', 'max:50', 'regex:/^[\pL\pN]+$/u'],
             'licence_number' => ['nullable', 'string', 'max:50'],

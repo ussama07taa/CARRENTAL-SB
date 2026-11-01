@@ -43,7 +43,7 @@ class MaintenanceOverviewTest extends TestCase
         $this->getJson('/api/v1/maintenance/overview?tab=files&q='.urlencode('Dossier #'.$id))
             ->assertOk()->assertJsonPath('total', 1)->assertJsonPath('balance_centimes', 45000);
         $this->getJson('/api/v1/maintenance/overview?tab=all&q='.urlencode('Dossier #'.$id))
-            ->assertOk()->assertJsonPath('total', 2)->assertJsonPath('balance_centimes', 45000);
+            ->assertOk()->assertJsonPath('total', 3)->assertJsonPath('counts.pricing', 1)->assertJsonPath('balance_centimes', 45000);
         $this->getJson('/api/v1/maintenance/overview?tab=files&q=absent')->assertOk()
             ->assertJsonPath('total', 0)->assertJsonPath('balance_centimes', 0)->assertJsonCount(1, 'coverage.without_history');
         $this->loginAgency();
@@ -57,12 +57,12 @@ class MaintenanceOverviewTest extends TestCase
         [$c,$m,$v] = $this->loginAgency();
         $id = $this->createEntry($v);
         $single = $this->getJson("/api/v1/vehicles/$v->id/maintenance")->assertOk()->json();
-        $r = $this->getJson('/api/v1/maintenance/overview?tab=all')->assertOk()->assertJsonPath('balance_centimes', $single['summary']['balance_centimes'])->assertJsonPath('provisional_files', 1)->assertJsonPath('counts.payments', 1)->assertJsonPath('counts.all', 2)->assertJsonPath('vehicle_count', 1)->json();
+        $r = $this->getJson('/api/v1/maintenance/overview?tab=all')->assertOk()->assertJsonPath('balance_centimes', $single['summary']['balance_centimes'])->assertJsonPath('provisional_files', 1)->assertJsonPath('counts.payments', 1)->assertJsonPath('counts.pricing', 1)->assertJsonPath('counts.all', 3)->assertJsonPath('vehicle_count', 1)->json();
         $debt = collect($r['data'])->firstWhere('category', 'payments');
         $this->assertSame($id, $debt['entry_id']);
         $this->assertSame('pay', $debt['action']);
         $this->assertSame(45000, $debt['amount_centimes']);
-        $this->getJson('/api/v1/maintenance/overview?q=logan&tab=all')->assertJsonPath('total', 2);
+        $this->getJson('/api/v1/maintenance/overview?q=logan&tab=all')->assertJsonPath('total', 3);
         $this->getJson('/api/v1/maintenance/overview?q=unknown')->assertJsonPath('total', 0)->assertJsonPath('balance_centimes', 0);
         $this->getJson('/api/v1/maintenance/overview?tab=bad')->assertUnprocessable();
     }
@@ -103,7 +103,7 @@ class MaintenanceOverviewTest extends TestCase
         $this->loginAgency();
         $this->getJson('/api/v1/maintenance/overview?tab=files')->assertOk()->assertJsonPath('total', 0);
         $this->loginAgency(false);
-        $this->getJson('/api/v1/maintenance/overview?tab=files')->assertForbidden();
+        $this->getJson('/api/v1/maintenance/overview?tab=files')->assertOk()->assertJsonPath('can_manage_finance', false)->assertJsonMissingPath('balance_centimes');
     }
 
     public function test_files_paginate_all_interventions_of_one_vehicle(): void
@@ -125,7 +125,7 @@ class MaintenanceOverviewTest extends TestCase
         $this->loginAgency();
         $this->getJson('/api/v1/maintenance/overview?tab=all')->assertOk()->assertJsonPath('total', 0)->assertJsonPath('balance_centimes', 0);
         $this->loginAgency(false);
-        $this->getJson('/api/v1/maintenance/overview')->assertForbidden();
+        $this->getJson('/api/v1/maintenance/overview')->assertOk()->assertJsonPath('can_manage_finance', false)->assertJsonMissingPath('balance_centimes');
     }
 
     public function test_300_vehicle_fleet_uses_batched_queries_and_stable_pagination(): void

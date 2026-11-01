@@ -7,10 +7,10 @@ use App\Models\CompanyMembership;
 use App\Models\Vehicle;
 use App\Support\Tenancy\Tenant;
 use App\Support\Vehicles\VehicleMaintenance;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Tests\Support\IsolatedDatabaseMigrations as DatabaseMigrations;
 use Tests\TestCase;
 
 class MaintenancePaymentConcurrencyTest extends TestCase

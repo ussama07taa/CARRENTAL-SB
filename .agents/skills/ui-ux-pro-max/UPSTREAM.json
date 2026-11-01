@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+  "commit": "28b3b8dee8c976df4fa3e94aed4e092ad43fcb03",
+  "source_path": ".claude/skills/ui-ux-pro-max",
+  "installed_with": "skill-installer/install-skill-from-github.py",
+  "local_adaptations": [
+    "SKILL.md script paths use project-local absolute location; all search/data code unchanged"
+  ]
+}

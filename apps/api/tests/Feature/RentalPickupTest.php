@@ -16,7 +16,6 @@ use App\Support\Reservations\RentalPickup;
 use App\Support\Tenancy\Tenant;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +24,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Support\IsolatedDatabaseMigrations as DatabaseMigrations;
 use Tests\TestCase;
 
 class RentalPickupTest extends TestCase
@@ -115,7 +115,9 @@ class RentalPickupTest extends TestCase
         Storage::fake('vehicle_documents');
         Tenant::run($company->id, function () use ($actor, $car, $circulation): void {
             foreach (['registration', 'insurance', 'inspection', 'circulation'] as $kind) {
-                if ($kind === 'circulation' && ! $circulation) { continue; }
+                if ($kind === 'circulation' && ! $circulation) {
+                    continue;
+                }
                 $path = $kind.'.png';
                 Storage::disk('vehicle_documents')->put($path, 'vehicle document fixture');
                 VehicleDocument::create(['vehicle_id' => $car->id, 'actor_membership_id' => $actor->id, 'kind' => $kind, 'version' => 1, 'change_kind' => 'initial', 'effective_on' => $kind === 'registration' ? null : '2026-01-01', 'expires_on' => $kind === 'registration' ? null : '2030-01-01', 'disk' => 'vehicle_documents', 'path' => $path, 'mime' => 'image/png', 'size' => 24, 'sha256' => hash('sha256', 'vehicle document fixture'), 'request_key' => (string) Str::uuid(), 'request_hash' => hash('sha256', 'test')]);
@@ -174,12 +176,15 @@ class RentalPickupTest extends TestCase
             $this->pickup($id, $this->pickupInput($id))->assertUnprocessable()->assertJsonPath('code', 'PICKUP_BLOCKED');
         };
         $attempt();
-        $add = function (int $version, string $start, string $end, bool $file) use ($company,$actor,$car): void {
-            Tenant::run($company->id, fn () => VehicleDocument::create(['vehicle_id' => $car->id, 'actor_membership_id' => $actor->id, 'kind' => 'circulation', 'version' => $version, 'change_kind' => 'renewal', 'effective_on' => $start, 'expires_on' => $end, 'disk' => $file ? 'vehicle_documents' : null, 'path' => $file ? 'circulation.png' : null, 'mime' => $file ? 'image/png' : null, 'size' => $file ? 24 : null, 'sha256' => $file ? hash('sha256','vehicle document fixture') : null, 'request_key' => (string) Str::uuid(), 'request_hash' => hash('sha256','fixture')]));
+        $add = function (int $version, string $start, string $end, bool $file) use ($company, $actor, $car): void {
+            Tenant::run($company->id, fn () => VehicleDocument::create(['vehicle_id' => $car->id, 'actor_membership_id' => $actor->id, 'kind' => 'circulation', 'version' => $version, 'change_kind' => 'renewal', 'effective_on' => $start, 'expires_on' => $end, 'disk' => $file ? 'vehicle_documents' : null, 'path' => $file ? 'circulation.png' : null, 'mime' => $file ? 'image/png' : null, 'size' => $file ? 24 : null, 'sha256' => $file ? hash('sha256', 'vehicle document fixture') : null, 'request_key' => (string) Str::uuid(), 'request_hash' => hash('sha256', 'fixture')]));
         };
-        $add(1, '2026-10-23', '2030-01-01', true); $attempt();
-        $add(2, '2026-01-01', '2026-10-21', true); $attempt();
-        $add(3, '2026-01-01', '2030-01-01', false); $attempt();
+        $add(1, '2026-10-23', '2030-01-01', true);
+        $attempt();
+        $add(2, '2026-01-01', '2026-10-21', true);
+        $attempt();
+        $add(3, '2026-01-01', '2030-01-01', false);
+        $attempt();
         $add(4, '2026-01-01', '2030-01-01', true);
         $this->pickup($id, $this->pickupInput($id))->assertUnprocessable();
         Storage::disk('vehicle_documents')->put('circulation.png', 'vehicle document fixture');
@@ -364,6 +369,21 @@ class RentalPickupTest extends TestCase
         $this->app->instance(RentalPayment::class, $financial);
         $this->getJson("/api/v1/reservations/$id/pickup")->assertJsonPath('data.checks.2.ok', false);
         $this->assertDatabaseCount('rental_pickups', 0);
+    }
+
+    public function test_physical_garage_return_does_not_authorize_pickup_until_readiness_is_checked(): void
+    {
+        [,,,$car,$id] = $this->approvedFixture();
+        $base = "/api/v1/vehicles/$car->id/maintenance";
+        $entry = $this->postJson($base, ['kind' => 'repair', 'title' => 'TEST retour à contrôler', 'performed_on' => '2026-10-22', 'cost_centimes' => 0, 'paid_centimes' => 0, 'in_garage' => true, 'request_key' => (string) Str::uuid()])->assertCreated()->json('id');
+        $this->postJson("$base/$entry/return", ['returned_on' => '2026-10-22', 'note' => 'Revenue, contrôle restant.', 'ready' => false, 'request_key' => (string) Str::uuid()])->assertCreated();
+        $this->getJson("/api/v1/reservations/$id/pickup")->assertJsonPath('data.checks.7.ok', false);
+        $this->pickup($id, $this->pickupInput($id))->assertUnprocessable()->assertJsonPath('code', 'PICKUP_BLOCKED');
+        $this->assertDatabaseCount('rental_pickups', 0);
+        $entryData = $this->getJson("$base/$entry/file")->json('data');
+        $this->postJson("$base/$entry/readiness", ['followup_return_id' => null, 'revision' => $entryData['revision'], 'checked_on' => '2026-10-22', 'note' => 'Contrôle effectué, prête.', 'ready' => true, 'request_key' => (string) Str::uuid()])->assertCreated();
+        $this->getJson("/api/v1/reservations/$id/pickup")->assertJsonPath('data.checks.7.ok', true);
+        $this->pickup($id, $this->pickupInput($id))->assertCreated();
     }
 
     public function test_open_garage_visit_and_changed_reading_prevent_pickup(): void

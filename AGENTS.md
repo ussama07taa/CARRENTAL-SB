@@ -13,6 +13,7 @@ Car-rental management for one Moroccan agency initially (7 vehicles, employees),
 - Explain product decisions to the user in Arabic-script Darija. This does not change product languages.
 
 ## Layout
+- For UI/UX work, use the project-local `.agents/skills/ui-ux-pro-max/SKILL.md` installed at the user's request. Read `design-system/ben-sbih/MASTER.md` and any relevant page override before implementation. Treat search results as recommendations: user constraints, this file and the unified specification take precedence. Do not apply generated palettes, fonts, business claims or unrelated sections automatically. This skill is development tooling, not a browser dependency.
 - `apps/api` — Laravel, REST API under `/api/v1`
 - `apps/site` — Next.js public site (FR + AR, full RTL)
 - `apps/dashboard` — Next.js responsive dashboard (FR ONLY); offline/PWA workflows deferred

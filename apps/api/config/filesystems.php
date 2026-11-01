@@ -28,7 +28,9 @@ return [
     |
     */
 
-    'disks' => [
+    'disks' => ['rental_invoices'=>['driver'=>'local','root'=>storage_path('app/private/rental-invoices/'.env('DB_DATABASE','default')),'serve'=>false,'visibility'=>'private','throw'=>true],'payment_proofs' => ['driver'=>'local','root'=>storage_path('app/private/payment-proofs/'.env('DB_DATABASE','default')),'serve'=>false,'visibility'=>'private','throw'=>true],
+'fine_documents' => ['driver' => 'local', 'root' => storage_path('app/private/fine-documents/'.env('DB_DATABASE')), 'visibility' => 'private', 'throw' => true],
+        'expense_documents' => ['driver' => 'local', 'root' => storage_path('app/private/expense-documents/'.env('DB_DATABASE', 'default')), 'serve' => false, 'visibility' => 'private', 'throw' => true],
         'rental_contracts' => ['driver' => 'local', 'root' => storage_path('app/private/rental-contracts/'.env('DB_DATABASE', 'default')), 'serve' => false, 'visibility' => 'private', 'throw' => true],
         'rental_returns' => ['driver' => 'local', 'root' => storage_path('app/private/rental-returns/'.env('APP_ENV', 'production')), 'serve' => false, 'visibility' => 'private', 'throw' => true],
         'inspection_photos' => ['driver' => 'local', 'root' => storage_path('app/private/inspection-photos/'.env('APP_ENV', 'production')), 'serve' => false, 'visibility' => 'private', 'throw' => true],

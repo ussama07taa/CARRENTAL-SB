@@ -1,0 +1,39 @@
+/* Application chrome shares the approved prototype palette; no workflow changes. */
+body{background:var(--ui-surface);color:var(--ui-text)}
+:root{--brand-forest:var(--ui-accent);--brand-lime:var(--ui-selected);--brand-surface:var(--ui-surface);--brand-line:var(--ui-line);--brand-text:var(--ui-text);--brand-muted:var(--ui-muted);--accent:var(--ui-accent)}
+.workspace.app-shell{--cp-forest:var(--ui-accent);--cp-ink:var(--ui-text);--cp-muted:var(--ui-muted);--cp-line:var(--ui-line);background:var(--ui-surface)}
+.app-sidebar{background:var(--ui-panel);color:var(--ui-text);border:1px solid var(--ui-line);box-shadow:0 2px 8px #25203004}
+.app-sidebar .app-nav-label{color:var(--ui-muted)}
+.app-sidebar .app-nav a{color:var(--ui-muted)}
+.app-sidebar .app-nav a[aria-current=page]{background:var(--ui-selected);color:var(--ui-accent);box-shadow:inset 3px 0 var(--ui-accent)}
+.app-sidebar .app-nav a:not([aria-current]):hover{background:#f4f7ff;color:var(--ui-text)}
+.app-sidebar .app-nav a:focus-visible{outline-color:var(--ui-focus)}
+.app-sidebar .app-nav a>span{background:transparent;color:inherit}
+.app-sidebar .app-nav-logout{background:white;color:#965052;border-color:#eee2e3}
+.app-sidebar .app-nav-logout:hover{background:#fff1f1;color:#873c3f}
+.app-sidebar button:not(.app-nav-logout){color:var(--ui-muted);border-color:var(--ui-line)}
+.app-shell .brand-mark{background:var(--ui-accent);color:white}
+.app-shell .brand strong{color:var(--ui-text)}
+.app-profile-avatar{background:var(--ui-selected);color:var(--ui-accent)}
+.primary,.app-content .add-client,.app-content .mo-add{background:var(--ui-accent);border-color:var(--ui-accent);color:#fff}
+.primary:hover:not(:disabled){background:var(--ui-accent-hover);border-color:var(--ui-accent-hover)}
+.secondary{background:#fff;color:#56515f;border-color:var(--ui-line)}
+.app-shell > .demo-banner{background:var(--ui-selected);color:var(--ui-muted);border-bottom:1px solid var(--ui-line)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline-color:var(--ui-focus)}
+
+.app-content .fleet-hero{background:#fff;background-image:none;color:var(--ui-text);border:1px solid var(--ui-line)}
+.app-content .fleet-hero h1,.app-content .fleet-hero h1 span{color:var(--ui-text)}
+.app-content .fleet-hero p,.app-content .fleet-hero .fleet-eyebrow,.app-content .fleet-hero small{color:var(--ui-muted)}
+.app-content .fleet-hero button{background:var(--ui-accent);border-color:var(--ui-accent);color:#fff}
+.app-content .fleet-hero .fleet-total{color:var(--ui-text);border-color:var(--ui-line)}
+.app-shell .cockpit .cp-rental-tabs button[aria-pressed=true]:not(.is-late){background:var(--ui-selected);color:var(--ui-accent);border-color:#c6d7ff;box-shadow:inset 0 3px var(--ui-accent)}
+.app-shell .cockpit .cp-rental-tabs button[aria-pressed=true]:not(.is-late) small{color:var(--ui-muted)}
+.app-content .fleet-count{border-color:var(--ui-line)}.app-content .fleet-count>span,.app-content .fleet-count>span:first-child{color:var(--ui-muted)}
+
+.agency-logo{display:block;width:250px;height:auto;max-width:100%;object-fit:contain;flex-shrink:0}.ls-brand .agency-logo{width:205px}.login-shell .agency-logo{width:280px}@media(max-width:560px){.workspace-header .agency-logo,.ls-brand .agency-logo{width:165px}}
+
+/* Approved white canvas; retain borders and semantic/selected feedback. */
+body,.workspace.app-shell,.app-shell-unavailable{background:#fff}
+
+/* Brand hierarchy: navy headings and cobalt actions on white. */
+.login-card h1,.app-content h1{color:var(--ui-navy)}

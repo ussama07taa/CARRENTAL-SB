@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-31",
+  "environment": "local dashboard 3103 / pickup sandbox",
+  "writes_performed": false,
+  "browser_verified": [
+    "client creation: empty required inputs (previous pass)",
+    "vehicle creation: empty plate and make",
+    "expense creation: empty required fields and abc amount; amount focus verified after fix",
+    "user creation: empty fields and malformed email; no password entered",
+    "loan creation stage 1: missing vehicle then missing seller",
+    "cash count: missing amount and confirmation; amount focus verified after fix",
+    "fine preparation: missing date and attestation",
+    "maintenance creation: missing amount; save no longer silently disabled for missing payment choice",
+    "reservation creation: missing departure and return dates",
+    "departure inspection: abc odometer; inline error and focus",
+    "date correction: missing reason and agreement",
+    "rental cancellation: missing amount, reason and agreement; no cancellation executed",
+    "vehicle document: missing start/end dates; first invalid date focused",
+    "vehicle document: unsupported file and file over 5 MiB; inline error and file input focused; no upload saved",
+    "return inspection: invalid odometer, missing fuel, missing damage notes; inline error and matching field focused",
+    "return inspection: removed draft photo; missing photo error targets visible media picker; cancelled draft preserves original",
+    "return inspection: empty reason, unchecked confirmation, missing signatures, absent-client empty signature reason; inline errors and matching controls focused",
+    "settlement payment-void: empty reason and unchecked confirmation; inline errors and matching controls focused; cancelled without saving"
+  ],
+  "code_reviewed_and_typechecked_not_browser_verified": [
+    "extension",
+    "fuel settlement",
+    "vehicle replacement",
+    "additional driver",
+    "departure contract",
+    "pickup confirmations",
+    "pricing simulation",
+    "departure contract file validation (no eligible upload flow exercised)",
+    "other settlement amount/refund variants"
+  ],
+  "still_requires_browser_coverage": [
+    "remaining nested maintenance and loan operations",
+    "backup settings forms",
+    "pricing edits",
+    "mobile viewport (requested override did not change actual 1280x720 viewport)",
+    "signed-contract upload error cases",
+    "settlement refund/amount and physical return variants not exposed in exercised dossiers"
+  ],
+  "automated_tests": "6 form-validation unit tests pass; dashboard typecheck passes after this audit changes",
+  "proof": "return-validation-proof.png (local visualization artifact)"
+}

@@ -13,11 +13,22 @@ class ContractPdf
     {
         $font = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';
         $view = $snapshot;
+
         if (isset($snapshot['presentation'])) {
             $presentation = $snapshot['presentation'];
             $ar = ($snapshot['language'] ?? 'fr') === 'ar';
             $fuelLabels = $ar ? ['diesel' => 'الغازوال', 'petrol' => 'البنزين', 'hybrid' => 'هجين', 'electric' => 'كهربائي'] : ['diesel' => 'Diesel', 'petrol' => 'Essence', 'hybrid' => 'Hybride', 'electric' => 'Électrique'];
-            $methodLabels = $ar ? ['especes' => 'نقداً', 'virement' => 'تحويل بنكي'] : ['especes' => 'Espèces', 'virement' => 'Virement'];
+            $methodLabels = $ar ? ['especes' => 'نقداً', 'virement' => 'تحويل بنكي', 'carte' => 'بطاقة بنكية'] : ['especes' => 'Espèces', 'virement' => 'Virement', 'carte' => 'Carte bancaire'];
+            $placeNames = $ar
+                ? ['airport' => 'مطار طنجة', 'city' => 'وسط مدينة طنجة', 'hotel' => 'الفندق', 'agency' => 'الوكالة - طنجة']
+                : ['airport' => 'Tanger Aéroport', 'city' => 'Tanger Ville', 'hotel' => 'Hôtel', 'agency' => 'Agence - Tanger'];
+            foreach (['pickup', 'dropoff'] as $side) {
+                $location = $presentation['locations'][$side] ?? null;
+                $detail = trim((string) ($presentation['locations'][$side.'_detail'] ?? ''));
+                $view[$side.'_label'] = isset($placeNames[$location ?? ''])
+                    ? $placeNames[$location].($detail !== '' && $detail !== $placeNames[$location] ? ' - '.$detail : '')
+                    : null;
+            }
             $view['vehicle']['fuel'] = $fuelLabels[$presentation['fuel'] ?? ''] ?? null;
             $methods = array_map(fn (string $method): string => $methodLabels[$method] ?? $method, $presentation['verified_payment_methods'] ?? []);
             $view['payment_methods_label'] = $methods ? implode(' / ', $methods) : null;
@@ -52,14 +63,14 @@ class ContractPdf
     public function render(array $snapshot, string $reference): string
     {
         $pdf = $this->renderHtml($this->html($snapshot, $reference));
-        if (($snapshot['presentation']['layout'] ?? null) === 4) {
-            $this->assertSignatureSpace($pdf, ($snapshot['language'] ?? 'fr') === 'ar');
+        if (in_array($snapshot['presentation']['layout'] ?? null, [4, 5], true)) {
+            $this->assertSignatureSpace($pdf, ($snapshot['language'] ?? 'fr') === 'ar', (int) $snapshot['presentation']['layout']);
         }
 
         return $pdf;
     }
 
-    private function assertSignatureSpace(string $pdf, bool $arabic): void
+    private function assertSignatureSpace(string $pdf, bool $arabic, int $layout): void
     {
         $directory = storage_path('app/private/contract-layout/'.Str::uuid());
         File::ensureDirectoryExists($directory, 0700);
@@ -70,11 +81,14 @@ class ContractPdf
             $document = new \DOMDocument;
             $document->loadXML($process->getOutput(), LIBXML_NONET);
             abort_unless($document->getElementsByTagName('page')->length === 2, 422, 'Le contenu dépasse deux pages. Préparez une annexe lisible avant l’émission.');
-            foreach ($document->getElementsByTagName('word') as $word) {
-                $top = (float) $word->getAttribute('yMin') * 25.4 / 72;
-                $height = (float) $word->getAttribute('yMax') - (float) $word->getAttribute('yMin');
-                $overlap = ($top >= 259 && $top < 282) || ($top >= 250 && $top < 259 && $height > ($arabic ? 10 : 7.2));
-                abort_if($overlap, 422, 'Le contenu empiète sur les signatures. Préparez une annexe lisible avant l’émission.');
+            foreach ($document->getElementsByTagName('page') as $pageIndex => $page) {
+                $signatureTop = $layout === 5 && $pageIndex === 0 ? 235 : 251;
+                foreach ($page->getElementsByTagName('word') as $word) {
+                    $top = (float) $word->getAttribute('yMin') * 25.4 / 72;
+                    $height = (float) $word->getAttribute('yMax') - (float) $word->getAttribute('yMin');
+                    $overlap = ($top >= $signatureTop + 8 && $top < $signatureTop + 31) || ($top >= $signatureTop - 1 && $top < $signatureTop + 8 && $height > ($arabic ? 10 : 7.2));
+                    abort_if($overlap, 422, 'Le contenu empiète sur les signatures. Préparez une annexe lisible avant l’émission.');
+                }
             }
         } finally {
             File::deleteDirectory($directory);
@@ -83,7 +97,7 @@ class ContractPdf
 
     public function renderHtml(string $html): string
     {
-        $browser = Browsershot::html($html)->setNodeBinary(config('rental_contracts.node'))->setNpmBinary(config('rental_contracts.npm'))->setNodeModulePath(base_path('../../node_modules'))->format('A4')->margins(0, 0, 0, 0)->showBackground()->disableJavascript()->blockUrls(['http://', 'https://'])->timeout(40)->setOption('args', ['--disable-dev-shm-usage']);
+        $browser = Browsershot::html($html)->setNodeBinary(config('rental_contracts.node'))->setNpmBinary(config('rental_contracts.npm'))->setNodeModulePath(base_path('../../node_modules'))->format('A4')->margins(0, 0, 0, 0)->showBackground()->waitUntilNetworkIdle()->disableJavascript()->blockUrls(['http://', 'https://'])->timeout(40)->setOption('args', ['--disable-dev-shm-usage']);
         if (config('rental_contracts.chrome')) {
             $browser->setChromePath(config('rental_contracts.chrome'));
         }

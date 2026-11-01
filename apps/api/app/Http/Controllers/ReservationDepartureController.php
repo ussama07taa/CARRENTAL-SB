@@ -20,9 +20,19 @@ class ReservationDepartureController extends Controller
     public function customer(Request $request, int $reservation, SaveCustomer $save, DeparturePreparation $departure): JsonResponse
     {
         abort_unless($departure->ready(), 503, 'La préparation du départ attend l’activation de la mise à jour.');
-        $input = $request->validate(['version' => ['required', 'integer', 'min:1'], 'identity_type' => ['required', Rule::in(['cin', 'passport'])], 'identity_number' => ['required', 'string', 'max:50', 'regex:/^[\pL\pN]+$/u'], 'licence_number' => ['required', 'string', 'max:50'], 'licence_expires_on' => ['required', 'date_format:Y-m-d'], 'company_id' => ['prohibited']]);
+        $input = $request->validate(['version' => ['required', 'integer', 'min:1'], 'identity_type' => ['required', Rule::in(['cin', 'passport'])], 'identity_number' => ['required', 'string', 'max:50', 'regex:/^[\pL\pN]+$/u'], 'licence_number' => ['required', 'string', 'max:50'], 'licence_expires_on' => ['required', 'date_format:Y-m-d'], 'company_id' => ['prohibited']], [
+            'required' => 'Ce champ est obligatoire.',
+            'identity_type.in' => 'Choisissez CIN ou Passeport.',
+            'identity_number.regex' => 'Le numéro de pièce doit contenir uniquement des lettres et des chiffres, sans espace ni tiret.',
+            'string' => 'Saisissez du texte.',
+            'max' => 'Ce champ est trop long (maximum :max caractères).',
+            'date_format' => 'Saisissez une date valide.',
+            'integer' => 'Saisissez un nombre entier valide.',
+            'min' => 'La valeur est insuffisante.',
+            'prohibited' => 'Ce champ ne peut pas être fourni.',
+        ]);
 
-        return DB::transaction(function () use ($request, $reservation, $input, $save): JsonResponse {
+        return DB::transaction(function () use ($request, $reservation, $input, $save, $departure): JsonResponse {
             Company::whereKey(Tenant::id())->lockForUpdate()->firstOrFail();
             $record = Reservation::findOrFail($reservation);
             abort_unless($record->status === 'confirmee', 422, 'Confirmez la réservation avant de préparer le départ.');
@@ -30,7 +40,9 @@ class ReservationDepartureController extends Controller
             $input['identity_number'] = CustomerFields::identity($input['identity_number']);
             $save->handle([...$customer->only(CustomerFields::EDITABLE), ...$input], $request->user()->id, $customer->id);
 
-            return response()->json(['saved' => true]);
+            $actor = CompanyMembership::where('user_id', $request->user()->id)->firstOrFail();
+
+            return response()->json(['saved' => true, 'data' => $departure->summary($record, $actor)]);
         });
     }
 
