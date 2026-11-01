@@ -227,7 +227,9 @@ class TabletContractSignatureTest extends TestCase
 
     public function test_real_renderer_preserves_two_a4_pages_and_original_bytes(): void
     {
-        $original = file_get_contents(base_path('../../output/pdf/bensbehicarrental-contrat-design-reference-v3.pdf'));
+        $original = app(ContractPdf::class)->renderHtml(
+            '<!doctype html><html><head><meta charset="utf-8"><style>@page{size:A4;margin:0}body{margin:0}.page{height:280mm;box-sizing:border-box;padding:20mm;break-after:page}.page:last-child{break-after:auto}</style></head><body><section class="page">Contrat fictif — recto</section><section class="page">Conditions fictives — verso</section></body></html>'
+        );
         $hash = hash('sha256', $original);
         $pdf = app(TabletContractPdf::class)->render($original, ['client' => $this->signature(), 'agency' => $this->signature(), 'client_name' => 'Client TEST', 'agency_name' => 'Agence TEST'], 'CTR-TEST-TABLET', $hash, '2026-10-20 12:00:00');
         $dir = base_path('../../.local/tablet-signature-qa');

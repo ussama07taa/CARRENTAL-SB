@@ -43,6 +43,16 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Prepare PDF rendering tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
+          sudo env "PATH=$PATH" "HOME=$HOME" pnpm exec puppeteer browsers install chrome-headless-shell --install-deps
+          echo "PDF_NODE_BINARY=$(command -v node)" >> "$GITHUB_ENV"
+          echo "PDF_NPM_BINARY=$(command -v npm)" >> "$GITHUB_ENV"
+          echo "PDF_CHROME_BINARY=$(node -e 'process.stdout.write(require("puppeteer").executablePath({headless:"shell"}))')" >> "$GITHUB_ENV"
+          echo "PDF_NO_SANDBOX=true" >> "$GITHUB_ENV"
       - run: composer install --working-dir=apps/api --no-interaction --prefer-dist
       - name: Prepare isolated test database
         working-directory: apps/api
@@ -56,6 +66,5 @@ jobs:
       - name: Run API tests
         working-directory: apps/api
         run: php artisan test
-      - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm typecheck
