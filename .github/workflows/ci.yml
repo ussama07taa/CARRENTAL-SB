@@ -51,7 +51,9 @@ jobs:
           sudo env "PATH=$PATH" "HOME=$HOME" pnpm exec puppeteer browsers install chrome-headless-shell --install-deps
           echo "PDF_NODE_BINARY=$(command -v node)" >> "$GITHUB_ENV"
           echo "PDF_NPM_BINARY=$(command -v npm)" >> "$GITHUB_ENV"
-          echo "PDF_CHROME_BINARY=$(node -e 'process.stdout.write(require("puppeteer").executablePath({headless:"shell"}))')" >> "$GITHUB_ENV"
+          pdf_chrome_path=$(node --input-type=module -e 'import puppeteer from "puppeteer"; process.stdout.write(await puppeteer.executablePath({headless:"shell"}));')
+          test -x "$pdf_chrome_path"
+          echo "PDF_CHROME_BINARY=$pdf_chrome_path" >> "$GITHUB_ENV"
           echo "PDF_NO_SANDBOX=true" >> "$GITHUB_ENV"
       - run: composer install --working-dir=apps/api --no-interaction --prefer-dist
       - name: Prepare isolated test database
