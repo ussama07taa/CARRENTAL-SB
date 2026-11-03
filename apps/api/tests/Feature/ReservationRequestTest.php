@@ -29,6 +29,13 @@ class ReservationRequestTest extends TestCase
 
     private function payload(Customer $customer, Vehicle $vehicle): array
     {
+        Tenant::run($vehicle->company_id, function () use ($vehicle): void {
+            if (\App\Models\VehicleDocument::where('vehicle_id', $vehicle->id)->exists()) return;
+            $actor = CompanyMembership::firstOrFail();
+            foreach (\App\Models\VehicleDocument::KINDS as $kind) {
+                \App\Models\VehicleDocument::factory()->create(['vehicle_id'=>$vehicle->id,'actor_membership_id'=>$actor->id,'kind'=>$kind,'path'=>'fixture.pdf','effective_on'=>'2026-01-01','expires_on'=>'2027-12-31']);
+            }
+        });
         return ['customer_id' => $customer->id, 'vehicle_id' => $vehicle->id, 'starts_local' => '2026-10-22T10:00', 'ends_local' => '2026-10-25T10:00', 'request_key' => (string) Str::uuid()];
     }
 

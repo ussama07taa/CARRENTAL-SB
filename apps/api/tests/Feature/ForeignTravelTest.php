@@ -22,6 +22,7 @@ use Tests\TestCase;
 
 class ForeignTravelTest extends TestCase
 {
+    use \Tests\Support\StartsAfterVehicleSelection;
     use LazilyRefreshDatabase;
 
     private function fixture(bool $confirmed = false): array

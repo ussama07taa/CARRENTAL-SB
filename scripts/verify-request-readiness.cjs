@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const puppeteer=require('../node_modules/puppeteer');
+(async()=>{const browser=await puppeteer.launch({headless:true,executablePath:'/home/taaouati/.cache/puppeteer/chrome-headless-shell/linux-155.0.8059.79/chrome-headless-shell-linux64/chrome-headless-shell',args:['--no-sandbox']});
+try{const p=await browser.newPage();await p.setViewport({width:1280,height:900});let ready=false,customers=0;const errors=[];p.on('pageerror',e=>errors.push(e.message));await p.setRequestInterception(true);
+p.on('request',req=>{const u=new URL(req.url());if(!u.pathname.startsWith('/api/')&&!u.pathname.startsWith('/sanctum/'))return req.continue();const reply=(data,status=200)=>req.respond({status,contentType:'application/json',headers:{'access-control-allow-origin':'http://localhost:3108','access-control-allow-credentials':'true'},body:JSON.stringify(data)});
+if(u.pathname.endsWith('/vehicle-check'))return reply({ready,issues:ready?[]:[{kind:'document',message:'Assurance : document manquant.'},{kind:'operation',message:'Retour précédent · voiture pas encore déclarée prête'}]});
+if(u.pathname.endsWith('/availability'))return reply({data:[{id:7,make:'Dacia',model:'Jogger',plate:'QA-7',year:2026,current_odometer:0,cover_id:null,available:true,reason:null}],page:1,last_page:1,total:1,available_count:1,unavailable_count:0,checked_at:new Date().toISOString(),period:{starts_local:u.searchParams.get('starts_local'),ends_local:u.searchParams.get('ends_local'),duration_minutes:2880,timezone:'Africa/Casablanca'}});
+if(u.pathname.endsWith('/customers')){customers++;return reply({data:[],page:1,last_page:1,total:0});}return reply({},503);});
+await p.goto('http://localhost:3108/qa-request-readiness',{waitUntil:'networkidle0'});
+for(const [name,value] of [['starts_local','2027-05-01T10:00'],['ends_local','2027-05-03T10:00']]){await p.$eval('input[name='+name+']',(e,v)=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,v);e.dispatchEvent(new Event('input',{bubbles:true}));},value);}
+await p.click('button[type=submit]');await p.waitForSelector('button[aria-label="Choisir QA-7"]');await p.click('button[aria-label="Choisir QA-7"]');await p.waitForSelector('.rq-vehicle-warning[open]');assert.equal(customers,0);
+assert.equal(await p.$eval('.rq-vehicle-warning a',e=>e.getAttribute('href')),'/vehicles?vehicle=7&section=documents');
+for(const width of [320,768,1280]){await p.setViewport({width,height:900});assert.equal(await p.$eval('.rq-vehicle-warning',e=>e.scrollWidth<=e.clientWidth),true);}
+await p.screenshot({path:'/tmp/request-readiness-warning.png'});
+await p.click('.rq-vehicle-warning .secondary');await p.waitForSelector('button[aria-label="Choisir QA-7"]');assert.equal(customers,0);await p.click('button[aria-label="Choisir QA-7"]');await p.waitForSelector('.rq-vehicle-warning[open]');ready=true;await p.click('.rq-vehicle-warning .rq-link');await p.waitForSelector('#rq-client-search');assert.ok(customers>0);assert.equal(await p.$('.rq-vehicle-warning'),null);assert.deepEqual(errors,[]);console.log('PASS early block, reasons, document link, alternate vehicle, retry after correction, mobile/tablet/desktop; all API mocked.');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1)});

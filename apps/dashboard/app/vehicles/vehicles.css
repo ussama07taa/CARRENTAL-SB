@@ -431,3 +431,18 @@
 
 .vehicle-km small{display:block;margin-top:6px;color:var(--ui-muted);font-size:10px;line-height:1.5}.vehicle-daily-rate{white-space:nowrap;font-variant-numeric:tabular-nums}.vehicle-daily-rate strong{display:block;font-size:16px;font-weight:650;color:var(--ui-text)}.vehicle-daily-rate strong.missing{font-size:13px;font-weight:500;color:#7d7768}.vehicle-daily-rate small{display:block;font-size:10px;color:var(--ui-muted);line-height:1.5;margin-top:6px}.fleet-table th .field-info{vertical-align:middle;margin-left:5px}
 @media(max-width:620px){.fleet-table td.vehicle-daily-rate{grid-column:2;grid-row:3;text-align:right}.fleet-table td:last-child{grid-column:1/-1;grid-row:4;text-align:right;padding-top:10px;border-top:1px solid var(--ui-line)}.fleet-table td:last-child .fleet-open{width:100%;min-height:42px;justify-content:center}.fleet-table td.vehicle-km{white-space:normal}.vehicle-km small{font-size:10px}.vehicle-daily-rate strong{font-size:17px}.vehicle-daily-rate small{font-size:9px}}
+
+/* Vehicle editor step actions remain reachable on narrow screens. */
+.vehicle-dialog .vehicle-footer>div:last-child{flex-wrap:wrap}
+.vehicle-dialog .vehicle-footer button{min-height:44px}
+
+.vehicle-dialog.vehicle-photos-step{height:fit-content;max-height:calc(100dvh - 48px)}
+.vehicle-dialog.vehicle-photos-step>form{height:auto;max-height:calc(100dvh - 48px)}
+.vehicle-photos-step .vehicle-body{flex:0 1 auto}
+@media(max-width:700px){.vehicle-dialog.vehicle-photos-step,.vehicle-dialog.vehicle-photos-step>form{max-height:100dvh}.vehicle-photos-step .vehicle-footer>div:last-child{gap:6px}}
+
+.vehicle-dialog .vehicle-footer .v-save{background:#004fff;border-color:#004fff;color:white}
+
+.v-custom-add{display:flex;align-items:flex-end;gap:12px}.v-custom-add .v-field{flex:1;min-width:0}.v-custom-add>button{display:flex;align-items:center;gap:6px;min-height:44px;margin-bottom:0}@media(max-width:540px){.v-custom-add{align-items:stretch;flex-direction:column}.v-custom-add>button{justify-content:center}}
+
+.v-catalog-item{min-width:0;border:1px solid #dce3ee;border-radius:12px;overflow:hidden}.v-catalog-item .v-equipment{border:0;border-radius:0;height:auto;min-height:64px}.v-catalog-actions{display:flex;gap:8px;flex-wrap:wrap;padding:4px 10px 8px}.v-catalog-actions button{min-height:44px;padding:6px 9px;border:0;border-radius:6px;background:#f2f6ff;color:#004fff;cursor:pointer;font-size:12px}.v-catalog-actions button:disabled{opacity:.5;cursor:wait}.v-catalog-editor{padding:16px;background:#f7f9ff;border:1px solid #dce3ee;border-radius:12px}.v-catalog-editor .v-catalog-actions{padding:12px 0 0}

@@ -16,6 +16,7 @@ use Tests\TestCase;
 
 class RentalPaymentProofTest extends TestCase
 {
+    use \Tests\Support\StartsAfterVehicleSelection;
     use IsolatedDatabaseMigrations;
 
     public function test_optional_private_proof_is_idempotent_and_never_verifies_a_transfer(): void

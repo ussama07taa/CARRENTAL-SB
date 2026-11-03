@@ -27,6 +27,27 @@ class DashboardOverviewTest extends TestCase
         return [$company, $member, $vehicle];
     }
 
+    public function test_notifications_group_missing_documents_without_hiding_expired_documents(): void
+    {
+        [$company, $member, $vehicle] = $this->agency();
+        $this->getJson('/api/v1/dashboard/activity?notifications=1&window=action')->assertOk()
+            ->assertJsonPath('total', 1)->assertJsonPath('priority_count', 0)
+            ->assertJsonPath('notification_counts.action', 1)->assertJsonPath('data.0.title', '5 documents à compléter');
+        Tenant::run($company->id, function () use ($member, $vehicle) {
+            VehicleDocument::factory()->create(['vehicle_id' => $vehicle->id, 'actor_membership_id' => $member->id, 'kind' => 'insurance', 'effective_on' => '2026-01-01', 'expires_on' => '2026-10-17', 'path' => 'test.pdf']);
+            VehicleDocument::factory()->create(['vehicle_id' => $vehicle->id, 'actor_membership_id' => $member->id, 'kind' => 'inspection', 'effective_on' => null, 'expires_on' => '2026-10-25', 'path' => 'test.pdf']);
+        });
+        $this->getJson('/api/v1/dashboard/activity?notifications=1&window=urgent')->assertOk()
+            ->assertJsonPath('total', 1)->assertJsonPath('priority_count', 1)->assertJsonPath('data.0.title', 'Assurance');
+        $r = $this->getJson('/api/v1/dashboard/activity?notifications=1&window=action')->assertOk()
+            ->assertJsonPath('total', 1)->assertJsonPath('data.0.title', '3 documents à compléter')->json();
+        $this->assertArrayNotHasKey('kind', $r['data'][0]['target']);
+        $this->getJson('/api/v1/dashboard/activity?notifications=1&window=upcoming')->assertOk()
+            ->assertJsonPath('total', 1)->assertJsonPath('data.0.title', 'Visite technique');
+        $this->getJson('/api/v1/dashboard/activity?window=all')->assertOk()->assertJsonPath('total', 5);
+        $this->getJson('/api/v1/dashboard/activity?notifications=1&window=action&q=introuvable')->assertOk()->assertJsonPath('total', 0)->assertJsonPath('notification_counts.action', 1);
+    }
+
     private function loan(Vehicle $vehicle): int
     {
         return $this->postJson('/api/v1/loans', ['vehicle_id' => $vehicle->id, 'lender' => 'Banque test', 'reference' => (string) Str::uuid(), 'tracking_from' => '2026-10-01', 'schedule_confirmed' => true, 'opening_confirmed' => true, 'request_key' => (string) Str::uuid(), 'installments' => [

@@ -44,3 +44,20 @@
 @media(max-width:600px){.notification-categories{padding:12px 16px 4px;gap:6px}.notification-categories button{padding:8px;font-size:11px}.activity-notifications>header p{line-height:1.6}}
 
 .activity-notifications.notification-dialog{height:calc(100dvh - 32px);max-height:calc(100dvh - 32px);top:16px}.activity-notifications>header{padding:18px 20px}.activity-notifications>header h2{margin:6px 0}.activity-notifications .notification-body{min-height:0;flex:1;overflow:auto}.activity-notifications .activity-notification-filters{padding-top:10px;padding-bottom:10px}
+
+/* Compact notification triage, independent of the full dashboard feed. */
+.activity-notifications .notification-type-filter{display:flex;align-items:center;gap:12px;margin-top:12px;font-size:13px;color:#536783}
+.activity-notifications .notification-type-filter select{flex:1;min-width:0;min-height:44px;border:1px solid #dbe3f1;border-radius:8px;background:white;padding:8px 12px;color:#102344}
+.activity-notifications .activity-windows button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px}
+.notification-count{font-size:11px;border-radius:6px;padding:2px 5px;background:#edf2fa}
+.activity-notifications .activity-list.is-compact li{padding:16px;gap:10px}
+.activity-notifications .activity-copy p{margin:6px 0;font-size:13px;line-height:1.5}
+.activity-notifications .activity-action{min-height:40px;padding:8px 12px;margin-top:2px}
+.activity-notifications .notification-guide{margin:10px 0 0;font-size:12px}
+
+.activity-notifications .activity-windows{flex:0 0 100%;min-width:0;box-sizing:border-box}
+.activity-notifications .activity-windows button{min-width:0;font-size:12px;padding:8px 4px}
+.activity-notifications .notification-type-filter{flex:0 0 100%;min-width:0;margin-top:0}
+.activity-notifications .activity-copy{min-width:0;overflow-wrap:anywhere}
+.activity-notifications .activity-row-heading{flex-wrap:wrap}
+.activity-notifications.notification-dialog{box-sizing:border-box;overflow-x:hidden}

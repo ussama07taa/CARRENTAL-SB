@@ -30,6 +30,7 @@ use Tests\TestCase;
 
 class TabletContractSignatureTest extends TestCase
 {
+    use \Tests\Support\StartsAfterVehicleSelection;
     use LazilyRefreshDatabase;
 
     private function fixture(bool $confirmed = true): array

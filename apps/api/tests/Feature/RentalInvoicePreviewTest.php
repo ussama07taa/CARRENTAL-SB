@@ -15,6 +15,7 @@ use Tests\TestCase;
 
 class RentalInvoicePreviewTest extends TestCase
 {
+    use \Tests\Support\StartsAfterVehicleSelection;
     use LazilyRefreshDatabase;
 
     private function fixture(): array

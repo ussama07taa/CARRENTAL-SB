@@ -70,6 +70,42 @@ class VehiclePhotosTest extends TestCase
         $this->getJson("/api/v1/vehicles/{$client->id}")->assertJsonCount(1, 'photos');
     }
 
+    public function test_gallery_reorder_and_remove_preserve_originals_and_reject_stale_updates(): void
+    {
+        Storage::fake('vehicle_photos');
+        [$member, $vehicle] = $this->setupClient(); $this->login($member);
+        $url = "/api/v1/vehicles/{$vehicle->id}";
+        $a = $this->postJson($url.'/photos', $this->input())->assertCreated()->json('data.id');
+        $b = $this->postJson($url.'/photos', $this->input(['slot' => 'front']))->assertCreated()->json('data.id');
+        $payload = ['action' => 'swap', 'slot' => 'front', 'target' => 'cover', 'expected' => ['cover' => $a, 'front' => $b], 'request_key' => (string) Str::uuid()];
+        $photos = collect($this->postJson($url.'/photos/manage', $payload)->assertOk()->json('photos'))->keyBy('slot');
+        $this->assertDatabaseCount('vehicle_photos', 4);
+        $this->postJson($url.'/photos/manage', $payload)->assertOk();
+        $this->assertDatabaseCount('vehicle_photos', 4);
+        $this->postJson($url.'/photos/manage', [...$payload, 'request_key' => (string) Str::uuid()])->assertConflict();
+        $this->get($url.'/photos/'.$a.'/content')->assertOk();
+        $this->postJson($url.'/photos/manage', ['action' => 'remove', 'slot' => 'cover', 'expected' => $photos->pluck('id', 'slot')->all(), 'request_key' => (string) Str::uuid()])->assertOk()->assertJsonCount(1, 'photos');
+        $this->getJson($url)->assertOk()->assertJsonCount(1, 'photos');
+        $this->getJson('/api/v1/vehicles')->assertOk()->assertJsonPath('data.0.cover_id', null);
+        $this->assertDatabaseCount('vehicle_photos', 4);
+        $this->assertCount(2, Storage::disk('vehicle_photos')->allFiles());
+        $this->postJson($url.'/photos', $this->input())->assertCreated()->assertJsonPath('data.version', 3);
+        $this->getJson($url)->assertJsonCount(2, 'photos');
+    }
+
+    public function test_gallery_management_cannot_cross_company_and_move_to_empty_cover_hides_source(): void
+    {
+        Storage::fake('vehicle_photos');
+        [$member, $vehicle] = $this->setupClient(); $this->login($member);
+        $url = "/api/v1/vehicles/{$vehicle->id}";
+        $id = $this->postJson($url.'/photos', $this->input(['slot' => 'front']))->assertCreated()->json('data.id');
+        $payload = ['action' => 'swap', 'slot' => 'front', 'target' => 'cover', 'expected' => ['front' => $id], 'request_key' => (string) Str::uuid()];
+        $this->postJson($url.'/photos/manage', $payload)->assertOk()->assertJsonCount(1, 'photos')->assertJsonPath('photos.0.slot', 'cover');
+        [$other] = $this->setupClient(); $this->login($other);
+        $this->postJson($url.'/photos/manage', $payload)->assertNotFound();
+        $this->assertDatabaseCount('vehicle_photos', 2);
+    }
+
     public function test_invalid_and_oversized_files_are_rejected_without_creating_metadata(): void
     {
         Storage::fake('vehicle_photos');

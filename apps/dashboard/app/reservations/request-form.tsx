@@ -6,6 +6,7 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 import {CalendarDays, CarFront, Check, ChevronLeft, ChevronRight, Info, Plus, RefreshCw, Search, ShieldCheck, UserRound, X} from 'lucide-react';
 import {api, apiMutation} from '../_lib/auth-client';
 import {focusFieldError, type FieldErrors} from '../_lib/form-validation';
+import VehicleReadinessWarning, {type VehicleIssue} from './vehicle-readiness-warning';
 import NewRequestClient, {type NewClientState} from './new-request-client';
 import FieldHelp from '../_components/field-help';
 import {VehiclePhoto, type FleetPreview} from '../_components/fleet-spotlight';
@@ -37,7 +38,8 @@ export default function RequestForm({onClose, onSaved, initial, initialClient}: 
   const [error, setError] = useState(''), [fields, setFields] = useState<FieldErrors>({}), [retry, setRetry] = useState(0);
   const [newClientOpen,setNewClientOpen]=useState(false),[newClientState,setNewClientState]=useState<NewClientState>({dirty:false,busy:false,uncertain:false}),[createdClientId,setCreatedClientId]=useState<number|null>(null);
   const handleNewClientState=useCallback((state:NewClientState)=>setNewClientState(state),[]);
-  const frozen = saving || uncertain || newClientState.busy || newClientState.uncertain;
+  const [blockedCar,setBlockedCar]=useState<{vehicle:FleetPreview;issues:VehicleIssue[];result?:Available}|null>(null);
+  const frozen = checking || saving || uncertain || newClientState.busy || newClientState.uncertain;
   useEffect(()=>{const warn=(event:BeforeUnloadEvent)=>{if(newClientOpen&&(newClientState.dirty||newClientState.busy||newClientState.uncertain)){event.preventDefault();event.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[newClientOpen,newClientState]);
   function leaveNewClient(){if(newClientState.busy||newClientState.uncertain)return false;if(newClientOpen&&newClientState.dirty&&!window.confirm('Abandonner les informations du nouveau client non enregistrées ? La voiture et les dates restent conservées.'))return false;setNewClientOpen(false);return true;}
   function close(){if(!saving&&!uncertain&&leaveNewClient())onClose();}
@@ -108,6 +110,16 @@ export default function RequestForm({onClose, onSaved, initial, initialClient}: 
     setFields(errors);
     return Object.keys(errors).length === 0;
   }
+  async function inspectVehicle(vehicle:FleetPreview,signal:AbortSignal,result?:Available){
+    const params=new URLSearchParams({vehicle_id:String(vehicle.id)});
+    if(start&&end){params.set('starts_local',start);params.set('ends_local',end);}
+    const r=await fetch(`${api}/api/v1/reservations/vehicle-check?${params}`,{credentials:'include',cache:'no-store',signal:AbortSignal.any([signal,AbortSignal.timeout(15000)])});
+    if(r.status===401){window.location.replace('/login');throw Error('Votre session a expiré.');}
+    const body=await r.json();if(!r.ok)throw Error(body.message??'Vérification impossible. Réessayez avant de continuer.');
+    if(signal.aborted)return false;
+    if(body.ready!==true){setProof(null);setBlockedCar({vehicle,issues:body.issues??[{kind:'operation',message:'La disponibilité de cette voiture n’est pas confirmée.'}],result});return false;}
+    return true;
+  }
   async function checkCar() {
     if (!car || !datesValid() || checking) return;
     const controller = new AbortController(); checkController.current = controller;
@@ -123,7 +135,7 @@ export default function RequestForm({onClose, onSaved, initial, initialClient}: 
           if (controller.signal.aborted) return;
           if (!response.ok) {if (body.errors) setFields(body.errors); throw Error(body.message ?? 'La vérification a échoué. Réessayez.');}
           const vehicle = (body.data as Car[]).find(item => item.id === car.id);
-          if (vehicle) {setProof({readiness_warning: vehicle.readiness_warning, vehicleId: vehicle.id, available: vehicle.available, reason: vehicle.reason, period: body.period, checkedAt: body.checked_at}); return;}
+          if (vehicle) {if(!await inspectVehicle(vehicle,controller.signal))return;setProof({readiness_warning: vehicle.readiness_warning, vehicleId: vehicle.id, available: vehicle.available, reason: vehicle.reason, period: body.period, checkedAt: body.checked_at}); return;}
           last = body.last_page; current++;
         } while (current <= last);
       }
@@ -131,11 +143,19 @@ export default function RequestForm({onClose, onSaved, initial, initialClient}: 
     } catch (e) {if (!controller.signal.aborted) setError(e instanceof Error ? e.message : 'Connexion impossible.');}
     finally {if (!controller.signal.aborted) setChecking(false);}
   }
-  function selectCar(vehicle: FleetPreview & {readiness_warning?:string|null}, result?: Available) {
-    setCar(vehicle); clear('vehicle_id'); setProof(result ? {readiness_warning: vehicle.readiness_warning, vehicleId: vehicle.id, available: true, reason: null, period: result.period, checkedAt: result.checked_at} : null);
-    if (catalog) navigate('dates'); else if (result) navigate('client');
+  async function selectCar(vehicle: FleetPreview & {readiness_warning?:string|null}, result?: Available) {
+    if(checking)return;
+    const controller=new AbortController();checkController.current?.abort();checkController.current=controller;
+    setChecking(true);setProof(null);setError('');
+    try{
+      if(!await inspectVehicle(vehicle,controller.signal,result))return;
+      setCar(vehicle);clear('vehicle_id');
+      setProof(result?{vehicleId:vehicle.id,available:true,reason:null,period:result.period,checkedAt:result.checked_at}:null);
+      if(catalog)navigate('dates');else if(result)navigate('client');else if(mode==='vehicle')navigate('dates');
+    }catch(e){if(!controller.signal.aborted)setError(e instanceof Error?e.message:'Vérification impossible.');}
+    finally{if(!controller.signal.aborted)setChecking(false);}
   }
-  function alternatives() {setMode('dates'); setShow('available'); setCar(null); setProof(null); navigate('cars');}
+  function alternatives() {setCar(null);setProof(null);if(catalog){setQuery('');return;}setMode('dates');setShow('available');navigate(start&&end?'cars':'start');}
   function back() {
     if (stage === 'client') navigate(mode === 'vehicle' ? 'dates' : 'cars');
     else if (stage !== 'start') navigate('start');
@@ -154,6 +174,7 @@ export default function RequestForm({onClose, onSaved, initial, initialClient}: 
       if (response.ok) {onSaved(body.data.id); return;}
       setUncertain(false);
       if (body.code === 'REQUEST_ALREADY_USED' && body.id) {onSaved(body.id); return;}
+      if(body.code==='VEHICLE_NOT_READY'&&body.issues){setProof(null);setBlockedCar({vehicle:car,issues:body.issues});navigate(mode==='vehicle'?'dates':'cars');}
       if (body.errors) {
         if (body.errors.starts_local || body.errors.ends_local) {setProof(null); navigate(mode === 'vehicle' ? 'dates' : 'start');}
         else if (body.errors.vehicle_id) {setProof(null); navigate(mode === 'vehicle' ? 'dates' : 'cars'); setRetry(n => n + 1);}
@@ -179,13 +200,13 @@ export default function RequestForm({onClose, onSaved, initial, initialClient}: 
   const searchBox = (isClient: boolean) => <><label htmlFor={isClient ? 'rq-client-search' : 'rq-vehicle-search'}>{isClient ? 'Nom ou téléphone' : 'Plaque, marque ou modèle'} <FieldHelp field={isClient ? 'request_client' : 'request_vehicle'} label={isClient ? 'Choisir le client' : 'Choisir une voiture'}/></label><div className="rq-search"><Search size={18}/><input id={isClient ? 'rq-client-search' : 'rq-vehicle-search'} name={isClient ? 'customer_id' : 'vehicle_id'} value={query} maxLength={100} placeholder={isClient ? 'Rechercher un client…' : 'Ex. Clio ou 12345-A-6'} aria-invalid={!!fields[isClient ? 'customer_id' : 'vehicle_id']} aria-describedby={fields[isClient ? 'customer_id' : 'vehicle_id'] ? `rq-error-${isClient ? 'customer_id' : 'vehicle_id'}` : undefined} onChange={e => {setQuery(e.target.value); clear(isClient ? 'customer_id' : 'vehicle_id');}}/></div>{fieldError(isClient ? 'customer_id' : 'vehicle_id')}</>;
   const actionLabel = saving ? 'Enregistrement…' : stage === 'client' ? uncertain ? 'Réessayer l’enregistrement' : 'Enregistrer la demande' : dateScreen ? mode === 'dates' ? 'Voir les voitures disponibles' : checking ? 'Vérification…' : verified ? 'Choisir le client' : 'Vérifier la disponibilité' : 'Choisir le client';
 
-  return <dialog ref={dialog} className="rq-dialog rq-create" aria-labelledby="rq-create-title" onCancel={e => {e.preventDefault(); if (!lock.current) close();}}>
+  return <>{blockedCar&&<VehicleReadinessWarning vehicle={blockedCar.vehicle} issues={blockedCar.issues} onOther={()=>{setBlockedCar(null);alternatives();}} onRetry={()=>{const previous=blockedCar;setBlockedCar(null);if(mode==='vehicle'&&stage==='dates')void checkCar();else void selectCar(previous.vehicle,previous.result);}}/>}<dialog ref={dialog} className="rq-dialog rq-create" aria-labelledby="rq-create-title" onCancel={e => {e.preventDefault(); if (!lock.current) close();}}>
     <form ref={form} noValidate onSubmit={e => {e.preventDefault(); submit();}}>
       <header><div><span className="rq-eyebrow">NOUVEAU DOSSIER</span><h2 id="rq-create-title">Créer une demande</h2><p>{initialClient ? 'Le client est sélectionné. Choisissez les dates et la voiture.' : 'Trouvez la voiture pour les bonnes dates, puis choisissez le client.'}</p></div><button type="button" className="rq-close" disabled={frozen} onClick={close} aria-label="Fermer la création"><X size={21}/></button></header>
       <nav className="rq-steps" aria-label="Étapes de la demande">{(mode === 'vehicle' ? ['Voiture', 'Disponibilité', 'Client'] : ['Dates', 'Voiture', 'Client']).map((label, i) => <button type="button" key={label} aria-current={step === i + 1 ? 'step' : undefined} disabled={i + 1 >= step || frozen} onClick={() => navigate(i === 0 ? 'start' : mode === 'vehicle' ? 'dates' : 'cars')}><span>{i + 1 < step ? <Check size={14}/> : i + 1}</span>{label}</button>)}</nav>
       <div className="rq-dialog-body">
         {error && <div className="rq-error" role="alert">{error}{!frozen && !dateScreen && <button type="button" className="secondary" onClick={() => setRetry(n => n + 1)}><RefreshCw size={14}/>Réessayer</button>}</div>}
-        <div className="rq-create-layout"><fieldset disabled={saving||uncertain} className="rq-form-content">
+        <div className="rq-create-layout"><fieldset disabled={saving||uncertain||checking} className="rq-form-content">
           {stage === 'start' && <div className="rq-start-modes" aria-label="Commencer la demande"><button type="button" aria-pressed={mode === 'dates'} onClick={() => chooseMode('dates')}><CalendarDays size={20}/><span><strong>J’ai les dates</strong><small>Voir les voitures disponibles</small></span>{mode === 'dates' && <Check size={16}/>}</button><button type="button" aria-pressed={mode === 'vehicle'} onClick={() => chooseMode('vehicle')}><CarFront size={20}/><span><strong>J’ai une voiture en tête</strong><small>Vérifier cette voiture</small></span>{mode === 'vehicle' && <Check size={16}/>}</button></div>}
           {catalog && <section><div className="rq-section-heading"><CarFront size={22}/><div><h3>Quelle voiture intéresse le client ?</h3><p>Choisissez-la, puis vérifiez ses dates. Aucun client à saisir pour consulter.</p></div></div>{searchBox(false)}{loading ? <p className="rq-empty" role="status">Chargement du parc…</p> : !error && <><div className="rq-car-grid">{fleet?.data.map(vehicle => <article className="rq-car" key={vehicle.id}><VehiclePhoto vehicle={vehicle}/><div className="rq-car-description"><h4>{vehicle.make} {vehicle.model}</h4><p className="rq-car-plate">{vehicle.plate}</p><p className="rq-catalog-note">Disponibilité à vérifier selon les dates</p></div><button type="button" className="secondary" aria-label={`Vérifier ${vehicle.plate}`} onClick={() => selectCar(vehicle)}>Vérifier les dates <ChevronRight size={14}/></button></article>)}</div>{!fleet?.data.length && <p className="rq-empty">Aucune voiture trouvée. Essayez une autre plaque ou un autre modèle.</p>}{pager}</>}</section>}
           {dateScreen && <section><div className="rq-section-heading"><CalendarDays size={22}/><div><h3>{mode === 'vehicle' ? 'Est-elle disponible pour ces dates ?' : 'Pour quelle période ?'}</h3><p>Dates et heures du Maroc. Vérifiez le départ et le retour.</p></div></div>
@@ -196,7 +217,7 @@ export default function RequestForm({onClose, onSaved, initial, initialClient}: 
             <p className="rq-muted">Contrôle des immobilisations connues, revérifié à l’enregistrement. Une demande ne bloque pas la voiture. Le blocage et la confirmation se font ensuite dans son dossier.</p>
           </section>}
           {stage === 'cars' && <section><div className="rq-section-heading"><CarFront size={22}/><div><h3>Les voitures pour votre période</h3><p>{localDate(start)} → {localDate(end)}{available && resultsCurrent ? ` · ${duration(available.period.duration_minutes)}` : ''}</p></div></div>{searchBox(false)}<div className="rq-car-tabs">{[['available', 'Disponibles'], ['unavailable', 'Indisponibles']].map(([value, label]) => <button type="button" key={value} aria-pressed={show === value} onClick={() => {setShow(value); setPage(1);}}>{label} {loading || !available ? '…' : value === 'available' ? available.available_count : available.unavailable_count}</button>)}</div>
-            {loading ? <p className="rq-empty" role="status">Vérification des voitures…</p> : available && resultsCurrent && !error && <><div className="rq-car-grid">{available.data.map(vehicle => <article className={`rq-car ${car?.id === vehicle.id && verified ? 'selected' : ''}`} key={vehicle.id}><VehiclePhoto vehicle={vehicle}/><div className="rq-car-description"><h4>{vehicle.make} {vehicle.model}</h4><p className="rq-car-plate">{vehicle.plate}</p><p className={vehicle.available ? 'rq-available' : 'rq-unavailable'}>{vehicle.available ? 'Créneau disponible · remise à contrôler' : vehicle.reason}</p>{vehicle.readiness_warning&&<p className="dp-warning">{vehicle.readiness_warning}</p>}</div><button type="button" className={car?.id === vehicle.id && verified ? 'primary' : 'secondary'} disabled={!vehicle.available} aria-pressed={car?.id === vehicle.id && verified} aria-label={`Choisir ${vehicle.plate}`} onClick={() => selectCar(vehicle, available)}>{car?.id === vehicle.id && verified ? <><Check size={16}/>Sélectionnée</> : 'Choisir'}</button></article>)}</div>{!available.data.length && <p className="rq-empty">{show === 'available' ? 'Aucune voiture disponible pour cette recherche. Modifiez la recherche ou les dates.' : 'Aucune voiture indisponible dans cette recherche.'}</p>}{pager}</>}
+            {loading ? <p className="rq-empty" role="status">Vérification des voitures…</p> : available && resultsCurrent && !error && <><div className="rq-car-grid">{available.data.map(vehicle => <article className={`rq-car ${car?.id === vehicle.id && verified ? 'selected' : ''}`} key={vehicle.id}><VehiclePhoto vehicle={vehicle}/><div className="rq-car-description"><h4>{vehicle.make} {vehicle.model}</h4><p className="rq-car-plate">{vehicle.plate}</p><p className={vehicle.available ? 'rq-available' : 'rq-unavailable'}>{vehicle.available ? 'Créneau libre · contrôles à vérifier au choix' : vehicle.reason}</p>{vehicle.readiness_warning&&<p className="dp-warning">{vehicle.readiness_warning}</p>}</div><button type="button" className={car?.id === vehicle.id && verified ? 'primary' : 'secondary'} disabled={checking} aria-pressed={car?.id === vehicle.id && verified} aria-label={`Choisir ${vehicle.plate}`} onClick={() => selectCar(vehicle, available)}>{car?.id === vehicle.id && verified ? <><Check size={16}/>Sélectionnée</> : vehicle.available?'Choisir':'Voir les blocages'}</button></article>)}</div>{!available.data.length && <p className="rq-empty">{show === 'available' ? 'Aucune voiture disponible pour cette recherche. Modifiez la recherche ou les dates.' : 'Aucune voiture indisponible dans cette recherche.'}</p>}{pager}</>}
             <p className="rq-muted">Les voitures au garage sans retour enregistré ne peuvent pas être choisies. Une demande enregistrée ne réserve pas la voiture.</p>
           </section>}
           {stage === 'client' && <section><div className="rq-section-heading"><UserRound size={22}/><div><h3>Pour quel client ?</h3><p>La voiture et les dates sont choisies. Reliez maintenant le client à la demande.</p></div></div>{!newClientOpen&&<div className="rq-client-toolbar"><p>Le client n’existe pas encore ? Ajoutez-le ici sans quitter la demande.</p><button type="button" className="secondary" disabled={frozen} onClick={()=>{setNewClientOpen(true);setError('');}}><Plus size={17}/>Nouveau client</button></div>}{newClientOpen?<NewRequestClient onSelect={selectNewClient} onCancel={()=>void leaveNewClient()} onStateChange={handleNewClientState}/>:<>{searchBox(true)}{client && <div className="rq-selection"><Check size={17}/><span><strong>{client.first_name} {client.last_name}</strong> · {client.phone}</span></div>}{createdClientId===client?.id&&<p className="rq-new-client-saved" role="status">Fichier client créé et sélectionné. Vous pouvez enregistrer la demande.</p>}{loading ? <p className="rq-empty" role="status">Chargement des clients…</p> : !error && <><div className="rq-client-options">{clients?.data.map(person => <button type="button" key={person.id} className={`rq-client-option ${client?.id === person.id ? 'selected' : ''}`} aria-pressed={client?.id === person.id} onClick={() => {setClient(person); clear('customer_id');}}><span className="rq-client-initial">{person.first_name[0]}{person.last_name[0]}</span><span><strong>{person.first_name} {person.last_name}</strong>{person.in_rental&&<span className="rq-client-renting">En location</span>}<small>{person.phone}</small></span>{client?.id === person.id ? <Check size={19}/> : <ChevronRight size={18}/>}</button>)}</div>{!clients?.data.length && <p className="rq-empty">Aucun client trouvé. Utilisez « Nouveau client » pour créer son fichier ici. La voiture et les dates restent conservées.</p>}{pager}<button type="button" className="rq-link" onClick={() => setRetry(n => n + 1)}>Actualiser les clients</button></>}</>}</section>}
@@ -209,5 +230,5 @@ export default function RequestForm({onClose, onSaved, initial, initialClient}: 
         </aside></div>
       </div><footer><button type="button" className="secondary" disabled={frozen} onClick={back}>{stage === 'start' ? 'Annuler' : <><ChevronLeft size={16}/>Retour</>}</button><span className="rq-footer-context">Étape {step} / 3{catalog ? ' · Choisissez une voiture dans la liste' : ''}</span>{!catalog && <button type="submit" className="primary" disabled={saving || checking || (stage === 'cars' && (!verified || loading)) || (stage === 'client' && (!verified||newClientOpen)) || newClientState.busy || newClientState.uncertain}>{actionLabel}{stage !== 'client' && <ChevronRight size={17}/>}</button>}</footer>
     </form>
-  </dialog>;
+  </dialog></>;
 }

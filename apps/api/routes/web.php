@@ -59,6 +59,7 @@ Route::prefix('api/v1/reservations')->middleware(['auth:web', RequireCompany::cl
     Route::post('/{reservation}/drivers', [ReservationDriverController::class, 'store'])->whereNumber('reservation')->middleware('throttle:30,1');
     Route::get('/', [ReservationController::class, 'index']);
     Route::get('/availability', [ReservationController::class, 'availability']);
+    Route::get('/vehicle-check', [ReservationController::class, 'vehicleCheck']);
     Route::get('/planning', [ReservationController::class, 'planning']);
     Route::get('/departure-notifications', [ReservationController::class, 'departureNotifications']);
     Route::post('/', [ReservationController::class, 'store'])->middleware('throttle:30,1');
@@ -88,6 +89,8 @@ Route::prefix('api/v1/reservations')->middleware(['auth:web', RequireCompany::cl
     Route::post('/{reservation}/extensions/{agreement}/activate', [ReservationExtensionController::class, 'activate'])->whereNumber(['reservation', 'agreement'])->middleware('throttle:30,1');
     Route::get('/{reservation}/vehicle-swaps', [ReservationVehicleSwapController::class, 'show'])->whereNumber('reservation');
     Route::post('/{reservation}/vehicle-swaps', [ReservationVehicleSwapController::class, 'store'])->whereNumber('reservation')->middleware('throttle:30,1');
+    Route::get('/{reservation}/disposal', [\App\Http\Controllers\RequestTrashController::class, 'show'])->whereNumber('reservation');
+    Route::post('/{reservation}/disposal', [\App\Http\Controllers\RequestTrashController::class, 'store'])->whereNumber('reservation')->middleware('throttle:30,1');
     Route::post('/{reservation}/cancellation', [ReservationCancellationController::class, 'store'])->whereNumber('reservation')->middleware('throttle:30,1');
     Route::post('/{reservation}/settlement', [ReservationSettlementController::class, 'store'])->whereNumber('reservation')->middleware('throttle:30,1');
     Route::get('/{reservation}/return/fuel', [ReservationFuelController::class, 'show'])->whereNumber('reservation');
@@ -140,6 +143,9 @@ Route::prefix('api/v1/customers')->middleware(['auth:web', RequireCompany::class
 });
 
 Route::prefix('api/v1/vehicles')->middleware(['auth:web', RequireCompany::class, PrivateResponse::class])->group(function (): void {
+    Route::post('/equipment-catalog/{equipment}', [VehicleController::class, 'equipmentManage'])->whereNumber('equipment')->middleware('throttle:30,1');
+    Route::get('/equipment-catalog', [VehicleController::class, 'equipmentIndex']);
+    Route::post('/equipment-catalog', [VehicleController::class, 'equipmentStore'])->middleware('throttle:30,1');
     Route::get('/{vehicle}/pricing', [VehiclePricingController::class, 'vehicle'])->whereNumber('vehicle');
     Route::post('/{vehicle}/pricing', [VehiclePricingController::class, 'updateNormal'])->whereNumber('vehicle')->middleware('throttle:30,1');
     Route::post('/{vehicle}/maintenance/{entry}/payments/{payment}/corrections', [MaintenancePaymentCorrectionController::class, 'store'])->whereNumber(['vehicle', 'entry', 'payment']);
@@ -171,6 +177,7 @@ Route::prefix('api/v1/vehicles')->middleware(['auth:web', RequireCompany::class,
     Route::get('/{vehicle}', [VehicleController::class, 'show'])->whereNumber('vehicle');
     Route::put('/{vehicle}', [VehicleController::class, 'update'])->whereNumber('vehicle');
     Route::post('/{vehicle}/odometer', [VehicleOdometerController::class, 'store'])->whereNumber('vehicle');
+    Route::post('/{vehicle}/photos/manage', [VehiclePhotoController::class, 'manage'])->whereNumber('vehicle')->middleware('throttle:30,1');
     Route::post('/{vehicle}/photos', [VehiclePhotoController::class, 'store'])->whereNumber('vehicle')->middleware('throttle:30,1');
     Route::get('/{vehicle}/photos/{document}/content', [VehiclePhotoController::class, 'content'])->whereNumber(['vehicle', 'document']);
 });

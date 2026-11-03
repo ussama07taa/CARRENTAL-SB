@@ -29,6 +29,7 @@ use Tests\TestCase;
 
 class RentalPickupTest extends TestCase
 {
+    use \Tests\Support\StartsAfterVehicleSelection;
     use DatabaseMigrations;
 
     protected function tearDown(): void

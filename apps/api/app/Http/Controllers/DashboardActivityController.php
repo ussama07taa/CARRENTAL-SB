@@ -16,7 +16,8 @@ class DashboardActivityController extends Controller
         $financial = $access->financial($request->user()->id);
         $input = $request->validate([
             'group' => ['nullable', Rule::in(['all', 'departures', 'returns', 'fleet', 'deadlines', 'requests', 'finance'])],
-            'window' => ['nullable', Rule::in(['all', 'priority', 'upcoming'])],
+            'window' => ['nullable', Rule::in(['all', 'priority', 'upcoming', 'urgent', 'action'])],
+            'notifications' => ['sometimes', 'boolean'],
             'q' => ['nullable', 'string', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
         ]);

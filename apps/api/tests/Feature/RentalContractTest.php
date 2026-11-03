@@ -24,6 +24,7 @@ use Tests\TestCase;
 
 class RentalContractTest extends TestCase
 {
+    use \Tests\Support\StartsAfterVehicleSelection;
     use LazilyRefreshDatabase;
 
     private function fixture(bool $confirmed = true): array

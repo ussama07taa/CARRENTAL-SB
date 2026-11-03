@@ -9,6 +9,7 @@ use App\Models\Vehicle;
 use App\Models\VehiclePhoto;
 use App\Support\Reservations\VehiclePricing;
 use App\Support\Tenancy\Tenant;
+use App\Support\Vehicles\EquipmentCatalog;
 use App\Support\Vehicles\VehicleFields;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,28 @@ use Illuminate\Validation\Rule;
 
 class VehicleController extends Controller
 {
+    public function equipmentIndex(): JsonResponse
+    {
+        return response()->json(['data' => EquipmentCatalog::all()]);
+    }
+
+    public function equipmentStore(Request $request): JsonResponse
+    {
+        $data = $request->validate(['name' => ['required', 'string', 'max:100'], 'company_id' => ['prohibited']]);
+        $name = trim($data['name']);
+        abort_if($name === '', 422, 'Saisissez le nom de l’équipement.');
+
+        return response()->json(['data' => EquipmentCatalog::remember(array_fill_keys(['fr', 'ar', 'en', 'es'], $name), true)], 201);
+    }
+
+    public function equipmentManage(Request $request, int $equipment): JsonResponse
+    {
+        $input = $request->validate(['action' => ['required', Rule::in(['rename', 'remove'])], 'expected_name' => ['required', 'string', 'max:100'], 'name' => ['required_if:action,rename', 'string', 'max:100'], 'company_id' => ['prohibited']]);
+        EquipmentCatalog::manage($equipment, $input);
+
+        return response()->json(['data' => EquipmentCatalog::all()]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $input = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1'], 'make' => ['nullable', 'string', 'max:60'], 'fuel' => ['nullable', Rule::in(VehicleFields::FUELS)], 'transmission' => ['nullable', Rule::in(VehicleFields::TRANSMISSIONS)]]);
@@ -41,7 +64,7 @@ class VehicleController extends Controller
             }
         }
         $rows = $query->latest('id')->paginate(15, ['id', 'plate', 'make', 'model', 'year', 'fuel', 'transmission', 'current_odometer', 'current_odometer_date', 'updated_at']);
-        $covers = VehiclePhoto::whereIn('vehicle_id', collect($rows->items())->pluck('id'))->where('slot', 'cover')->orderByDesc('version')->get()->unique('vehicle_id')->keyBy('vehicle_id');
+        $covers = VehiclePhoto::current()->whereIn('vehicle_id', collect($rows->items())->pluck('id'))->where('slot', 'cover')->orderByDesc('version')->get()->unique('vehicle_id')->keyBy('vehicle_id');
         $pricingReady = app(VehiclePricing::class)->ready();
         $pricingVersion = $pricingReady ? DB::table('vehicle_pricing_versions')->where('company_id', Tenant::id())->latest('id')->value('id') : null;
         $rates = $pricingVersion ? DB::table('vehicle_pricing_rates')->where('company_id', Tenant::id())->where('version_id', $pricingVersion)->whereIn('vehicle_id', collect($rows->items())->pluck('id'))->whereNull('season_key')->pluck('daily_centimes', 'vehicle_id') : collect();
@@ -59,7 +82,7 @@ class VehicleController extends Controller
         })
             ->join('users as u', 'u.id', '=', 'm.user_id')->where('r.company_id', Tenant::id())->where('r.vehicle_id', $vehicle)->latest('r.id')->limit(50)->get(['r.id', 'r.kilometers', 'r.recorded_on', 'r.kind', 'r.reason', 'u.name as actor']);
 
-        return response()->json(['data' => $record, 'photos' => VehiclePhoto::where('vehicle_id', $vehicle)->orderByDesc('version')->get()->unique('slot')->values(),
+        return response()->json(['data' => $record, 'photos' => VehiclePhoto::current()->where('vehicle_id', $vehicle)->orderByDesc('version')->get()->unique('slot')->values(),
             'readings' => $readings, 'can_correct_odometer' => CompanyMembership::where('user_id', $request->user()->id)->where('is_primary_responsible', true)->exists()]);
     }
 

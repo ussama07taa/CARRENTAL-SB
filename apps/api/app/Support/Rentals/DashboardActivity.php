@@ -93,21 +93,60 @@ class DashboardActivity
             'urgent_count' => count($urgent), 'urgent' => array_slice($urgent, 0, 4),
             'schedule_count' => count($schedule), 'schedule' => array_slice($schedule, 0, 12),
         ];
+        $notificationCounts = null;
+        if (! empty($input['notifications'])) {
+            $rows = $this->notificationRows($rows);
+            $notificationCounts = ['urgent' => 0, 'action' => 0, 'upcoming' => 0];
+            foreach ($rows as $row) {
+                $bucket = in_array($row['priority'], ['overdue', 'today'], true) ? 'urgent' : $row['priority'];
+                $notificationCounts[$bucket]++;
+            }
+            // Badge describes urgent actions and requests to process, not unread messages.
+            $priorityCount = $notificationCounts['urgent'] + count(array_filter($rows, fn ($row) => $row['group'] === 'requests' && $row['priority'] === 'action'));
+        }
         $q = mb_strtolower(trim($input['q'] ?? ''));
         $filtered = array_values(array_filter($rows, function (array $row) use ($input, $q): bool {
             $window = $input['window'] ?? 'priority';
 
             return (($input['group'] ?? 'all') === 'all' || $row['group'] === $input['group'])
-                && ($window === 'all' || ($window === 'priority' ? $row['priority'] !== 'upcoming' : $row['priority'] === 'upcoming'))
+                && ($window === 'all' || match ($window) { 'priority' => $row['priority'] !== 'upcoming', 'urgent' => in_array($row['priority'], ['overdue', 'today'], true), default => $row['priority'] === $window })
                 && ($q === '' || str_contains(mb_strtolower(implode(' ', [$row['title'], $row['subject'], $row['context'], $row['detail']])), $q));
         }));
         $last = max(1, (int) ceil(count($filtered) / 8));
         $page = min((int) ($input['page'] ?? 1), $last);
 
         return ['data' => array_slice($filtered, ($page - 1) * 8, 8), 'total' => count($filtered), 'page' => $page, 'last_page' => $last,
-            'overview' => $overview, 'counts' => $counts, 'priority_count' => $priorityCount,
+            'notification_counts' => $notificationCounts, 'overview' => $overview, 'counts' => $counts, 'priority_count' => $priorityCount,
             'website_request_count' => Reservation::where('source', 'website')->where(fn ($q) => $q->where('status', 'demande')->orWhere(fn ($held) => $held->where('status', 'temporaire')->where('hold_expires_at', '<=', $now)))->count(), 'can_manage_finance' => $financial,
             'today' => $today, 'generated_at' => $now->toIso8601String()];
+    }
+
+    private function notificationRows(array $rows): array
+    {
+        $result = [];
+        $documents = [];
+        foreach ($rows as $row) {
+            if (($row['target']['type'] ?? null) === 'documents' && $row['priority'] === 'action') {
+                $documents[$row['vehicle']['id']][] = $row;
+            } else {
+                $result[] = $row;
+            }
+        }
+        foreach ($documents as $vehicleId => $items) {
+            $row = $items[0];
+            $row['key'] = 'vehicle-documents-'.$vehicleId;
+            $row['title'] = count($items).' document'.(count($items) > 1 ? 's' : '').' à compléter';
+            $row['detail'] = implode(' · ', array_column($items, 'title'));
+            $row['document_details'] = array_map(fn ($item) => ['title' => $item['title'], 'detail' => $item['detail']], $items);
+            $row['date'] = null;
+            $row['action'] = 'Compléter les documents';
+            unset($row['target']['kind']);
+            $result[] = $row;
+        }
+        $rank = ['overdue' => 0, 'today' => 1, 'action' => 2, 'upcoming' => 3];
+        usort($result, fn ($a, $b) => [$rank[$a['priority']], $a['date'] ?? '9999', $a['key']] <=> [$rank[$b['priority']], $b['date'] ?? '9999', $b['key']]);
+
+        return $result;
     }
 
     private function rentals(CarbonImmutable $now): array
