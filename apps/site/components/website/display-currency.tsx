@@ -37,3 +37,5 @@ export function CurrencyProvider({children,country}:{children:ReactNode;country?
 }
 export function useDisplayCurrency(){return useContext(Context);}
 export const currencyNotice={fr:'Estimation · prix final et paiement en MAD.',en:'Estimate · final price and payment in MAD.',es:'Estimación · precio final y pago en MAD.',ar:'تحويل تقريبي · الثمن النهائي والأداء بالدرهم.'};
+
+export function CurrencyAttribution(){const {currency,rates}=useDisplayCurrency();if(currency==='MAD'||!rates)return null;return <a className="sf-currency-source" href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">Rates By Exchange Rate API</a>;}

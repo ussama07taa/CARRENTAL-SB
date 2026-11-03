@@ -17,7 +17,7 @@ export function DailyPrice({value,language}:{value:number|null|undefined;languag
  if(value==null)return null;
  const converted=currency!=='MAD'&&rates;const amount=value/100*(converted?rates[currency as 'EUR'|'USD']:1);
  const formatted=converted?new Intl.NumberFormat('en-US',{style:'currency',currency,currencyDisplay:'narrowSymbol',minimumFractionDigits:0,maximumFractionDigits:0}).format(Math.trunc(amount)):new Intl.NumberFormat('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}).format(Math.trunc(amount))+' DH';
- return <div className="public-daily-price" data-daily-price><strong><bdi dir="ltr">{formatted}</bdi></strong> <span>{({fr:'/ jour',en:'/ day',es:'/ día',ar:'/ يوم'})[language]}</span>{converted&&<small className="public-currency-note">{currencyNotice[language]} <bdi>{new Intl.NumberFormat(language).format(value/100)} MAD</bdi><br/><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">ExchangeRate-API</a> · <time dateTime={new Date(rates.updated).toISOString()}>{new Intl.DateTimeFormat(language,{dateStyle:'short'}).format(rates.updated)}</time></small>}</div>;
+ return <div className="public-daily-price" data-daily-price><strong><bdi dir="ltr">{formatted}</bdi></strong> <span>{({fr:'/ jour',en:'/ day',es:'/ día',ar:'/ يوم'})[language]}</span>{converted&&<small className="public-currency-note">{currencyNotice[language]} <bdi>{new Intl.NumberFormat(language).format(value/100)} MAD</bdi></small>}</div>;
 }
 export default function VehicleGallery({photos,name,language}:{photos:PublicPhoto[];name:string;language:CatalogueLanguage}) {
  const [active,setActive]=useState(0);const photo=photos[active]??photos[0];

@@ -8,3 +8,12 @@
 
 /* More legible navigation across the public site. */
 .gh>nav{font-size:14px;font-weight:600;gap:26px}.gh>nav:lang(ar){font-size:17px}.gh>nav [aria-current=page]{font-weight:800}@media(min-width:901px) and (max-width:1200px){.gh-cta{display:none}.gh>nav{gap:16px}.gh-brand img{width:145px}.gh{gap:12px;padding-inline:16px}}
+
+/* Keep navigation accessible without removing its space from the layout. */
+.gh{position:sticky;top:0;z-index:60;box-sizing:border-box}
+.gh.gh-scrolled{box-shadow:0 4px 18px #10234412}
+html:has(.public-site-shell){scroll-padding-top:calc(var(--public-header-height,88px) + 16px)}
+.public-site-shell .cf-sidebar{top:calc(var(--public-header-height,88px) + 16px)}
+@media(max-width:767px){.gh{min-height:68px}.gh .nh-choice-list{top:calc(var(--public-header-height,68px) + 8px)}}
+@media(prefers-reduced-motion:no-preference){html:has(.public-site-shell){scroll-behavior:smooth}.gh{transition:box-shadow .18s ease}}
+@media(prefers-reduced-motion:reduce){html:has(.public-site-shell){scroll-behavior:auto}}
