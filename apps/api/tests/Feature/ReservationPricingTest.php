@@ -16,6 +16,7 @@ use Tests\TestCase;
 
 class ReservationPricingTest extends TestCase
 {
+    use \Tests\Support\StartsAfterVehicleSelection;
     use LazilyRefreshDatabase;
 
     private function fixture(bool $priced = true): array

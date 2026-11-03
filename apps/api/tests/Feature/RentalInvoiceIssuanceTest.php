@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\{DB,Storage};
 use Illuminate\Support\Str;
 use Tests\TestCase;
 class RentalInvoiceIssuanceTest extends TestCase {
+    use \Tests\Support\StartsAfterVehicleSelection;
  use LazilyRefreshDatabase;
  private function ready(): array {
   $this->withoutMiddleware(ThrottleRequests::class);

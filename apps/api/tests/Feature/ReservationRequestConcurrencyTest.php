@@ -35,6 +35,11 @@ class ReservationRequestConcurrencyTest extends TestCase
         $this->withoutMiddleware(ThrottleRequests::class);
         $company = Company::factory()->create();
         [$member, $customer, $vehicle] = Tenant::run($company->id, fn (): array => [CompanyMembership::factory()->responsible()->create(), Customer::factory()->create(), Vehicle::factory()->create()]);
+        Tenant::run($company->id, function () use ($member, $vehicle): void {
+            foreach (\App\Models\VehicleDocument::KINDS as $kind) {
+                \App\Models\VehicleDocument::factory()->create(['vehicle_id'=>$vehicle->id,'actor_membership_id'=>$member->id,'kind'=>$kind,'path'=>'fixture.pdf']);
+            }
+        });
         $this->actingAs($member->user)->withSession(['company_id' => $company->id]);
         $payload = ['customer_id' => $customer->id, 'vehicle_id' => $vehicle->id, 'starts_local' => now('Africa/Casablanca')->addDay()->format('Y-m-d').'T10:00', 'ends_local' => now('Africa/Casablanca')->addDays(4)->format('Y-m-d').'T10:00', 'request_key' => (string) Str::uuid()];
         DB::disconnect();

@@ -1,5 +1,6 @@
 'use client';
 import {reportFieldErrors,type FieldErrors} from '../_lib/form-validation';
+import InspectionPhotoComparison from './inspection-photo-comparison';
 import DamagePanel from '../incidents/damage-panel';
 import {useEffect,useRef,useState} from 'react';
 import {api,apiMutation} from '../_lib/auth-client';
@@ -14,7 +15,7 @@ import './rental-return.css';
 import '../clients/document-photo-input.css';
 type Media={id:number;kind:string;mime:string;caption:string|null};
 type Control={id:number;kilometers:number;fuel_eighths:number;condition:string;notes:string|null;signature_state:string;signature_reason:string|null;reason:string;files:Media[];snapshot:{distance_km:number;fuel_difference_eighths:number}};
-type Data={ready:boolean;status:string;can_receive:boolean;simulation:boolean;server_now_local:string;vehicle:{id:number;plate:string;version:number;current_odometer:number|null};departure:{picked_up_local:string;kilometers:number;fuel_eighths:number;inspection_id:number}|null;return:{id:number;returned_local:string;reason:string}|null;inspection:Control|null;vehicle_ready:boolean;in_garage:boolean;maintenance_pending:boolean;can_approve_readiness:boolean;readiness_policy_pending:boolean;financial:{remaining_centimes:number|null};caution?:{waived:boolean;verified_centimes:number}};
+type Data={ready:boolean;status:string;can_receive:boolean;simulation:boolean;server_now_local:string;vehicle:{id:number;plate:string;version:number;current_odometer:number|null};departure:{picked_up_local:string;kilometers:number;fuel_eighths:number;inspection_id:number;photos?:Omit<Media,'kind'>[]}|null;return:{id:number;returned_local:string;reason:string}|null;inspection:Control|null;vehicle_ready:boolean;in_garage:boolean;maintenance_pending:boolean;can_approve_readiness:boolean;readiness_policy_pending:boolean;financial:{remaining_centimes:number|null};caution?:{waived:boolean;verified_centimes:number}};
 const conditions:Record<string,string>={bon:'Bon état constaté',dommages_existants:'Marques ou dommages à examiner',anomalie_bloquante:'Anomalie empêchant une nouvelle remise'};
 function Preview({file}:{file:File}){const [src,setSrc]=useState('');useEffect(()=>{const url=URL.createObjectURL(file);setSrc(url);return()=>URL.revokeObjectURL(url);},[file]);return file.type.startsWith('video/')?<video src={src||undefined} controls playsInline aria-label="Vidéo à enregistrer"/>:<img src={src||undefined} alt="Photo du retour à enregistrer"/>;}
 export default function RentalReturnPanel({id,returnId,onSettlement,onSaved,onBusyChange,onDirtyChange}:{id:number;returnId?:number;onSettlement?:()=>void;onSaved:()=>void;onBusyChange:(busy:boolean)=>void;onDirtyChange:(dirty:boolean)=>void}){
@@ -85,6 +86,7 @@ export default function RentalReturnPanel({id,returnId,onSettlement,onSaved,onBu
  {data.simulation&&<p className="dp-warning">{data.return?'Dossier simulé · retour enregistré.':'Dossier simulé · cette opération ne déclare pas un retour réel.'}</p>}
  {!data.ready?<p>Le retour attend l’activation de la mise à jour.</p>:<>
  {data.departure&&<div className="rr-summary"><div><span>Compteur au départ</span><strong>{data.departure.kilometers.toLocaleString('fr-FR')} km</strong></div><div><span>Carburant au départ</span><strong>{data.departure.fuel_eighths}/8</strong></div>{data.return&&<div><span>Retour enregistré</span><strong>{localDate(data.return.returned_local)}</strong></div>}</div>}
+ {data.departure&&<InspectionPhotoComparison key={id+':'+(data.return?.id??'current')} reservationId={id} departure={data.departure.photos??[]} returned={mode==='inspection'?retained:(data.inspection?.files??[])} drafts={mode==='inspection'?files:[]} departureDate={localDate(data.departure.picked_up_local)} returnDate={data.return?localDate(data.return.returned_local):null}/>}
  <p>Le retour physique, le constat signé, la disponibilité de la voiture et le règlement sont suivis séparément. Aucun montant n’est ajouté automatiquement.</p>
  {!mode&&!data.return&&<><p>Commencez par confirmer la réception de la voiture. Un solde ou une signature manquante ne bloque pas le retour.</p><button type="button" className="primary" disabled={!data.can_receive||blocked} onClick={()=>begin('receive')}>Enregistrer le retour</button></>}
  {!mode&&data.return&&<>

@@ -31,6 +31,7 @@ use Tests\TestCase;
 
 class RentalReturnTest extends TestCase
 {
+    use \Tests\Support\StartsAfterVehicleSelection;
     use LazilyRefreshDatabase;
 
     public function test_fine_declaration_and_client_direct_payment_never_create_agency_money(): void
@@ -484,6 +485,36 @@ class RentalReturnTest extends TestCase
 
         return $fixture;
 
+    }
+
+    public function test_photo_comparison_uses_the_pickup_inspection_not_a_later_control(): void
+    {
+        [, , , , $id] = $this->outFile();
+        $before = $this->getJson("/api/v1/reservations/$id/return")->assertOk()->json('data.departure');
+        $expected = DB::table('rental_inspection_photos')
+            ->where('reservation_id', $id)->where('inspection_id', $before['inspection_id'])
+            ->whereIn('mime', ['image/jpeg', 'image/png', 'image/webp'])->orderBy('id')->pluck('id')->all();
+        $this->assertNotEmpty($expected);
+        $this->assertSame($expected, array_column($before['photos'], 'id'));
+        $this->assertArrayNotHasKey('path', $before['photos'][0]);
+
+        // A later inspection must not replace the evidence captured at pickup.
+        $copy = (array) DB::table('rental_departure_inspections')->where('id', $before['inspection_id'])->first();
+        unset($copy['id']);
+        $copy['request_key'] = (string) Str::uuid();
+        $copy['previous_id'] = $before['inspection_id'];
+        $later = DB::table('rental_departure_inspections')->insertGetId($copy);
+        $photo = (array) DB::table('rental_inspection_photos')->where('id', $expected[0])->first();
+        unset($photo['id']);
+        $photo['inspection_id'] = $later;
+        $photo['caption'] = 'Later control, not pickup';
+        DB::table('rental_inspection_photos')->insert($photo);
+
+        $this->receive($id, $this->returnInput($id))->assertCreated();
+        $this->inspectReturn($id, $this->control($id))->assertCreated();
+        $result = $this->getJson("/api/v1/reservations/$id/return")->assertOk()->json('data');
+        $this->assertSame($expected, array_column($result['departure']['photos'], 'id'));
+        $this->assertSame('Photo retour TEST', $result['inspection']['files'][0]['caption']);
     }
 
     private function returnInput(int $id): array

@@ -21,6 +21,7 @@ class Reservation extends Model
 
     protected static function booted(): void
     {
+        static::addGlobalScope('request_trash', fn (Builder $query) => \App\Support\Reservations\RequestTrash::scope($query));
         static::addGlobalScope('company', fn (Builder $query) => $query->where($query->qualifyColumn('company_id'), Tenant::id()));
         static::creating(function (self $record): void {
             abort_if($record->company_id !== null && (int) $record->company_id !== Tenant::id(), 403);

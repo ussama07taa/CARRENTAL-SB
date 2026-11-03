@@ -3,7 +3,7 @@ import {LayoutDashboard,CarFront,FileCheck2,Wrench,Landmark,ArrowUpRight,Camera,
 import './vehicle-file-layout.css';
 import DamagePanel from '../incidents/damage-panel';
 
-import {useState} from 'react';
+import {useState,useEffect} from 'react';
 import type {DocumentOverview} from './vehicle-documents';
 import { vehicleTypes } from './vehicle-types';
 import VehicleDocuments from './vehicle-documents';
@@ -22,6 +22,7 @@ export default function VehicleSummary({ vehicle, photos, readings, equipment, s
   slots: readonly (readonly [Slot, string])[];
 }) {
   const [active,setActive]=useState(justCreated?'documents':'overview');
+  useEffect(()=>{if(justCreated)setActive('documents');},[justCreated]);
   const views=[['overview','Vue d’ensemble',LayoutDashboard],['information','Informations et photos',CarFront],['documents','Documents',FileCheck2],['maintenance','Entretien',Wrench],['finance','Achat et échéances',Landmark]] as const;
   const [documentOverview,setDocumentOverview]=useState<DocumentOverview|null>(null);
   const overview=documentOverview?.vehicleId===vehicle.id?documentOverview:null;
@@ -70,7 +71,7 @@ export default function VehicleSummary({ vehicle, photos, readings, equipment, s
     </section>
     <section className="v-workspace-panel" id="vf-panel-documents" role="tabpanel" aria-labelledby="vf-tab-documents" hidden={active!=='documents'}>
       <div className="v-file-section-heading"><div><h3>Assurance et documents</h3><p>Pièces enregistrées, dates de validité et documents à compléter.</p></div></div>
-      {justCreated&&<p role="status">Votre véhicule est enregistré. Vous pouvez maintenant ajouter son assurance et ses documents.</p>}
+      {justCreated&&<p role="status">Votre véhicule est enregistré. Retrouvez les pièces ajoutées et complétez les documents manquants ci-dessous.</p>}
       <VehicleDocuments vehicleId={vehicle.id} onOverview={setDocumentOverview}/>
     </section>
     <section className="v-workspace-panel" id="vf-panel-maintenance" role="tabpanel" aria-labelledby="vf-tab-maintenance" hidden={active!=='maintenance'}><VehicleMaintenance vehicleId={vehicle.id} onChange={onChange}/></section>

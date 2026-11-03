@@ -41,7 +41,7 @@ class PublicWebsiteController extends Controller
     private function photos(int $id): Collection
     {
         // Select the latest version BEFORE validating it. Never resurrect an old slot.
-        return VehiclePhoto::where('vehicle_id', $id)->orderByDesc('version')->get()->unique('slot')
+        return VehiclePhoto::current()->where('vehicle_id', $id)->orderByDesc('version')->get()->unique('slot')
             ->filter(fn ($p) => in_array($p->slot, VehiclePhoto::SLOTS, true) && $this->usable($p))
             ->sortBy(fn ($p) => array_search($p->slot, VehiclePhoto::SLOTS, true))->values();
     }
@@ -138,7 +138,7 @@ class PublicWebsiteController extends Controller
         return $this->within(function () use ($vehicle, $slot) {
             $this->vehicle($vehicle);
             abort_unless(in_array($slot, VehiclePhoto::SLOTS, true), 404);
-            $p = VehiclePhoto::where('vehicle_id', $vehicle)->where('slot', $slot)->latest('version')->firstOrFail();
+            $p = VehiclePhoto::current()->where('vehicle_id', $vehicle)->where('slot', $slot)->latest('version')->firstOrFail();
             abort_unless($this->usable($p), 404);
 
             return Storage::disk($p->disk)->response($p->path, null, ['Content-Type' => $p->mime, 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'no-store']);

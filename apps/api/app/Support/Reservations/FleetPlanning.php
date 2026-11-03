@@ -42,7 +42,7 @@ class FleetPlanning
             $join->on('rental.company_id', '=', 'p.company_id')->on('rental.id', '=', 'p.reservation_id');
         })->where('p.company_id', Tenant::id())->whereIn('p.vehicle_id', $ids)->when(Schema::hasTable('rental_vehicle_swaps'), fn ($q) => $q->whereRaw('p.swap_id IS DISTINCT FROM rental.active_swap_id'), fn ($q) => $q->whereColumn('p.vehicle_id', '<>', 'rental.vehicle_id'))->where('p.picked_up_at', '<', $until)->where('returned.returned_at', '>', $from)->get(['p.id', 'p.vehicle_id', 'p.reservation_id', 'p.picked_up_at', 'returned.returned_at', 'rental.customer_id']) : collect();
         $customers = Customer::whereIn('id', [...$requests->whereIn('vehicle_id', $ids)->pluck('customer_id')->all(), ...$pastLegs->pluck('customer_id')->all()])->get()->keyBy('id');
-        $covers = VehiclePhoto::whereIn('vehicle_id', $ids)->where('slot', 'cover')->orderByDesc('version')->get()->unique('vehicle_id')->keyBy('vehicle_id');
+        $covers = VehiclePhoto::current()->whereIn('vehicle_id', $ids)->where('slot', 'cover')->orderByDesc('version')->get()->unique('vehicle_id')->keyBy('vehicle_id');
         $maintenance = app(VehicleMaintenance::class);
         $entries = $maintenance->query()->whereIn('vehicle_id', $ids)->get();
         $returns = $maintenance->query('maintenance_returns')->whereIn('maintenance_id', $entries->pluck('id'))->get()->keyBy('maintenance_id');

@@ -7,6 +7,7 @@ use App\Models\CompanyMembership;
 use App\Models\Vehicle;
 use App\Support\Reservations\VehiclePricing;
 use App\Support\Tenancy\Tenant;
+use App\Support\Vehicles\EquipmentCatalog;
 use App\Support\Vehicles\VehicleFields;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
@@ -64,6 +65,9 @@ class SaveVehicle
                 $vehicle->version++;
             }
             $vehicle->save();
+            foreach ($vehicle->custom_equipment ?? [] as $labels) {
+                EquipmentCatalog::remember($labels);
+            }
             if ($before === null && isset($input['initial_daily_centimes'])) {
                 $pricing = app(VehiclePricing::class);
                 $pricing->setNormal($vehicle->id, ['daily_centimes' => (int) $input['initial_daily_centimes'], 'minimum_days' => 0, 'expected_version' => $pricing->current()?->id, 'request_key' => $input['creation_key'], 'reason' => 'Prix défini à la création du véhicule'], $actor->id);

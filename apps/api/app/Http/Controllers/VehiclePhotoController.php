@@ -39,7 +39,8 @@ class VehiclePhotoController extends Controller
                     return $existing;
                 }
                 $previous = VehiclePhoto::where('vehicle_id', $vehicle)->where('slot', $input['slot'])->latest('version')->first();
-                if (($previous?->id ?? null) !== (isset($input['previous_id']) ? (int) $input['previous_id'] : null)) {
+                $visiblePrevious = VehiclePhoto::current()->where('vehicle_id', $vehicle)->where('slot', $input['slot'])->first();
+                if (($visiblePrevious?->id ?? null) !== (isset($input['previous_id']) ? (int) $input['previous_id'] : null)) {
                     return response()->json(['code' => 'PHOTO_CHANGED', 'message' => 'Cette photo a été remplacée ailleurs. Fermez et rouvrez le fichier pour voir la dernière version avant de la remplacer.'], 409);
                 }
                 $actor = CompanyMembership::where('user_id', $request->user()->id)->firstOrFail();
@@ -72,6 +73,53 @@ class VehiclePhotoController extends Controller
         }
 
         return $result instanceof JsonResponse ? $result : response()->json(['data' => $result], 201);
+    }
+
+    public function manage(Request $request, int $vehicle): JsonResponse
+    {
+        $input = $request->validate([
+            'action' => ['required', 'in:swap,remove'],
+            'slot' => ['required', \Illuminate\Validation\Rule::in(VehiclePhoto::SLOTS)],
+            'target' => ['required_if:action,swap', 'nullable', \Illuminate\Validation\Rule::in(VehiclePhoto::SLOTS)],
+            'expected' => ['present', 'array'], 'expected.*' => ['integer', 'min:1'],
+            'request_key' => ['required', 'uuid'],
+        ]);
+        return DB::transaction(function () use ($request, $vehicle, $input) {
+            Company::whereKey(Tenant::id())->lockForUpdate()->firstOrFail();
+            Vehicle::whereKey($vehicle)->lockForUpdate()->firstOrFail();
+            $actor = CompanyMembership::where('user_id', $request->user()->id)->firstOrFail();
+            $events = DB::table('vehicle_events')->where('company_id', Tenant::id())->where('vehicle_id', $vehicle);
+            $retry = (clone $events)->where('action', 'photo_gallery_changed')->whereRaw("after::jsonb->>'request_key' = ?", [$input['request_key']])->first();
+            if ($retry) {
+                abort_unless(json_decode($retry->after, true) == $input, 409, 'Cette demande a déjà été utilisée.');
+                return response()->json(['photos' => VehiclePhoto::current()->where('vehicle_id', $vehicle)->get()]);
+            }
+            $photos = VehiclePhoto::current()->where('vehicle_id', $vehicle)->get()->keyBy('slot');
+            $actual = $photos->map(fn ($p) => (int) $p->id)->all();
+            $expected = array_map('intval', $input['expected']); ksort($actual); ksort($expected);
+            if ($actual !== $expected) return response()->json(['code' => 'PHOTO_CHANGED', 'message' => 'Les photos ont changé. Fermez et rouvrez le fichier avant de réessayer.'], 409);
+            $source = $photos->get($input['slot']);
+            abort_unless($source, 422, 'Choisissez une photo enregistrée.');
+            $audit = function (string $action, array $after) use ($actor, $vehicle): void {
+                DB::table('vehicle_events')->insert(['company_id' => Tenant::id(), 'vehicle_id' => $vehicle,
+                    'actor_membership_id' => $actor->id, 'action' => $action, 'before' => null, 'after' => json_encode($after), 'created_at' => now()]);
+            };
+            if ($input['action'] === 'remove') {
+                $audit('photo_removed', ['photo_id' => $source->id, 'slot' => $source->slot]);
+            } else {
+                abort_if($input['slot'] === $input['target'], 422, 'Choisissez un autre emplacement.');
+                $target = $photos->get($input['target']);
+                foreach ([[$source, $input['target']], [$target, $input['slot']]] as [$photo, $slot]) {
+                    if (! $photo) { $audit('photo_removed', ['photo_id' => $source->id, 'slot' => $source->slot]); continue; }
+                    VehiclePhoto::create(['vehicle_id' => $vehicle, 'actor_membership_id' => $actor->id, 'slot' => $slot,
+                        'version' => ((int) VehiclePhoto::where('vehicle_id', $vehicle)->where('slot', $slot)->max('version')) + 1,
+                        'upload_key' => (string) Str::uuid(), 'disk' => $photo->disk, 'path' => $photo->path,
+                        'mime' => $photo->mime, 'size' => $photo->size, 'sha256' => $photo->sha256, 'created_at' => now()]);
+                }
+            }
+            $audit('photo_gallery_changed', $input);
+            return response()->json(['photos' => VehiclePhoto::current()->where('vehicle_id', $vehicle)->get()]);
+        });
     }
 
     public function content(Request $request, int $vehicle, int $document): StreamedResponse

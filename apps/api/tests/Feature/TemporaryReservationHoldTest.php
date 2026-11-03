@@ -17,6 +17,7 @@ use Tests\TestCase;
 
 class TemporaryReservationHoldTest extends TestCase
 {
+    use \Tests\Support\StartsAfterVehicleSelection;
     use LazilyRefreshDatabase;
 
     private function fixture(bool $responsible = true): array

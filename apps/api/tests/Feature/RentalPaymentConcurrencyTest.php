@@ -15,6 +15,7 @@ use Tests\TestCase;
 
 class RentalPaymentConcurrencyTest extends TestCase
 {
+    use \Tests\Support\StartsAfterVehicleSelection;
     use DatabaseMigrations;
 
     public function test_concurrent_confirmation_keeps_one_allocation_and_both_receipts(): void

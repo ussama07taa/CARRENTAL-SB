@@ -27,7 +27,7 @@ class DashboardOverviewController extends Controller
             }
             $today = CarbonImmutable::today('Africa/Casablanca');
             $vehicles = Vehicle::orderBy('id')->get()->keyBy('id');
-            $covers = VehiclePhoto::whereIn('vehicle_id', $vehicles->keys())->where('slot', 'cover')->orderByDesc('version')->get()->unique('vehicle_id')->keyBy('vehicle_id');
+            $covers = VehiclePhoto::current()->whereIn('vehicle_id', $vehicles->keys())->where('slot', 'cover')->orderByDesc('version')->get()->unique('vehicle_id')->keyBy('vehicle_id');
             $fleetPreview = $vehicles->sortByDesc('id')->sortByDesc(fn (Vehicle $vehicle): int => $covers->get($vehicle->id)?->id ?? 0)->take(4)->values()->map(fn (Vehicle $vehicle): array => [
                 ...$vehicle->only(['id', 'plate', 'make', 'model', 'year', 'fuel', 'transmission', 'current_odometer']),
                 'cover_id' => $covers->get($vehicle->id)?->id,

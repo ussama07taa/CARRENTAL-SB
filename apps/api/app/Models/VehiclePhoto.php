@@ -16,6 +16,17 @@ class VehiclePhoto extends Model
 
     protected $visible = ['id', 'slot', 'version', 'mime', 'size', 'created_at'];
 
+    /** Latest slot only, with archived photos hidden without reviving older versions. */
+    public function scopeCurrent(Builder $query): void
+    {
+        $query->whereNotExists(fn ($q) => $q->selectRaw('1')->from('vehicle_photos as newer')
+            ->whereColumn('newer.company_id', 'vehicle_photos.company_id')->whereColumn('newer.vehicle_id', 'vehicle_photos.vehicle_id')
+            ->whereColumn('newer.slot', 'vehicle_photos.slot')->whereColumn('newer.version', '>', 'vehicle_photos.version'))
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('vehicle_events as removed')
+                ->whereColumn('removed.company_id', 'vehicle_photos.company_id')->whereColumn('removed.vehicle_id', 'vehicle_photos.vehicle_id')
+                ->where('removed.action', 'photo_removed')->whereRaw("removed.after::jsonb->>'photo_id' = vehicle_photos.id::text"));
+    }
+
     protected static function booted(): void
     {
         static::addGlobalScope('company', fn (Builder $query) => $query->where($query->qualifyColumn('company_id'), Tenant::id()));

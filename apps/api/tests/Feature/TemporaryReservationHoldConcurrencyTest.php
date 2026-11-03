@@ -15,6 +15,7 @@ use Tests\TestCase;
 
 class TemporaryReservationHoldConcurrencyTest extends TestCase
 {
+    use \Tests\Support\StartsAfterVehicleSelection;
     use DatabaseMigrations;
 
     public function test_repeated_simultaneous_hold_is_idempotent(): void

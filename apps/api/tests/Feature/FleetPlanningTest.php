@@ -13,6 +13,7 @@ use Tests\TestCase;
 
 class FleetPlanningTest extends TestCase
 {
+    use \Tests\Support\StartsAfterVehicleSelection;
     use LazilyRefreshDatabase;
 
     private function agency(): array
